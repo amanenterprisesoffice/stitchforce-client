@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Outfit, Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
+import { Toaster } from "sonner";
 
 const interHeading = Inter({subsets:['latin'],variable:'--font-heading'});
 
@@ -25,7 +26,10 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", outfit.variable, interHeading.variable)}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -130,3 +130,143 @@
     @apply font-sans;
     }
 }
+
+
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-outfit);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #525252;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+
+button,
+a,
+label {
+  cursor: pointer;
+}
+
+.navbar-dark {
+  position: fixed;
+  background-color: transparent;
+  background-image: radial-gradient(#12121273 1px, #0345c8, #121212fc 1px);
+  background-size: 4px 4px;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  -webkit-mask: linear-gradient(rgb(235, 0, 0) 60%, rgba(255, 0, 0, 0.951) 100%);
+  mask: linear-gradient(rgb(252, 1, 1) 60%, rgba(56, 2, 2, 0) 100%);
+  opacity: 1;
+}
+
+.navbar-light {
+  position: fixed;
+  background-color: transparent;
+  background-image: radial-gradient(#e2e2e273 1px, #ffffff38, #fefefea1 1px);
+  background-size: 4px 4px;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  -webkit-mask: linear-gradient(rgb(0, 0, 0) 60%, rgba(0, 0, 0, 0) 100%);
+  mask: linear-gradient(rgb(0, 0, 0) 60%, rgb(0 0 0 / 0%) 100%);
+  opacity: 1;
+}
+
+
+.my-container {
+  width: 100%;
+  @media (width >=40rem
+
+    /* 640px */
+  ) {
+    max-width: 40rem
+      /* 640px */
+    ;
+  }
+
+  @media (width >=48rem
+
+    /* 768px */
+  ) {
+    max-width: 48rem
+      /* 768px */
+    ;
+  }
+
+  @media (width >=64rem
+
+    /* 1024px */
+  ) {
+    max-width: 64rem
+      /* 1024px */
+    ;
+  }
+
+  @media (width >=1150px) {
+    max-width: 1150px;
+  }
+
+  @media (width >=90rem
+
+    /* 1536px */
+  ) {
+    max-width: 90rem
+      /* 1536px */
+    ;
+  }
+}
+
+
+/* Light Mode */
+/* Light Mode */
+.round-home-logo {
+  background-image: linear-gradient(var(--primary), var(--background)); /* Using primary and background colors */
+}
+
+.home-line {
+  background-image: linear-gradient(
+    180deg,
+    rgba(11, 20, 22, 0), /* Transparent */
+    var(--secondary) 25%, /* Secondary color */
+    var(--primary) 50%,  /* Primary color in the center */
+    var(--secondary) 75%, /* Secondary color again */
+    rgba(11, 20, 22, 0) /* Transparent */
+  );
+}
+
+
+

@@ -1,0 +1,34 @@
+[
+  {
+    "subheading": "Drag & Drop",
+    "heading": "Upload GLB files instantly",
+    "description": "No installs required. Just drop your GLB model and instantly preview geometry, materials, and animations in-browser.",
+    "cta": "Try the sandbox",
+    "cta_link": "/sandbox",
+    "image": "/features/upload.png"
+  },
+  {
+    "subheading": "Scene Controls",
+    "heading": "Customize your environment",
+    "description": "Adjust lighting types, shadows, background colors, and camera angles with a fully interactive UI panel powered by Tweakpane.",
+    "cta": "Explore settings",
+    "cta_link": "/docs/customization",
+    "image": "/features/lighting.png"
+  },
+  {
+    "subheading": "Animations",
+    "heading": "Preview skeletal animations",
+    "description": "Load, inspect, and play back animation clips from your GLB file. Control loop counts and transitions on the fly.",
+    "cta": "Play animations",
+    "cta_link": "/docs/animations",
+    "image": "/features/animations.png"
+  },
+  {
+    "subheading": "Export/Share",
+    "heading": "Save and share scene configs",
+    "description": "Export your customized scene as JSON, or import existing settings for easy iteration or pipeline integration.",
+    "cta": "Learn how it works",
+    "cta_link": "/docs/export",
+    "image": "/features/export.png"
+  }
+]

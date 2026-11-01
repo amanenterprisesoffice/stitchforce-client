@@ -4,7 +4,7 @@ import { verifyToken } from "./utils/verifyToken";
 const PUBLIC_ONLY_ROUTES = ['/login', '/register'];
 const PUBLIC_ROUTES = ['/'];
 
-export async function middleware(req) {
+export async function proxy(req) {
     const { pathname } = req.nextUrl;
 
     // Verify token and get the payload

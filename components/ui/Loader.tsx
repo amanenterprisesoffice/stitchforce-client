@@ -13,15 +13,15 @@ interface LoaderProps {
 const Loader = ({
   text,
   color = 'primary',
-  fullScreen = true,
+  fullScreen = false,
   className = '',
   spinnerClassName = '',
 }: LoaderProps) => {
   return (
     <div
       className={cn(
-        'flex text-xs pointer-events-none flex-col items-center w-full justify-center h-full',
-        fullScreen && 'fixed top-0 inset-0 z-50',
+        'flex flex-1 text-xs pointer-events-none flex-col items-center w-full justify-center h-full',
+        fullScreen && 'fixed inset-0 z-[9999] min-h-dvh min-w-full bg-background',
         className
       )}
     >
@@ -32,7 +32,7 @@ const Loader = ({
           spinnerClassName
         )}
       ></div>
-      {text && <div className={cn('mt-3 rounded-xs text-secondary-foreground dark:bg-secondary/50 bg-primary/0 border border-secondary-foreground/40 px-2 py-1', color)}>{text}</div>}
+      {text && <div className={cn('mt-3 rounded-xs text-secondary-foreground dark:bg-secondary/50 bg-primary/0  px-2 py-1', color)}>{text}</div>}
     </div>
   );
 };

@@ -7,10 +7,12 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { toast } from "sonner";
 
 // Define a type for the user object
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
+  profile?: string;
+  organization_id: string;
   // Add other fields if needed
 }
 

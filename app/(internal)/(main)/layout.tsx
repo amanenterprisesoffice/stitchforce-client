@@ -1,48 +1,33 @@
-'use client'
+"use client"
 
-import Header from "@/components/ui/Header"
-import { usePathname } from "next/navigation"; // Hook to get the current path
-import { useEffect } from "react";
-import "@/app/globals.css";
-import { UserProvider } from "@/contexts/UserContext";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
+import { AppSidebar } from "@/components/app-sidebar"
+import AutoBreadcrumbs from "@/components/ui/AutoBreadCrumps"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 
-
-const MainLayout = ({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) => {
-  const pathname = usePathname();
-
-  // Check if the current path starts with "/edit/"
-  const isEditTemplate = pathname.startsWith("/edit/");
-  const isHome = pathname === "/";
-
+const MainLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <>
-      <div className="h-full max-h-screen flex flex-col">
-        <Header className={isEditTemplate ? 'relative!' : ''} />
-        <div className={`flex-1 no-scrollbar ${isEditTemplate ? 'border-t mx-auto w-full overflow-auto' : ''}`}>
-          <div className={` ${isHome ? '' : 'my-container h-full mx-auto pt-15 sm:pt-20 lg:pt-30'} ${isEditTemplate ? 'pt-2!' : ''} `}>
-            {children}
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+            />
+            <AutoBreadcrumbs />
           </div>
-        </div>
-      </div>
-      <Toaster
-        duration={2000}
-        toastOptions={{
-          classNames: {
-            success: '!bg-green-700 !text-white',
-            error: '!bg-red-700 !text-white',
-            info: '!bg-orange-500 !text-white',
-            warning: '!bg-yellow-500 !text-black',
-          },
-        }}
-      />
-    </>
-  );
-};
+        </header>
+        <div className="flex flex-1 flex-col gap-4 pt-0">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
 
-export default MainLayout;
+export default MainLayout

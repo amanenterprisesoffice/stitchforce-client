@@ -41,14 +41,16 @@ export default function AutoBreadcrumbs() {
               {label}
             </BreadcrumbPage>
           ) : (
-            <BreadcrumbLink>
-              <Link
-                href={href}
-                className="transition-colors hover:text-primary"
-              >
-                {label}
-              </Link>
-            </BreadcrumbLink>
+            <BreadcrumbLink
+              render={
+                <Link
+                  href={href}
+                  className="transition-colors hover:text-primary"
+                >
+                  {label}
+                </Link>
+              }
+            />
           )}
         </BreadcrumbItem>
         {!isLast && <BreadcrumbSeparator className="text-muted-text" />}

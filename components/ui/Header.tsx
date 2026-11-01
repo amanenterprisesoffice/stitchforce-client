@@ -104,9 +104,11 @@ const Header = ({ className = "" }: { className?: string }) => {
               <>
                 <UserDropdown user={user} />
 
-                <Button size="sm" asChild className="hidden lg:inline-flex">
-                  <Link href="/dashboard">Dashboard</Link>
-                </Button>
+                <Button
+                  size="sm"
+                  render={<Link href="/dashboard">Dashboard</Link>}
+                  className="hidden lg:inline-flex"
+                ></Button>
               </>
             ) : (
               !isLoading && (
@@ -140,22 +142,24 @@ export default Header
 const UserDropdown = ({ user }: { user: any }) => {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border bg-muted transition-colors outline-none hover:border-primary"
-          aria-label="Open user menu"
-        >
-          {user.imageUrl ? (
-            <img
-              src={user.imageUrl}
-              alt={user.name || "User"}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <UserIcon className="h-5 w-5 text-muted-foreground" />
-          )}
-        </button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <button
+            className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border bg-muted transition-colors outline-none hover:border-primary"
+            aria-label="Open user menu"
+          >
+            {user.imageUrl ? (
+              <img
+                src={user.imageUrl}
+                alt={user.name || "User"}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <UserIcon className="h-5 w-5 text-muted-foreground" />
+            )}
+          </button>
+        }
+      />
 
       <DropdownMenuContent align="end" className="w-56">
         <div className="px-3 py-2">
@@ -165,25 +169,15 @@ const UserDropdown = ({ user }: { user: any }) => {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard">Dashboard</Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem render={ <Link href="/dashboard">Dashboard</Link>}/>
 
-        <DropdownMenuItem asChild>
-          <Link href="/workers">Workers</Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem render={ <Link href="/workers">Workers</Link>}/>
 
-        <DropdownMenuItem asChild>
-          <Link href="/styles">Styles</Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem render={ <Link href="/styles">Styles</Link>}/>
 
-        <DropdownMenuItem asChild>
-          <Link href="/production">Production</Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem render={ <Link href="/production">Production</Link>}/>
 
-        <DropdownMenuItem asChild>
-          <Link href="/payments">Payments</Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem render={ <Link href="/payments">Payments</Link>}/>
 
         <DropdownMenuSeparator />
 

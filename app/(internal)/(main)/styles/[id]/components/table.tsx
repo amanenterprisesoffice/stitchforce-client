@@ -54,12 +54,12 @@ export default function StyleOperationsTable({
   onDelete,
 }: Props) {
   return (
-    <Card className="w-full pt-0 shadow-none">
+    <Card className="h-full w-full pt-0 shadow-none">
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">Sr.</TableHead>
+              <TableHead className="w-[100px]">ID.</TableHead>
 
               <TableHead>Operation Name</TableHead>
 
@@ -72,13 +72,13 @@ export default function StyleOperationsTable({
           </TableHeader>
 
           <TableBody>
-            {operations.map((operation) => (
-              <TableRow key={operation.id}>
+            {operations.map((operation, index) => (
+              <TableRow key={operation?.id ?? index}>
                 <TableCell>
                   <Badge variant="outline" className="p-3!">
                     <CopyButton
-                      label={`${operation.id.slice(0, 5)}..`}
-                      value={operation.id}
+                      label={`${operation?.id?.slice(0, 5) ?? ""}..`}
+                      value={operation?.id ?? ""}
                     />
                   </Badge>
                 </TableCell>
@@ -89,16 +89,18 @@ export default function StyleOperationsTable({
                       <Settings2 className="size-4 text-muted-foreground" />
                     </div>
 
-                    <span className="font-medium">{operation.name}</span>
+                    <span className="font-medium">{operation?.name ?? ""}</span>
                   </div>
                 </TableCell>
 
                 <TableCell className="font-medium tabular-nums">
-                  {formatRate(operation.rate_per_piece)}
+                  {operation?.rate_per_piece != null
+                    ? formatRate(operation.rate_per_piece)
+                    : ""}
                 </TableCell>
 
                 <TableCell className="hidden text-muted-foreground sm:table-cell">
-                  {operation.created_at
+                  {operation?.created_at
                     ? new Date(operation.created_at).toLocaleDateString()
                     : "—"}
                 </TableCell>

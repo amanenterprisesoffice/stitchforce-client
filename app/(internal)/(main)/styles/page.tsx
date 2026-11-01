@@ -192,6 +192,7 @@ export default function StylesPage() {
         ) : styles.length === 0 ? (
           <State
             message="No styles yet"
+            ICON={<Shirt />}
             description="Get started by creating your first garment style. You can add manufacturing operations and per-piece rates to each style."
             PortalButton={
               <Button variant="outline" onClick={openCreateDialog}>

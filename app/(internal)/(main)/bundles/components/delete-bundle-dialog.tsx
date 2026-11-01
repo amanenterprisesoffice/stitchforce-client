@@ -1,0 +1,77 @@
+
+"use client"
+
+import { Loader2 } from "lucide-react"
+
+import type { Bundle } from "@/utils/zodSchema/bundle"
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+interface Props {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  bundle: Bundle | null
+  onDelete: () => void
+  isDeleting: boolean
+  onCancel: () => void
+}
+
+export default function DeleteBundleDialog({
+  open,
+  onOpenChange,
+  bundle,
+  onDelete,
+  isDeleting,
+  onCancel,
+}: Props) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            Delete this bundle?
+          </AlertDialogTitle>
+
+          <AlertDialogDescription>
+            Are you sure you want to delete{" "}
+            <span className="font-medium text-foreground">
+              {bundle?.bundle_number}
+            </span>
+            ? This bundle will be soft-deleted and will no longer
+            appear in the active bundle list.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel
+            onClick={onCancel}
+            disabled={isDeleting}
+          >
+            Cancel
+          </AlertDialogCancel>
+
+          <AlertDialogAction
+            variant="destructive"
+            onClick={onDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting && (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            )}
+
+            Delete Bundle
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}

@@ -69,6 +69,14 @@ const data = {
           title: "Bundles",
           url: "/bundles",
         },
+        {
+          title: "Sizes",
+          url: "/sizes",
+        },
+        {
+          title: "Entries",
+          url: "/production-entries",
+        },
       ],
     },
     {

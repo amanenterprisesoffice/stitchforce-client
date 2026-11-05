@@ -17,7 +17,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { User } from "@/contexts/UserContext"
-import { getInitials, logout } from "@/lib/utils"
+import { getInitials, logout } from "@/utils/utils"
 import {
   ChevronsUpDownIcon,
   SparklesIcon,

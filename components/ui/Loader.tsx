@@ -1,6 +1,7 @@
 'use client';
 
-import { cn } from '@/lib/utils'; // Assuming 'cn' is a utility function similar to 'clsx'
+import { cn } from "cn";
+
 
 interface LoaderProps {
   text?: string; // Optional text for the loader

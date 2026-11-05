@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { logout as handleLogout } from "@/lib/utils"
+import { logout as handleLogout } from "@/utils/utils"
 import { Scissors, UserIcon } from "lucide-react"
 import { useUser } from "@/contexts/UserContext"
 import { Button } from "./button"

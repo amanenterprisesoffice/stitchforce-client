@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { getInitials } from "@/lib/utils"
+import { getInitials } from "@/utils/utils"
 
 interface Props {
   workers: GarmentWorker[]

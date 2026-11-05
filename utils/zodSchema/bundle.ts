@@ -9,12 +9,15 @@ export interface Bundle {
   size_id: string
   quantity: number
   attributes: Record<string, string>
-  status: string
+  status: BundleStatus
   remarks: string
   created_at: string
   updated_at: string
   deleted_at?: string | null
 }
+
+
+export type BundleStatus = "created" | "ready" | "in_progress" | "completed"
 
 export interface BundleAttribute {
   key: string
@@ -59,4 +62,12 @@ export const initialBundleValues: BundleFormValues = {
   quantity: 1,
   attributes: {},
   remarks: "",
+}
+
+
+export const STATUS_LABELS: Record<BundleStatus, string> = {
+  created: "Created",
+  ready: "Ready",
+  in_progress: "In Progress",
+  completed: "Completed",
 }

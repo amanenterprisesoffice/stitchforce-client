@@ -4,7 +4,6 @@ import { useForm, SubmitHandler, FieldValues } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -15,6 +14,7 @@ import { useState } from "react"
 import useFetch from "@/hooks/useFetch"
 import { Lock, MailIcon, User } from "lucide-react"
 import FormField from "@/components/ui/FormField"
+import { cn } from "cn"
 
 // Define a TypeScript interface for the form submission data
 interface FormSubmit {

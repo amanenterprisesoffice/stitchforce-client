@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { getInitials, formatDate } from "@/lib/utils"
+import { getInitials, formatDate } from "@/utils/utils"
 
 import EditGarmentWorkerDialog from "./components/edit-dialog"
 import DeleteGarmentWorkerDialog from "./components/delete-dialog"

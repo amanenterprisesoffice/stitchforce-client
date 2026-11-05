@@ -51,9 +51,6 @@ export default function StyleDetailsPage() {
   const { user } = useUser()
   const organizationID = user?.organization_id
 
-  const [style, setStyle] = useState<Style | null>(null)
-  const [operations, setOperations] = useState<StyleOperation[]>([])
-
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingOperation, setEditingOperation] =
     useState<StyleOperation | null>(null)
@@ -67,30 +64,23 @@ export default function StyleDetailsPage() {
       : ""
 
   // Fetch style
-  const { refetch: fetchStyle, isLoading: styleLoading } = useFetch({
-    auto: false,
-    onSuccess: (result) => {
-      setStyle(result.style ?? result)
-    },
-    onError: (err: any) => {
-      toast.error(err?.message || "Failed to fetch style")
-    },
+  const { data: styleData, isLoading: styleLoading } = useFetch({
+    auto: true,
+    url: baseURL,
   })
 
+  const style = styleData ?? null
   // Fetch operations
-  const { refetch: fetchOperations, isLoading: operationsLoading } = useFetch({
-    auto: false,
-    onSuccess: (result) => {
-      const items = Array.isArray(result)
-        ? result
-        : (result.operations ?? result.data ?? [])
-
-      setOperations(items)
-    },
-    onError: (err: any) => {
-      toast.error(err?.message || "Failed to fetch operations")
-    },
+  const {
+    data: styleOperationsData,
+    refetch: fetchOperations,
+    isLoading: operationsLoading,
+  } = useFetch({
+    auto: true,
+    url: `${baseURL}/operations`,
   })
+
+  const operations: StyleOperation[] = styleOperationsData ?? []
 
   // Create operation
   const { refetch: createOperation, isLoading: creating } = useFetch({
@@ -108,21 +98,6 @@ export default function StyleDetailsPage() {
   })
 
   const isSaving = creating || updating
-
-  // Initial fetch
-  useEffect(() => {
-    if (!baseURL) return
-
-    fetchStyle({
-      url: baseURL,
-      method: "GET",
-    })
-
-    fetchOperations({
-      url: `${baseURL}/operations`,
-      method: "GET",
-    })
-  }, [baseURL, fetchStyle, fetchOperations])
 
   // Create dialog
   const openCreateDialog = () => {

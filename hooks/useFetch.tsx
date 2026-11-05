@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
 
 // Define the type for the hook's options parameter
 interface UseFetchOptions {
@@ -104,6 +105,7 @@ export default function useFetch({
       successCallback(result);
     } catch (err: any) {
       const message = err.message || 'Unknown error';
+      toast.error(message)
       setError(message);
       errorCallback(err.fullError || err);
     } finally {

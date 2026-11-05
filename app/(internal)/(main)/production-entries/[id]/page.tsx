@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { formatDate, getInitials } from "@/lib/utils"
+import { formatDate, getInitials } from "@/utils/utils"
 
 import type {
   ProductionEntry,

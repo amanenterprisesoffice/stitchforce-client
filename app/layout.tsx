@@ -1,11 +1,11 @@
-import { Geist, Geist_Mono, Outfit, Inter } from "next/font/google"
+import { Geist, Geist_Mono, Outfit, Inter, IBM_Plex_Sans, Source_Sans_3, Oxanium } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
+import { cn } from "cn";
 
-const interHeading = Inter({subsets:['latin'],variable:'--font-heading'});
+const oxaniumHeading = Oxanium({subsets:['latin'],variable:'--font-heading'});
 
 const outfit = Outfit({subsets:['latin'],variable:'--font-sans'})
 
@@ -23,7 +23,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", outfit.variable, interHeading.variable)}
+      className={cn("antialiased", fontMono.variable, "font-sans", outfit.variable, oxaniumHeading.variable)}
     >
       <body>
         <ThemeProvider>

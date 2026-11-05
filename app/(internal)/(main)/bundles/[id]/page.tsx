@@ -34,7 +34,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import State from "@/components/StateComponent"
 import BundleQRCode from "@/components/ui/BundleQRCode"
 import {
   Table,
@@ -44,37 +43,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import PageHeader from "@/components/ui/PageHeader"
 import StateComponent from "@/components/StateComponent"
-
-interface Bundle {
-  id: string
-  organization_id?: string
-  bundle_number: string
-  style_id: string
-  size_id: string
-  quantity: number
-  attributes?: Record<string, unknown> | string | null
-  status: string
-  remarks?: string
-  created_at?: string
-  updated_at?: string
-  deleted_at?: string | null
-}
-
-interface Style {
-  id: string
-  name: string
-  style_number?: string
-  description?: string
-}
-
-interface Size {
-  id: string
-  name: string
-}
-
-type BundleStatus = "created" | "ready" | "in_progress" | "completed"
+import { Bundle, BundleStatus, STATUS_LABELS } from "@/utils/zodSchema/bundle"
+import { prettifyKey } from "@/utils/utils"
+import BundleDetailsHeader from "./components/header"
+import { Style } from "@/utils/zodSchema/style"
+import { Size } from "@/utils/zodSchema/size"
 
 const STATUS_STEPS: {
   key: BundleStatus
@@ -120,13 +94,6 @@ const STATUS_ORDER: Record<BundleStatus, number> = {
   completed: 4,
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  created: "Created",
-  ready: "Ready",
-  in_progress: "In Progress",
-  completed: "Completed",
-}
-
 function formatDate(value?: string) {
   if (!value) return "—"
   const date = new Date(value)
@@ -158,31 +125,8 @@ function readAttributes(value: Bundle["attributes"]): Record<string, unknown> {
   return typeof value === "object" && !Array.isArray(value) ? value : {}
 }
 
-function humanize(value: string) {
-  return value.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
 function isValidStatus(status: string): status is BundleStatus {
   return Object.prototype.hasOwnProperty.call(STATUS_ORDER, status)
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    created:
-      "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200",
-    ready:
-      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300",
-    in_progress:
-      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300",
-    completed:
-      "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300",
-  }
-
-  return (
-    <Badge variant="outline" className={styles[status] || ""}>
-      {STATUS_LABELS[status] || humanize(status || "unknown")}
-    </Badge>
-  )
 }
 
 function DetailItem({
@@ -270,9 +214,9 @@ export default function BundleDetailsPage() {
       method: "GET",
     })
   }, [organizationID, bundle?.style_id])
-
+  
   const attributes = useMemo(
-    () => readAttributes(bundle?.attributes),
+    () => readAttributes(bundle?.attributes ?? {}),
     [bundle?.attributes]
   )
 
@@ -318,7 +262,6 @@ export default function BundleDetailsPage() {
     })
   }
 
-
   if (!organizationID) {
     return (
       <StateComponent
@@ -326,10 +269,7 @@ export default function BundleDetailsPage() {
         message="Error"
         description="Something went wrong "
         PortalButton={
-          <Button
-            variant="outline"
-            render={<Link href="/bundles" />}
-          >
+          <Button variant="outline" render={<Link href="/bundles" />}>
             Back to bundles
           </Button>
         }
@@ -338,26 +278,20 @@ export default function BundleDetailsPage() {
   }
 
   if (bundleLoading && !bundle) {
-    return (
-      <div className="p-6">
-        <Loader text="Loading bundle details" />
-      </div>
-    )
+    return <Loader text="Loading bundle details" />
   }
 
   if (!bundle) {
     return (
-      <div className="p-6">
-        <State
-          message="Bundle not found"
-          description="The bundle may have been deleted or you may not have access to it."
-          PortalButton={
-            <Button variant="outline" render={<Link href="/bundles" />}>
-              Back to bundles
-            </Button>
-          }
-        />
-      </div>
+      <StateComponent
+        message="Bundle not found"
+        description="The bundle may have been deleted or you may not have access to it."
+        PortalButton={
+          <Button variant="outline" render={<Link href="/bundles" />}>
+            Back to bundles
+          </Button>
+        }
+      />
     )
   }
 
@@ -365,36 +299,10 @@ export default function BundleDetailsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-5 p-4 md:p-6">
-      <PageHeader
-        title={bundle.bundle_number}
-        description={`${style?.name || (styleLoading ? "Loading style…" : "Style details")}${
-          style?.style_number ? ` · ${style.style_number}` : ""
-        }`}
-        icon={<Package className="size-5 text-muted-foreground" />}
-        badge={<StatusBadge status={bundle.status} />}
-        action={
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              render={
-                <Link
-                  href={`/production-entries?bundle_id=${encodeURIComponent(bundle.id)}`}
-                />
-              }
-            >
-              View production entries
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              render={<Link href={`/styles/${bundle.style_id}`} />}
-            >
-              <Shirt className="mr-2 size-4" />
-              View style
-              <ExternalLink className="ml-2 size-3.5" />
-            </Button>
-          </div>
-        }
+      <BundleDetailsHeader
+        bundle={bundle}
+        style={style}
+        styleLoading={styleLoading}
       />
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex min-w-0 flex-col gap-5">
@@ -416,9 +324,9 @@ export default function BundleDetailsPage() {
                   </p>
                 </div>
 
-                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                {/* <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
                   <Package className="size-5 text-primary" />
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 
@@ -438,9 +346,9 @@ export default function BundleDetailsPage() {
                   </p>
                 </div>
 
-                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                {/* <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
                   <Ruler className="size-5 text-primary" />
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 
@@ -460,9 +368,9 @@ export default function BundleDetailsPage() {
                   </p>
                 </div>
 
-                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                {/* <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
                   <CalendarDays className="size-5 text-primary" />
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 
@@ -482,9 +390,9 @@ export default function BundleDetailsPage() {
                   </p>
                 </div>
 
-                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                {/* <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
                   <Clock className="size-5 text-primary" />
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           </div>
@@ -624,7 +532,7 @@ export default function BundleDetailsPage() {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Unrecognized bundle status: {humanize(currentStatus)}
+                  Unrecognized bundle status: {prettifyKey(currentStatus)}
                 </p>
               )}
             </CardContent>
@@ -660,7 +568,7 @@ export default function BundleDetailsPage() {
                       {Object.entries(attributes).map(([key, value]) => (
                         <TableRow key={key}>
                           <TableCell className="font-medium">
-                            {humanize(key)}
+                            {prettifyKey(key)}
                           </TableCell>
 
                           <TableCell className="text-right break-words text-muted-foreground">

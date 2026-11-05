@@ -40,9 +40,9 @@ export default function PageHeader({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           {icon && (
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-muted">
+            <Button size="lg" variant="outline" className="aspect-square h-full">
               {icon}
-            </div>
+            </Button>
           )}
 
           <div className="min-w-0">

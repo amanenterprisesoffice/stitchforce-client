@@ -16,7 +16,7 @@ import State from "@/components/StateComponent"
 import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
 import {
   unwrapList,
-} from "@/lib/utils"
+} from "@/utils/utils"
 
 import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
 import type { Bundle } from "@/utils/zodSchema/bundle"

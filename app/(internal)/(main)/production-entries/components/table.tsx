@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-import { getInitials, formatDate, formatMoney } from "@/lib/utils"
+import { getInitials, formatDate, formatMoney } from "@/utils/utils"
 
 import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
 import type { ProductionEntry } from "@/utils/zodSchema/production-entry"

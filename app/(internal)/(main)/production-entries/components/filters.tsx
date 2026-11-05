@@ -6,7 +6,7 @@ import type {} from "../../../../../utils/zodSchema/production-entry"
 import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
 
 import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
-import { unwrapList } from "@/lib/utils"
+import { unwrapList } from "@/utils/utils"
 
 import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
 import type { Bundle } from "@/utils/zodSchema/bundle"

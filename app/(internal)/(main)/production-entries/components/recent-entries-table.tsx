@@ -10,7 +10,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import type { ProductionEntry } from "../../../../../utils/zodSchema/production-entry"
 import type { GarmentWorker } from "../../../../../utils/zodSchema/garmentWorker"
-import { formatMoney } from "@/lib/utils"
+import { formatMoney } from "@/utils/utils"
 import { getWorkerName } from "../../../../../utils/zodSchema/garmentWorker"
 export default function RecentEntriesTable({
   entries,

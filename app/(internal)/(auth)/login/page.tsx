@@ -1,4 +1,4 @@
-import { FlameIcon } from "lucide-react"
+import { FlameIcon, Scissors } from "lucide-react"
 import { AuthForm } from "@/components/AuthForm"
 import Link from "next/link"
 
@@ -9,9 +9,9 @@ export default function Login() {
         <div className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-medium">
             <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <FlameIcon className="size-4" />
+              <Scissors className="size-4" />
             </span>
-            <span>XP Life.</span>
+            <span>StitchForce</span>
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -33,6 +33,6 @@ export default function Login() {
 }
 
 export const metadata = {
-  title: "Login | XP Life",
-  description: "Login to XP Life and gamify your personal growth.",
+  title: "Login - StitchForce",
+  description: "Login to StitchForce to manage your stitching projects.",
 }

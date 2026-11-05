@@ -1,6 +1,6 @@
 // "use client";
 import { AuthForm } from "@/components/AuthForm"
-import { FlameIcon } from "lucide-react"
+import { FlameIcon, Scissors } from "lucide-react"
 import Link from "next/link"
 
 export default function Register() {
@@ -10,9 +10,9 @@ export default function Register() {
         <div className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-medium">
             <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <FlameIcon className="size-4" />
+              <Scissors className="size-4" />
             </span>
-            <span>XP Life.</span>
+            <span>StitchForce</span>
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -37,6 +37,6 @@ export default function Register() {
 // }
 
 export const metadata = {
-  title: "Register | XP Life",
-  description: "Register to XP Life and gamify your personal growth.",
+  title: "Register - StitchForce",
+  description: "Register to StitchForce to manage your stitching projects.",
 }

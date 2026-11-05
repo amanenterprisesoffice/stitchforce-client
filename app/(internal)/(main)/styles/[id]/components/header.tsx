@@ -1,42 +1,41 @@
-
-"use client"
-
-import { Plus } from "lucide-react"
-
+import React from "react"
+import PageHeader from "@/components/ui/PageHeader"
+import { Shirt, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Style } from "@/utils/zodSchema/style"
 
-interface Props {
-  count: number
-  onCreate: () => void
-}
-
-export default function OperationsHeader({
-  count,
-  onCreate,
-}: Props) {
+const StyleHeader = ({
+  style,
+  openCreateDialog,
+}: {
+  style: Style | null
+  openCreateDialog: () => void
+}) => {
+  if (!style) return null
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold tracking-tight">
-            Manufacturing Operations
-          </h2>
-
-          <Badge variant="secondary">
-            {count}
+    <PageHeader
+      title={style.name}
+      icon={<Shirt className="size-5 text-muted-foreground" />}
+      badge={
+        <>
+          <Badge variant="outline" className="font-mono">
+            {style.style_number}
           </Badge>
+          <span className="text-xs text-muted-foreground">Style details</span>
+        </>
+      }
+      action={
+        <div className="flex gap-2">
+          <Button onClick={openCreateDialog}>
+            <Plus className="size-4" />
+            Add Operation
+          </Button>
         </div>
-
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage operations and their per-piece rates for this style.
-        </p>
-      </div>
-
-      <Button onClick={onCreate}>
-        <Plus className="size-4" />
-        Add Operation
-      </Button>
-    </div>
+      }
+      description={style.description}
+    />
   )
 }
+
+export default StyleHeader

@@ -1,9 +1,7 @@
-
 "use client"
 
 import { Loader2 } from "lucide-react"
-
-import type { GarmentWorker } from "../../../../../utils/zodSchema/garmentWorker"
+import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
 
 import {
   AlertDialog,
@@ -19,16 +17,16 @@ import {
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  worker: GarmentWorker | null
+  entry: ProductionEntry
   onDelete: () => void
   isDeleting: boolean
   onCancel: () => void
 }
 
-export default function DeleteWorkerDialog({
+export default function DeleteProductionEntryDialog({
   open,
   onOpenChange,
-  worker,
+  entry,
   onDelete,
   isDeleting,
   onCancel,
@@ -36,42 +34,26 @@ export default function DeleteWorkerDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
-
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            Delete this worker?
-          </AlertDialogTitle>
-
+          <AlertDialogTitle>Delete this production entry?</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete{" "}
+            Are you sure you want to delete this entry for{" "}
             <span className="font-medium text-foreground">
-              {worker?.name}
-            </span>
-            ? This action cannot be undone.
+              {entry.worker?.name || "this worker"}
+            </span>{" "}
+            ({entry.quantity} pieces)? This action will remove the record from the active production entries list.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel
-            onClick={onCancel}
-            disabled={isDeleting}
-          >
+          <AlertDialogCancel onClick={onCancel} disabled={isDeleting}>
             Cancel
           </AlertDialogCancel>
-
-          <AlertDialogAction
-            variant="destructive"
-            onClick={onDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting && (
-              <Loader2 className="mr-2 size-4 animate-spin" />
-            )}
-
-            Delete Worker
+          <AlertDialogAction variant="destructive" onClick={onDelete} disabled={isDeleting}>
+            {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
+            Delete entry
           </AlertDialogAction>
         </AlertDialogFooter>
-
       </AlertDialogContent>
     </AlertDialog>
   )

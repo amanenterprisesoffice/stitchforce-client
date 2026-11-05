@@ -14,25 +14,28 @@ import { Badge } from "@/components/ui/badge"
 import FormSelect from "@/components/ui/FormSelect"
 import Loader from "@/components/ui/Loader"
 import State from "@/components/StateComponent"
+
+import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
+import RecentEntriesTable from "../components/recent-entries-table"
+import FormField from "@/components/ui/FormField"
+
 import type {
   ProductionEntry,
-  ProductionWorker,
-  ProductionBundle,
-  ProductionStyle,
-  StyleOperation,
   ProductionEntryPayload,
-} from "../schema"
-import { unwrapList, getWorkerName, formatMoney } from "../schema"
-import RecentEntriesTable from "../components/recent-entries-table"
-import FileInput from "@/components/ui/Fileinput"
-import FormField from "@/components/ui/FormField"
+} from "@/utils/zodSchema/production-entry"
+import { formatMoney, unwrapList } from "@/lib/utils"
+
+import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import type { Bundle } from "@/utils/zodSchema/bundle"
+import type { Style } from "@/utils/zodSchema/style"
+import type { StyleOperation } from "@/utils/zodSchema/styleops"
 
 export default function NewProductionEntriesPage() {
   const { user } = useUser()
   const orgID = user?.organization_id
-  const [workers, setWorkers] = useState<ProductionWorker[]>([])
-  const [bundles, setBundles] = useState<ProductionBundle[]>([])
-  const [styles, setStyles] = useState<ProductionStyle[]>([])
+  const [workers, setWorkers] = useState<GarmentWorker[]>([])
+  const [bundles, setBundles] = useState<Bundle[]>([])
+  const [styles, setStyles] = useState<Style[]>([])
   const [entries, setEntries] = useState<ProductionEntry[]>([])
   const [operations, setOperations] = useState<StyleOperation[]>([])
   const [bundleID, setBundleID] = useState("")
@@ -49,11 +52,8 @@ export default function NewProductionEntriesPage() {
     auto: false,
     onSuccess: (r: any) =>
       setWorkers(
-        unwrapList<ProductionWorker>(r, ["workers", "garment_workers"]).filter(
-          (w) =>
-            w.is_active !== false &&
-            w.active !== false &&
-            w.status !== "inactive"
+        unwrapList<GarmentWorker>(r, ["workers", "garment_workers"]).filter(
+          (w) => w.status !== "inactive"
         )
       ),
   })
@@ -61,15 +61,12 @@ export default function NewProductionEntriesPage() {
     auto: false,
     onSuccess: (r: any) =>
       setBundles(
-        unwrapList<ProductionBundle>(r, ["bundles"]).filter(
-          (b) => !b.deleted_at
-        )
+        unwrapList<Bundle>(r, ["bundles"]).filter((b) => !b.deleted_at)
       ),
   })
   const { refetch: fetchStyles } = useFetch({
     auto: false,
-    onSuccess: (r: any) =>
-      setStyles(unwrapList<ProductionStyle>(r, ["styles"])),
+    onSuccess: (r: any) => setStyles(unwrapList<Style>(r, ["styles"])),
   })
   const { refetch: fetchEntries, isLoading: entriesLoading } = useFetch({
     auto: false,
@@ -189,15 +186,6 @@ export default function NewProductionEntriesPage() {
     <div className="flex flex-1 flex-col gap-6 p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mb-2 -ml-3"
-            render={<Link href="/production-entries" />}
-          >
-            <ArrowLeft className="mr-2 size-4" />
-            Back to production entries
-          </Button>
           <h1 className="text-2xl font-semibold tracking-tight">
             Add production entries
           </h1>
@@ -364,7 +352,9 @@ export default function NewProductionEntriesPage() {
                   rows={3}
                   maxLength={1000}
                   value={remarks}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRemarks(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setRemarks(e.target.value)
+                  }
                   placeholder="Work completed, notes…"
                   isTextArea
                 />

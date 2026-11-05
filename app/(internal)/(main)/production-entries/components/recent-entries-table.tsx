@@ -8,14 +8,16 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
-import type { ProductionEntry, ProductionWorker } from "../schema"
-import { getWorkerName, formatMoney } from "../schema"
+import type { ProductionEntry } from "../../../../../utils/zodSchema/production-entry"
+import type { GarmentWorker } from "../../../../../utils/zodSchema/garmentWorker"
+import { formatMoney } from "@/lib/utils"
+import { getWorkerName } from "../../../../../utils/zodSchema/garmentWorker"
 export default function RecentEntriesTable({
   entries,
   workers,
 }: {
   entries: ProductionEntry[]
-  workers: Map<string, ProductionWorker>
+  workers: Map<string, GarmentWorker>
 }) {
   return (
     <Card className="pt-0 shadow-none">

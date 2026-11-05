@@ -1,8 +1,7 @@
-
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { PackagePlus, Search } from "lucide-react"
+import { Link, PackagePlus, Search } from "lucide-react"
 import { toast } from "sonner"
 
 import useFetch from "@/hooks/useFetch"
@@ -20,9 +19,9 @@ import type { Size } from "@/utils/zodSchema/size"
 import BundlesHeader from "./components/header"
 import BundlesTable from "./components/table"
 import BundleFormDialog from "./components/form-dialog"
-import BundleDetailsDialog from "./components/details-dialog"
 import DeleteBundleDialog from "./components/delete-bundle-dialog"
 import BundleFilters from "./components/filters"
+import StateComponent from "@/components/StateComponent"
 
 export default function BundlesPage() {
   const { user } = useUser()
@@ -153,18 +152,12 @@ export default function BundlesPage() {
       const matchesStyle =
         styleFilter === "all" || bundle.style_id === styleFilter
 
-      const matchesSize =
-        sizeFilter === "all" || bundle.size_id === sizeFilter
+      const matchesSize = sizeFilter === "all" || bundle.size_id === sizeFilter
 
       const matchesStatus =
         statusFilter === "all" || bundle.status === statusFilter
 
-      return (
-        matchesSearch &&
-        matchesStyle &&
-        matchesSize &&
-        matchesStatus
-      )
+      return matchesSearch && matchesStyle && matchesSize && matchesStatus
     })
   }, [
     bundles,
@@ -189,10 +182,7 @@ export default function BundlesPage() {
   }
 
   // View
-  const openDetailsDialog = (bundle: Bundle) => {
-    setViewingBundle(bundle)
-    setDetailsDialogOpen(true)
-  }
+
 
   // Save (POST / PUT)
   const handleSave = async (values: BundleFormValues) => {
@@ -207,8 +197,7 @@ export default function BundlesPage() {
     const duplicateBundle = bundles.some(
       (bundle) =>
         bundle.bundle_number.trim().toLowerCase() ===
-          bundleNumber.toLowerCase() &&
-        bundle.id !== editingBundle?.id
+          bundleNumber.toLowerCase() && bundle.id !== editingBundle?.id
     )
 
     if (duplicateBundle) {
@@ -228,9 +217,7 @@ export default function BundlesPage() {
     }
 
     await mutateBundle({
-      url: isEditing
-        ? `${bundlesURL}/${editingBundle.id}`
-        : bundlesURL,
+      url: isEditing ? `${bundlesURL}/${editingBundle.id}` : bundlesURL,
 
       method: isEditing ? "PUT" : "POST",
 
@@ -286,11 +273,11 @@ export default function BundlesPage() {
 
   if (!organizationID) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          Organization information is unavailable.
-        </p>
-      </div>
+      <StateComponent
+        className="rounded-none"
+        message="Error"
+        description="Something went wrong "
+      />
     )
   }
 
@@ -301,10 +288,7 @@ export default function BundlesPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <BundlesHeader
-        count={bundles.length}
-        onCreate={openCreateDialog}
-      />
+      <BundlesHeader count={bundles.length} onCreate={openCreateDialog} />
 
       {/* Search */}
       <div className="relative max-w-sm">
@@ -373,7 +357,6 @@ export default function BundlesPage() {
             bundles={filteredBundles}
             styles={styles}
             sizes={sizes}
-            onView={openDetailsDialog}
             onEdit={openEditDialog}
             onDelete={(bundle) => {
               setDeletingBundle(bundle)
@@ -392,15 +375,6 @@ export default function BundlesPage() {
         sizes={sizes}
         onSubmit={handleSave}
         isSaving={isSaving}
-      />
-
-      {/* View details */}
-      <BundleDetailsDialog
-        open={detailsDialogOpen}
-        onOpenChange={setDetailsDialogOpen}
-        bundle={viewingBundle}
-        styles={styles}
-        sizes={sizes}
       />
 
       {/* Delete */}

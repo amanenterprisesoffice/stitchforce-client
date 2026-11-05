@@ -25,3 +25,41 @@ export function getInitials(name: string) {
     return (words[0][0] + words[words.length - 1][0]).toUpperCase()
   }
 }
+
+
+export function formatDate(date?: string | Date | null) {
+  if (!date) return "—"
+
+  const value = new Date(date)
+
+  if (Number.isNaN(value.getTime())) return "—"
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(value)
+}
+
+export function formatMoney(amount: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(amount || 0) / 100)
+}
+
+export function unwrapList<T>(value: any, keys: string[] = []): T[] {
+  if (Array.isArray(value)) return value
+
+  for (const key of keys) {
+    if (Array.isArray(value?.[key])) return value[key]
+  }
+
+  if (Array.isArray(value?.data)) return value.data
+
+  return []
+}
+
+

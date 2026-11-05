@@ -15,7 +15,6 @@ import { Card, CardContent } from "@/components/ui/card"
 
 import StyleOperationsTable, { type StyleOperation } from "./components/table"
 
-import OperationsHeader from "./components/header"
 import OperationFormDialog from "./components/form-dialog"
 import DeleteOperationDialog from "./components/delete-dialog"
 
@@ -25,6 +24,7 @@ import StateComponent from "@/components/StateComponent"
 import { Separator } from "@/components/ui/separator"
 import Loader from "@/components/ui/Loader"
 import PageHeader from "@/components/ui/PageHeader"
+import StyleHeader from "./components/header"
 
 interface Style {
   id: string
@@ -240,23 +240,7 @@ export default function StyleDetailsPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      {/* Style Header */}
-      <PageHeader
-        title={style.name}
-        icon={<Shirt className="size-5 text-muted-foreground" />}
-        badge={
-          <>
-            <Badge variant="outline" className="font-mono">
-              {style.style_number}
-            </Badge>
-            <span className="text-xs text-muted-foreground">Style details</span>
-          </>
-        }
-        description={style.description}
-      />
-
-      {/* Operations Header */}
-      <OperationsHeader count={operations.length} onCreate={openCreateDialog} />
+      <StyleHeader style={style} openCreateDialog={openCreateDialog} />
 
       {/* Summary */}
       <div className="grid gap-4 sm:grid-cols-2">

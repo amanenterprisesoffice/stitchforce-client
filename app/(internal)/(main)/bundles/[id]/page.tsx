@@ -5,8 +5,10 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import {
   ArrowLeft,
+  CalendarDays,
   Check,
   CheckCircle2,
+  Clock,
   Clock3,
   ExternalLink,
   Package,
@@ -15,7 +17,6 @@ import {
   Play,
   Ruler,
   Shirt,
-  Sparkles,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -28,12 +29,23 @@ import { Badge } from "@/components/ui/badge"
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import State from "@/components/StateComponent"
+import BundleQRCode from "@/components/ui/BundleQRCode"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import PageHeader from "@/components/ui/PageHeader"
+import StateComponent from "@/components/StateComponent"
 
 interface Bundle {
   id: string
@@ -74,28 +86,28 @@ const STATUS_STEPS: {
   {
     key: "created",
     title: "Created",
-    description: "The bundle has been created and added to production.",
+    description: "Bundle created and recorded.",
     actionLabel: "",
     icon: Package,
   },
   {
     key: "ready",
     title: "Ready",
-    description: "The bundle is prepared and ready for production.",
+    description: "Prepared and ready for production.",
     actionLabel: "Mark as Ready",
     icon: CheckCircle2,
   },
   {
     key: "in_progress",
     title: "In Progress",
-    description: "Production work has started for this bundle.",
+    description: "Production work has started.",
     actionLabel: "Start Production",
     icon: Play,
   },
   {
     key: "completed",
     title: "Completed",
-    description: "Production for this bundle has been completed.",
+    description: "Production for this bundle is complete.",
     actionLabel: "Mark as Completed",
     icon: PackageCheck,
   },
@@ -117,9 +129,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 function formatDate(value?: string) {
   if (!value) return "—"
-
   const date = new Date(value)
-
   if (Number.isNaN(date.getTime())) return "—"
 
   return date.toLocaleString("en-IN", {
@@ -131,18 +141,13 @@ function formatDate(value?: string) {
   })
 }
 
-function readAttributes(
-  value: Bundle["attributes"]
-): Record<string, unknown> {
+function readAttributes(value: Bundle["attributes"]): Record<string, unknown> {
   if (!value) return {}
 
   if (typeof value === "string") {
     try {
       const parsed = JSON.parse(value)
-
-      return parsed &&
-        typeof parsed === "object" &&
-        !Array.isArray(parsed)
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
         ? parsed
         : {}
     } catch {
@@ -150,46 +155,54 @@ function readAttributes(
     }
   }
 
-  return typeof value === "object" && !Array.isArray(value)
-    ? value
-    : {}
+  return typeof value === "object" && !Array.isArray(value) ? value : {}
 }
 
 function humanize(value: string) {
-  return value
-    .replace(/[_-]/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  return value.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function isValidStatus(status: string): status is BundleStatus {
-  return status in STATUS_ORDER
+  return Object.prototype.hasOwnProperty.call(STATUS_ORDER, status)
 }
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    created: "border-slate-200 bg-slate-100 text-slate-700",
-    ready: "border-blue-200 bg-blue-50 text-blue-700",
-    in_progress: "border-amber-200 bg-amber-50 text-amber-700",
-    completed: "border-green-200 bg-green-50 text-green-700",
+    created:
+      "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200",
+    ready:
+      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300",
+    in_progress:
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300",
+    completed:
+      "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300",
   }
 
   return (
-    <Badge
-      variant="outline"
-      className={
-        styles[status] ||
-        "border-slate-200 bg-slate-100 text-slate-700"
-      }
-    >
+    <Badge variant="outline" className={styles[status] || ""}>
       {STATUS_LABELS[status] || humanize(status || "unknown")}
     </Badge>
+  )
+}
+
+function DetailItem({
+  label,
+  value,
+}: {
+  label: string
+  value: React.ReactNode
+}) {
+  return (
+    <div className="min-w-0 space-y-1">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="text-sm font-medium">{value}</div>
+    </div>
   )
 }
 
 export default function BundleDetailsPage() {
   const params = useParams()
   const bundleID = params.id as string
-
   const { user } = useUser()
   const organizationID = user?.organization_id
 
@@ -202,11 +215,7 @@ export default function BundleDetailsPage() {
       ? `/api/organizations/${organizationID}/bundles/${bundleID}`
       : ""
 
-  // Fetch bundle
-  const {
-    refetch: fetchBundle,
-    isLoading: bundleLoading,
-  } = useFetch({
+  const { refetch: fetchBundle, isLoading: bundleLoading } = useFetch({
     auto: false,
     onSuccess: (result: any) => {
       setBundle(result?.bundle ?? result?.data ?? result)
@@ -216,11 +225,7 @@ export default function BundleDetailsPage() {
     },
   })
 
-  // Fetch style
-  const {
-    refetch: fetchStyle,
-    isLoading: styleLoading,
-  } = useFetch({
+  const { refetch: fetchStyle, isLoading: styleLoading } = useFetch({
     auto: false,
     onSuccess: (result: any) => {
       setStyle(result?.style ?? result?.data ?? result)
@@ -230,14 +235,12 @@ export default function BundleDetailsPage() {
     },
   })
 
-  // Fetch sizes
   const { refetch: fetchSizes } = useFetch({
     auto: false,
     onSuccess: (result: any) => {
       const list = Array.isArray(result)
         ? result
-        : result?.sizes ?? result?.data ?? []
-
+        : (result?.sizes ?? result?.data ?? [])
       setSizes(Array.isArray(list) ? list : [])
     },
     onError: (error: any) => {
@@ -245,22 +248,14 @@ export default function BundleDetailsPage() {
     },
   })
 
-  // Update status
-  const {
-    refetch: updateStatus,
-    isLoading: isUpdatingStatus,
-  } = useFetch({
+  const { refetch: updateStatus, isLoading: isUpdatingStatus } = useFetch({
     auto: false,
   })
 
   useEffect(() => {
     if (!organizationID || !bundleID) return
 
-    fetchBundle({
-      url: bundleURL,
-      method: "GET",
-    })
-
+    fetchBundle({ url: bundleURL, method: "GET" })
     fetchSizes({
       url: `/api/organizations/${organizationID}/sizes`,
       method: "GET",
@@ -287,7 +282,6 @@ export default function BundleDetailsPage() {
     "—"
 
   const currentStatus = bundle?.status || "created"
-
   const currentStatusIndex = isValidStatus(currentStatus)
     ? STATUS_ORDER[currentStatus]
     : 0
@@ -296,52 +290,50 @@ export default function BundleDetailsPage() {
     (step) => STATUS_ORDER[step.key] === currentStatusIndex + 1
   )
 
-  const isCompleted = currentStatus === "completed"
-
-  // Move only one step forward at a time.
   const handleStatusUpdate = async () => {
     if (!bundleURL || !bundle || !nextStatusStep) return
 
     const targetStatus = nextStatusStep.key
 
     await updateStatus({
-      url: `${bundleURL}`,
+      url: bundleURL,
       method: "PUT",
-      payload: {
-        status: targetStatus,
-      },
+      payload: { status: targetStatus },
       onSuccess: (result: any) => {
         const updated = result?.bundle ?? result?.data ?? result
-
         setBundle((current) =>
           current
             ? {
                 ...current,
-                ...(updated && typeof updated === "object"
-                  ? updated
-                  : {}),
+                ...(updated && typeof updated === "object" ? updated : {}),
                 status: targetStatus,
               }
             : current
         )
-
-        toast.success(
-          `Bundle status updated to ${STATUS_LABELS[targetStatus]}`
-        )
+        toast.success(`Bundle status updated to ${STATUS_LABELS[targetStatus]}`)
       },
       onError: (error: any) => {
-        toast.error(
-          error?.message || "Failed to update bundle status"
-        )
+        toast.error(error?.message || "Failed to update bundle status")
       },
     })
   }
 
+
   if (!organizationID) {
     return (
-      <div className="p-6 text-sm text-muted-foreground">
-        Organization information is unavailable.
-      </div>
+      <StateComponent
+        className="rounded-none"
+        message="Error"
+        description="Something went wrong "
+        PortalButton={
+          <Button
+            variant="outline"
+            render={<Link href="/bundles" />}
+          >
+            Back to bundles
+          </Button>
+        }
+      />
     )
   }
 
@@ -369,330 +361,232 @@ export default function BundleDetailsPage() {
     )
   }
 
+  const completed = currentStatus === "completed"
+
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-      {/* Top navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          render={<Link href="/bundles" />}
-        >
-          <ArrowLeft className="mr-2 size-4" />
-          Back to bundles
-        </Button>
-
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            render={<Link href={`/styles/${bundle.style_id}`} />}
-          >
-            <Shirt className="mr-2 size-4" />
-            View style details
-            <ExternalLink className="ml-2 size-3.5" />
-          </Button>
-
-          <Button
-            render={
-              <Link
-                href={`/production-entries?bundle_id=${encodeURIComponent(
-                  bundle.id
-                )}`}
-              />
-            }
-          >
-            <Package className="mr-2 size-4" />
-            View production entries
-          </Button>
-        </div>
-      </div>
-
-      {/* Bundle heading */}
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
-            <Package className="size-5 text-muted-foreground" />
+    <main className="mx-auto flex w-full max-w-7xl flex-col gap-5 p-4 md:p-6">
+      <PageHeader
+        title={bundle.bundle_number}
+        description={`${style?.name || (styleLoading ? "Loading style…" : "Style details")}${
+          style?.style_number ? ` · ${style.style_number}` : ""
+        }`}
+        icon={<Package className="size-5 text-muted-foreground" />}
+        badge={<StatusBadge status={bundle.status} />}
+        action={
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              render={
+                <Link
+                  href={`/production-entries?bundle_id=${encodeURIComponent(bundle.id)}`}
+                />
+              }
+            >
+              View production entries
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link href={`/styles/${bundle.style_id}`} />}
+            >
+              <Shirt className="mr-2 size-4" />
+              View style
+              <ExternalLink className="ml-2 size-3.5" />
+            </Button>
           </div>
-
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-muted-foreground">
-              Bundle details
-            </p>
-
-            <h1 className="truncate font-mono text-2xl font-semibold tracking-tight">
-              {bundle.bundle_number}
-            </h1>
-          </div>
-
-          <StatusBadge status={bundle.status} />
-        </div>
-
-        <p className="text-sm text-muted-foreground">
-          Review bundle information and track its progress through
-          production.
-        </p>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
-        {/* Left column */}
-        <div className="flex flex-col gap-4">
-          {/* Bundle information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">
-                Bundle information
-              </CardTitle>
-
-              <CardDescription>
-                Core details captured when this bundle was created.
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="grid gap-5 sm:grid-cols-2">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
-                  Bundle number
-                </p>
-
-                <p className="font-mono font-semibold">
-                  {bundle.bundle_number}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
-                  Quantity
-                </p>
-
-                <p className="font-semibold tabular-nums">
-                  {Number(bundle.quantity || 0).toLocaleString("en-IN")}{" "}
-                  pieces
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
-                  Style
-                </p>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-medium">
-                    {style?.name ||
-                      (styleLoading ? "Loading style…" : "Style")}
+        }
+      />
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-5">
+          {/* At-a-glance details */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="shadow-none">
+              <CardContent className="flex flex-row items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Quantity
                   </p>
 
-                  {style?.style_number && (
-                    <span className="text-xs text-muted-foreground">
-                      ({style.style_number})
-                    </span>
-                  )}
+                  <p className="text-3xl font-semibold tracking-tight tabular-nums">
+                    {Number(bundle.quantity || 0).toLocaleString("en-IN")}
+                  </p>
 
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="h-auto p-0"
-                    render={<Link href={`/styles/${bundle.style_id}`} />}
-                  >
-                    Open style
-                    <ExternalLink className="ml-1 size-3" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
-                  Size
-                </p>
-
-                <div className="flex items-center gap-2">
-                  <Ruler className="size-4 text-muted-foreground" />
-
-                  <p className="font-medium">{sizeName}</p>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
-                  Created
-                </p>
-
-                <p className="font-medium">
-                  {formatDate(bundle.created_at)}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
-                  Last updated
-                </p>
-
-                <p className="font-medium">
-                  {formatDate(bundle.updated_at)}
-                </p>
-              </div>
-
-              {bundle.remarks && (
-                <div className="space-y-1 sm:col-span-2">
                   <p className="text-xs text-muted-foreground">
-                    Remarks
-                  </p>
-
-                  <p className="whitespace-pre-wrap text-sm">
-                    {bundle.remarks}
+                    Pieces in this bundle
                   </p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Attributes */}
+                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                  <Package className="size-5 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-none">
+              <CardContent className="flex flex-row items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Size
+                  </p>
+
+                  <p className="text-3xl font-semibold tracking-tight">
+                    {sizeName}
+                  </p>
+
+                  <p className="text-xs text-muted-foreground">
+                    Bundle garment size
+                  </p>
+                </div>
+
+                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                  <Ruler className="size-5 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-none">
+              <CardContent className="flex flex-row items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Created
+                  </p>
+
+                  <p className="text-lg font-semibold tracking-tight">
+                    {formatDate(bundle.created_at)}
+                  </p>
+
+                  <p className="text-xs text-muted-foreground">
+                    Bundle creation date
+                  </p>
+                </div>
+
+                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                  <CalendarDays className="size-5 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-none">
+              <CardContent className="flex flex-row items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Last updated
+                  </p>
+
+                  <p className="text-lg font-semibold tracking-tight">
+                    {formatDate(bundle.updated_at)}
+                  </p>
+
+                  <p className="text-xs text-muted-foreground">
+                    Most recent modification
+                  </p>
+                </div>
+
+                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
+                  <Clock className="size-5 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Palette className="size-4 text-muted-foreground" />
-
-                <CardTitle className="text-base">
-                  Manufacturing attributes
-                </CardTitle>
-              </div>
-
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Bundle information</CardTitle>
               <CardDescription>
-                Shade, colour, fabric lot, and other bundle-specific
-                details.
+                Style, size and manufacturing details.
               </CardDescription>
             </CardHeader>
-
-            <CardContent>
-              {Object.keys(attributes).length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No manufacturing attributes were added.
-                </p>
-              ) : (
-                <div className="divide-y rounded-lg border">
-                  {Object.entries(attributes).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="flex flex-wrap items-start justify-between gap-3 px-4 py-3"
+            <CardContent className="grid gap-x-8 gap-y-5 border-t pt-5 sm:grid-cols-2">
+              <DetailItem
+                label="Style"
+                value={
+                  <span className="flex flex-wrap items-center gap-2">
+                    {style?.name || (styleLoading ? "Loading…" : "—")}
+                    {style?.style_number && (
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {style.style_number}
+                      </span>
+                    )}
+                    <Link
+                      className="text-xs font-medium text-primary hover:underline"
+                      href={`/styles/${bundle.style_id}`}
                     >
-                      <span className="text-sm capitalize text-muted-foreground">
-                        {humanize(key)}
+                      Open style
+                    </Link>
+                  </span>
+                }
+              />
+              <DetailItem label="Size" value={sizeName} />
+              <DetailItem
+                label="Bundle ID"
+                value={
+                  <span className="font-mono text-xs break-all">
+                    {bundle.id}
+                  </span>
+                }
+              />
+              <DetailItem
+                label="Quantity"
+                value={`${Number(bundle.quantity || 0).toLocaleString("en-IN")} pieces`}
+              />
+              {bundle.remarks ? (
+                <div className="sm:col-span-2">
+                  <DetailItem
+                    label="Remarks"
+                    value={
+                      <span className="font-normal whitespace-pre-wrap">
+                        {bundle.remarks}
                       </span>
-
-                      <span className="max-w-[65%] break-words text-right text-sm font-medium">
-                        {typeof value === "object"
-                          ? JSON.stringify(value)
-                          : String(value ?? "—")}
-                      </span>
-                    </div>
-                  ))}
+                    }
+                  />
                 </div>
-              )}
+              ) : null}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Right column */}
-        <div className="flex flex-col gap-4">
-          {/* Status timeline */}
+          {/* Status progression */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">
-                Production status
-              </CardTitle>
-
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Production progress</CardTitle>
               <CardDescription>
-                Track each stage of this bundle's production journey.
+                Status moves forward one stage at a time.
               </CardDescription>
             </CardHeader>
-
-            <CardContent className="space-y-5">
-              <div className="space-y-0">
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-4">
                 {STATUS_STEPS.map((step, index) => {
                   const StepIcon = step.icon
-                  const stepOrder = STATUS_ORDER[step.key]
-
-                  const isStepComplete =
-                    currentStatusIndex >= stepOrder
-
-                  const isCurrentStep =
-                    currentStatusIndex === stepOrder
-
-                  const isFutureStep =
-                    currentStatusIndex < stepOrder
+                  const order = STATUS_ORDER[step.key]
+                  const isDone = currentStatusIndex >= order
+                  const isCurrent = currentStatusIndex === order
 
                   return (
                     <div
                       key={step.key}
-                      className="relative flex gap-3"
+                      className={`rounded-lg border p-3 ${isCurrent ? "border-primary/50 bg-primary/5" : ""}`}
                     >
-                      {/* Timeline connector */}
-                      {index < STATUS_STEPS.length - 1 && (
-                        <span
-                          className={`absolute left-[15px] top-8 h-[calc(100%-0.5rem)] w-px ${
-                            isStepComplete
-                              ? "bg-primary"
-                              : "bg-border"
-                          }`}
-                        />
-                      )}
-
-                      {/* Timeline icon */}
-                      <div
-                        className={`relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border ${
-                          isStepComplete
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border bg-background text-muted-foreground"
-                        }`}
-                      >
-                        {isStepComplete ? (
-                          <Check className="size-4" />
-                        ) : (
-                          <StepIcon className="size-4" />
-                        )}
-                      </div>
-
-                      {/* Timeline content */}
-                      <div className="min-w-0 flex-1 pb-7">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p
-                            className={`text-sm ${
-                              isCurrentStep
-                                ? "font-semibold"
-                                : "font-medium"
-                            }`}
-                          >
-                            {step.title}
-                          </p>
-
-                          {isCurrentStep && (
-                            <Badge variant="secondary">
-                              Current
-                            </Badge>
-                          )}
-
-                          {isFutureStep && (
-                            <span className="text-xs text-muted-foreground">
-                              Pending
-                            </span>
-                          )}
-
-                          {isStepComplete && !isCurrentStep && (
-                            <span className="text-xs text-green-600">
-                              Completed
-                            </span>
+                      <div className="mb-2 flex items-center justify-between">
+                        <div
+                          className={`flex size-8 items-center justify-center rounded-full ${isDone ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                        >
+                          {isDone ? (
+                            <Check className="size-4" />
+                          ) : (
+                            <StepIcon className="size-4" />
                           )}
                         </div>
-
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {step.description}
-                        </p>
-
-                        {step.key === "created" && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {formatDate(bundle.created_at)}
-                          </p>
-                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
                       </div>
+                      <p className="text-sm font-medium">{step.title}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {step.description}
+                      </p>
+                      {isCurrent && (
+                        <Badge variant="secondary" className="mt-2">
+                          Current stage
+                        </Badge>
+                      )}
                     </div>
                   )
                 })}
@@ -700,114 +594,145 @@ export default function BundleDetailsPage() {
 
               <Separator />
 
-              {/* Next status action */}
               {nextStatusStep ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Clock3 className="size-4 text-muted-foreground" />
-
-                    <p className="text-sm font-medium">
-                      Next step: {nextStatusStep.title}
-                    </p>
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <div className="flex items-start gap-2">
+                    <Clock3 className="mt-0.5 size-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">
+                        Next: {nextStatusStep.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        This updates the bundle to the next stage.
+                      </p>
+                    </div>
                   </div>
-
                   <Button
-                    className="w-full"
                     onClick={handleStatusUpdate}
                     disabled={isUpdatingStatus}
+                    size="sm"
                   >
-                    {nextStatusStep.key === "ready" && (
-                      <CheckCircle2 className="mr-2 size-4" />
-                    )}
-
-                    {nextStatusStep.key === "in_progress" && (
-                      <Play className="mr-2 size-4" />
-                    )}
-
-                    {nextStatusStep.key === "completed" && (
-                      <PackageCheck className="mr-2 size-4" />
-                    )}
-
                     {isUpdatingStatus
-                      ? "Updating status…"
+                      ? "Updating…"
                       : nextStatusStep.actionLabel}
                   </Button>
-
-                  <p className="text-xs text-muted-foreground">
-                    The bundle will move to the next status. Status
-                    changes cannot be reversed.
-                  </p>
                 </div>
-              ) : isCompleted ? (
-                <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-                  <CheckCircle2 className="size-5 shrink-0" />
-
-                  <div>
-                    <p className="font-semibold">
-                      Production completed
-                    </p>
-
-                    <p className="mt-0.5 text-xs">
-                      This bundle has completed all production stages.
-                    </p>
-                  </div>
+              ) : completed ? (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <CheckCircle2 className="size-4" />
+                  All production stages are complete.
                 </div>
               ) : (
-                <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-                  Unknown bundle status: {humanize(currentStatus)}
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Unrecognized bundle status: {humanize(currentStatus)}
+                </p>
               )}
             </CardContent>
           </Card>
 
-          {/* Quick links */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">
-                Quick links
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Palette className="size-4 text-muted-foreground" />
+                Manufacturing attributes
               </CardTitle>
-
               <CardDescription>
-                Jump to related production records.
+                Additional information attached to this bundle.
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="flex flex-col gap-3">
+            <CardContent className="pt-0">
+              {Object.keys(attributes).length === 0 ? (
+                <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+                  No manufacturing attributes added.
+                </p>
+              ) : (
+                <div className="overflow-hidden rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[40%]">Attribute</TableHead>
+                        <TableHead className="text-right">Value</TableHead>
+                      </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                      {Object.entries(attributes).map(([key, value]) => (
+                        <TableRow key={key}>
+                          <TableCell className="font-medium">
+                            {humanize(key)}
+                          </TableCell>
+
+                          <TableCell className="text-right break-words text-muted-foreground">
+                            {typeof value === "object" && value !== null
+                              ? JSON.stringify(value)
+                              : String(value ?? "—")}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* QR and related actions */}
+        <aside className="flex flex-col gap-5 lg:sticky lg:top-6">
+          <BundleQRCode
+            bundleId={bundle.id}
+            bundleNumber={bundle.bundle_number}
+          />
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Related pages</CardTitle>
+              <CardDescription>
+                Open records connected to this bundle.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
               <Button
                 variant="outline"
                 className="w-full justify-between"
                 render={<Link href={`/styles/${bundle.style_id}`} />}
               >
-                <span className="flex items-center">
-                  <Shirt className="mr-2 size-4" />
-                  View style details
+                <span className="flex items-center gap-2">
+                  <Shirt className="size-4" />
+                  Style details
                 </span>
-
                 <ExternalLink className="size-4" />
               </Button>
-
               <Button
                 variant="outline"
                 className="w-full justify-between"
                 render={
                   <Link
-                    href={`/production-entries?bundle_id=${encodeURIComponent(
-                      bundle.id
-                    )}`}
+                    href={`/production-entries?bundle_id=${encodeURIComponent(bundle.id)}`}
                   />
                 }
               >
-                <span className="flex items-center">
-                  <Sparkles className="mr-2 size-4" />
-                  View entries for this bundle
+                <span className="flex items-center gap-2">
+                  <Package className="size-4" />
+                  Production entries
                 </span>
-
                 <ExternalLink className="size-4" />
+              </Button>
+              <Button
+                className="w-full"
+                render={
+                  <Link
+                    href={`/production-entries/new?bundle_id=${encodeURIComponent(bundle.id)}`}
+                  />
+                }
+              >
+                Create production entry
               </Button>
             </CardContent>
           </Card>
-        </div>
+        </aside>
       </div>
-    </div>
+    </main>
   )
 }

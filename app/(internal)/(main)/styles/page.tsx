@@ -19,6 +19,7 @@ import StylesTable from "./components/table"
 import StyleFormDialog from "./components/form-dialog"
 import DeleteStyleDialog from "./components/delete-style-dialog"
 import State from "@/components/StateComponent"
+import StateComponent from "@/components/StateComponent"
 
 export default function StylesPage() {
   const { user } = useUser()
@@ -161,11 +162,11 @@ export default function StylesPage() {
 
   if (!organizationID) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          Organization information is unavailable.
-        </p>
-      </div>
+      <StateComponent
+        className="rounded-none"
+        message="Error"
+        description="Something went wrong "
+      />
     )
   }
 

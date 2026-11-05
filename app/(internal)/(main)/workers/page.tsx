@@ -21,7 +21,7 @@ import type {
 } from "../../../../utils/zodSchema/garmentWorker"
 
 import { Search, Users2 } from "lucide-react"
-import DeleteWorkerDialog from "./components/delete-worker-dialog"
+import StateComponent from "@/components/StateComponent"
 
 export default function GarmentWorkersPage() {
   const { user } = useUser()
@@ -175,11 +175,11 @@ export default function GarmentWorkersPage() {
 
   if (!organizationID) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          Organization information is unavailable.
-        </p>
-      </div>
+      <StateComponent
+        className="rounded-none"
+        message="Error"
+        description="Something went wrong "
+      />
     )
   }
 
@@ -227,11 +227,6 @@ export default function GarmentWorkersPage() {
         ) : (
           <WorkersTable
             workers={filteredWorkers}
-            onEdit={openEditDialog}
-            onDelete={(worker) => {
-              setDeletingWorker(worker)
-              setDeleteDialogOpen(true)
-            }}
           />
         )}
       </div>
@@ -245,15 +240,6 @@ export default function GarmentWorkersPage() {
         isSaving={isSaving}
       />
 
-      {/* Delete */}
-      <DeleteWorkerDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        worker={deletingWorker}
-        onDelete={handleDelete}
-        isDeleting={isSaving}
-        onCancel={() => setDeletingWorker(null)}
-      />
     </div>
   )
 }

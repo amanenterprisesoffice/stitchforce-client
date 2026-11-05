@@ -1,6 +1,6 @@
 "use client"
 import { Loader2 } from "lucide-react"
-import type { ProductionEntry } from "../schema"
+import type { ProductionEntry } from "../../../../../utils/zodSchema/production-entry"
 import {
   AlertDialog,
   AlertDialogAction,

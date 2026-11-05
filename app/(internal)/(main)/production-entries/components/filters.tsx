@@ -2,17 +2,20 @@
 import { RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import FormSelect from "@/components/ui/FormSelect"
-import type {
-  ProductionWorker,
-  ProductionBundle,
-  ProductionEntry,
-  StyleOperation,
-} from "../schema"
-import { getWorkerName } from "../schema"
+import type {} from "../../../../../utils/zodSchema/production-entry"
+import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
+
+import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
+import { unwrapList } from "@/lib/utils"
+
+import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import type { Bundle } from "@/utils/zodSchema/bundle"
+import type { Style } from "@/utils/zodSchema/style"
+import type { StyleOperation } from "@/utils/zodSchema/styleops"
 
 interface Props {
-  workers: ProductionWorker[]
-  bundles: ProductionBundle[]
+  workers: GarmentWorker[]
+  bundles: Bundle[]
   entries: ProductionEntry[]
   operations: StyleOperation[]
   workerFilter: string

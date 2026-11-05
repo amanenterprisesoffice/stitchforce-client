@@ -33,7 +33,6 @@ interface Props {
   styles: Style[]
   sizes: Size[]
 
-  onView: (bundle: Bundle) => void
   onEdit: (bundle: Bundle) => void
   onDelete: (bundle: Bundle) => void
 }
@@ -65,7 +64,6 @@ export default function BundlesTable({
   bundles,
   styles,
   sizes,
-  onView,
   onEdit,
   onDelete,
 }: Props) {
@@ -157,11 +155,6 @@ export default function BundlesTable({
                       </DropdownMenuTrigger>
 
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onView(bundle)}>
-                          <Eye className="mr-2 size-4" />
-                          View Details
-                        </DropdownMenuItem>
-
                         <DropdownMenuItem onClick={() => onEdit(bundle)}>
                           <Pencil className="mr-2 size-4" />
                           Edit

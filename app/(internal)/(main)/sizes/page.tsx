@@ -19,6 +19,7 @@ import SizesTable from "./components/table"
 import SizeFormDialog from "./components/form-dialog"
 import State from "@/components/StateComponent"
 import DeleteSizeDialog from "./components/delete-size-dialog"
+import StateComponent from "@/components/StateComponent"
 
 export default function SizesPage() {
   const { user } = useUser()
@@ -172,11 +173,11 @@ export default function SizesPage() {
 
   if (!organizationID) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          Organization information is unavailable.
-        </p>
-      </div>
+      <StateComponent
+        className="rounded-none"
+        message="Error"
+        description="Something went wrong "
+      />
     )
   }
 

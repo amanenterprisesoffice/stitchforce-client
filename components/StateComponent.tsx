@@ -9,6 +9,7 @@ interface StateProps {
   message: string
   description?: string
   PortalButton?: React.ReactNode
+  className?: string
 }
 const colorMap: Record<string, string> = {
   red: "text-red-500",
@@ -23,9 +24,10 @@ const StateComponent: React.FC<StateProps> = ({
   message,
   description,
   PortalButton,
+  className,
 }) => {
   return (
-    <Card className="flex h-full w-full flex-1 items-center justify-center border-dashed shadow-none">
+    <Card className={`flex h-full w-full flex-1 items-center justify-center border-dashed shadow-none ${className}`}>
       <CardContent className="flex max-w-md flex-col items-center space-y-0! text-center">
         <div className="mb-5 flex size-16 items-center justify-center rounded-2xl bg-muted">
           {ICON || (

@@ -1,5 +1,14 @@
-
 import { z } from "zod"
+
+export interface StyleOperation {
+  id: string
+  organization_id: string
+  style_id: string
+  name: string
+  rate_per_piece: number
+  created_at: string
+  updated_at: string
+}
 
 export const operationSchema = z.object({
   name: z

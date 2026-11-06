@@ -33,6 +33,8 @@ export interface GarmentWorker {
   gender: "male" | "female" | "other"
   photo_url?: string
   status: "active" | "inactive" 
+  created_at: string
+  updated_at: string
 }
 
 

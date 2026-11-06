@@ -1,36 +1,42 @@
-'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { toast } from 'sonner';
+"use client";
 
-// Define the type for the hook's options parameter
-interface UseFetchOptions {
+import { useState, useEffect, useCallback, useRef } from "react";
+import { toast } from "sonner";
+
+interface UseFetchOptions<T> {
   auto?: boolean;
   url?: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   payload?: any;
   headers?: Record<string, string>;
   withAuth?: boolean;
-  onSuccess?: (data: any) => void;
+  onSuccess?: (data: T) => void;
   onError?: (error: any) => void;
 }
 
-export default function useFetch({
+interface UseFetchReturn<T> {
+  data: T | null;
+  error: string | null;
+  isLoading: boolean;
+  refetch: (overrideOptions?: Partial<UseFetchOptions<T>>) => Promise<void>;
+}
+
+export default function useFetch<T = any>({
   auto = false,
-  url = '',
-  method = 'GET',
+  url = "",
+  method = "GET",
   payload = null,
   headers = {},
   withAuth = true,
   onSuccess = () => {},
   onError = () => {},
-}: UseFetchOptions = {}) {
-  const [data, setData] = useState<any>(null); // Any type for data (could be refined depending on your API response)
-  const [error, setError] = useState<string | null>(null); // Error state as string or null
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+}: UseFetchOptions<T> = {}): UseFetchReturn<T> {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Keep latest values in refs so refetch() always uses up-to-date info
-  const latestConfigRef = useRef({
+  const latestConfigRef = useRef<UseFetchOptions<T>>({
     url,
     method,
     payload,
@@ -40,7 +46,6 @@ export default function useFetch({
     onError,
   });
 
-  // Update config refs on every render
   useEffect(() => {
     latestConfigRef.current = {
       url,
@@ -53,73 +58,85 @@ export default function useFetch({
     };
   }, [url, method, payload, headers, withAuth, onSuccess, onError]);
 
-  // Define refetch function with appropriate types for overrideOptions
-  const refetch = useCallback(async (overrideOptions: UseFetchOptions = {}) => {
-    const {
-      url: reqUrl = latestConfigRef.current.url,
-      method: reqMethod = latestConfigRef.current.method,
-      payload: reqPayload = latestConfigRef.current.payload,
-      headers: reqHeaders = latestConfigRef.current.headers,
-      withAuth: reqWithAuth = latestConfigRef.current.withAuth,
-      onSuccess: successCallback = latestConfigRef.current.onSuccess,
-      onError: errorCallback = latestConfigRef.current.onError,
-    } = overrideOptions;
-
-    if (!reqUrl) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const finalHeaders = { ...reqHeaders };
-
-      const isFormData = reqPayload instanceof FormData;
-      if (!isFormData && reqMethod !== 'GET') {
-        finalHeaders['Content-Type'] = 'application/json';
-      }
-
-      const fetchOptions: RequestInit = {
-        method: reqMethod,
-        headers: finalHeaders,
-        body: reqMethod !== 'GET'
-          ? (isFormData ? reqPayload : JSON.stringify(reqPayload))
-          : undefined,
+  const refetch = useCallback(
+    async (overrideOptions: Partial<UseFetchOptions<T>> = {}) => {
+      const config = {
+        ...latestConfigRef.current,
+        ...overrideOptions,
       };
 
-      // Conditionally include credentials (for HTTP-only auth cookies)
-      if (reqWithAuth) {
-        fetchOptions.credentials = 'include';
+      if (!config.url) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const finalHeaders = { ...config.headers };
+
+        const isFormData = config.payload instanceof FormData;
+
+        if (!isFormData && config.method !== "GET") {
+          finalHeaders["Content-Type"] = "application/json";
+        }
+
+        const fetchOptions: RequestInit = {
+          method: config.method,
+          headers: finalHeaders,
+          body:
+            config.method !== "GET"
+              ? isFormData
+                ? config.payload
+                : JSON.stringify(config.payload)
+              : undefined,
+        };
+
+        if (config.withAuth) {
+          fetchOptions.credentials = "include";
+        }
+
+        const response = await fetch(config.url, fetchOptions);
+
+        const isJson = response.headers
+          .get("content-type")
+          ?.includes("application/json");
+
+        const result = isJson
+          ? await response.json()
+          : await response.text();
+
+        if (!response.ok) {
+          throw {
+            message:
+              result?.error?.message ||
+              result?.message ||
+              "Something went wrong",
+            fullError: result?.error,
+            status: response.status,
+          };
+        }
+
+        setData(result as T);
+        config.onSuccess?.(result as T);
+      } catch (err: any) {
+        const message = err?.message || "Unknown error";
+
+        toast.error(message);
+        setError(message);
+        config.onError?.(err?.fullError || err);
+      } finally {
+        setIsLoading(false);
       }
+    },
+    []
+  );
 
-      const response = await fetch(reqUrl, fetchOptions);
-
-      const isJson = response.headers.get('content-type')?.includes('application/json');
-      const result = isJson ? await response.json() : await response.text();
-
-      if (!response.ok) {
-        const errorMessage = result?.error?.message || result?.message || 'Something went wrong';
-        throw { message: errorMessage, fullError: result.error, status: response.status };
-      }
-
-      setData(result);
-      successCallback(result);
-    } catch (err: any) {
-      const message = err.message || 'Unknown error';
-      toast.error(message)
-      setError(message);
-      errorCallback(err.fullError || err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Only fire auto-fetch if `auto === true` and `url` is valid on first render
   useEffect(() => {
     if (auto && url) {
       refetch();
     }
+    // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // only on mount
+  }, []);
 
   return {
     data,

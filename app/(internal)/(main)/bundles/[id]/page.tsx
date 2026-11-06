@@ -34,7 +34,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import BundleQRCode from "@/components/ui/BundleQRCode"
 import {
   Table,
   TableBody,
@@ -49,6 +48,7 @@ import { prettifyKey } from "@/utils/utils"
 import BundleDetailsHeader from "./components/header"
 import { Style } from "@/utils/zodSchema/style"
 import { Size } from "@/utils/zodSchema/size"
+import QRCode from "@/components/ui/qr-code"
 
 const STATUS_STEPS: {
   key: BundleStatus
@@ -214,7 +214,7 @@ export default function BundleDetailsPage() {
       method: "GET",
     })
   }, [organizationID, bundle?.style_id])
-  
+
   const attributes = useMemo(
     () => readAttributes(bundle?.attributes ?? {}),
     [bundle?.attributes]
@@ -588,9 +588,11 @@ export default function BundleDetailsPage() {
 
         {/* QR and related actions */}
         <aside className="flex flex-col gap-5 lg:sticky lg:top-6">
-          <BundleQRCode
-            bundleId={bundle.id}
-            bundleNumber={bundle.bundle_number}
+          <QRCode
+            value={`/production-entries/new?style_id=${bundle.style_id}&bundle_id=${bundle.id}`}
+            title="Production QR code"
+            description="Scan to create a production entry with this bundle selected."
+            fileName={`${bundle.bundle_number}-production-qr`}
           />
 
           <Card>
@@ -631,7 +633,7 @@ export default function BundleDetailsPage() {
                 className="w-full"
                 render={
                   <Link
-                    href={`/production-entries/new?bundle_id=${encodeURIComponent(bundle.id)}`}
+                    href={`/production-entries/new?style_id=${bundle.style_id}&bundle_id=${encodeURIComponent(bundle.id)}`}
                   />
                 }
               >

@@ -1,190 +1,236 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { Link, PackagePlus, Search } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { PackagePlus, Search } from "lucide-react"
 import { toast } from "sonner"
 
 import useFetch from "@/hooks/useFetch"
 import { useUser } from "@/contexts/UserContext"
 
 import Loader from "@/components/ui/Loader"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import State from "@/components/StateComponent"
+import StateComponent from "@/components/StateComponent"
 
 import type { Bundle, BundleFormValues } from "@/utils/zodSchema/bundle"
 import type { Style } from "@/utils/zodSchema/style"
 import type { Size } from "@/utils/zodSchema/size"
+import { unwrapList } from "@/utils/utils"
 
 import BundlesHeader from "./components/header"
 import BundlesTable from "./components/table"
 import BundleFormDialog from "./components/form-dialog"
 import DeleteBundleDialog from "./components/delete-bundle-dialog"
 import BundleFilters from "./components/filters"
-import StateComponent from "@/components/StateComponent"
+import Pagination from "../../../../components/ui/pagination"
+
+const DEFAULT_LIMIT = 25
+const MAX_OPTION_LIMIT = 500
+
+type FilterState = {
+  search: string
+  styleID: string
+  sizeID: string
+  status: string
+  createdFrom: string
+  createdTo: string
+}
+
+function readInitialFilters(params: URLSearchParams): FilterState {
+  return {
+    search: params.get("search") || "",
+    styleID: params.get("style_id") || "",
+    sizeID: params.get("size_id") || "",
+    status: params.get("status") || "",
+    createdFrom: params.get("created_from") || "",
+    createdTo: params.get("created_to") || "",
+  }
+}
+
+function buildQuery(filters: FilterState, limit: number, offset: number) {
+  const params = new URLSearchParams()
+  if (filters.search.trim()) params.set("search", filters.search.trim())
+  if (filters.styleID) params.set("style_id", filters.styleID)
+  if (filters.sizeID) params.set("size_id", filters.sizeID)
+  if (filters.status) params.set("status", filters.status)
+  if (filters.createdFrom) params.set("created_from", filters.createdFrom)
+  if (filters.createdTo) params.set("created_to", filters.createdTo)
+  params.set("limit", String(limit))
+  params.set("offset", String(offset))
+  return params.toString()
+}
+
+function readTotal(response: unknown): number | undefined {
+  if (!response || typeof response !== "object") return undefined
+  const value = response as Record<string, any>
+  const candidates = [
+    value.total,
+    value.total_count,
+    value.count,
+    value.pagination?.total,
+    value.meta?.total,
+    value.meta?.total_count,
+  ]
+  const candidate = candidates.find(
+    (item) =>
+      item !== null &&
+      item !== undefined &&
+      item !== "" &&
+      Number.isFinite(Number(item))
+  )
+  return candidate === undefined ? undefined : Number(candidate)
+}
 
 export default function BundlesPage() {
   const { user } = useUser()
   const organizationID = user?.organization_id
+  const searchParams = useSearchParams()
+  const base = organizationID ? `/api/organizations/${organizationID}` : ""
+  const bundlesURL = `${base}/bundles`
 
-  const [search, setSearch] = useState("")
+  const [filters, setFilters] = useState<FilterState>({
+    search: "",
+    styleID: "",
+    sizeID: "",
+    status: "",
+    createdFrom: "",
+    createdTo: "",
+  })
+  const [filtersInitialized, setFiltersInitialized] = useState(false)
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [limit, setLimit] = useState(DEFAULT_LIMIT)
+  const [offset, setOffset] = useState(0)
 
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-
   const [editingBundle, setEditingBundle] = useState<Bundle | null>(null)
-  const [viewingBundle, setViewingBundle] = useState<Bundle | null>(null)
   const [deletingBundle, setDeletingBundle] = useState<Bundle | null>(null)
 
-  const [styleFilter, setStyleFilter] = useState("all")
-  const [sizeFilter, setSizeFilter] = useState("all")
-  const [statusFilter, setStatusFilter] = useState("all")
-
-  const bundlesURL = organizationID
-    ? `/api/organizations/${organizationID}/bundles`
-    : ""
-
-  const stylesURL = organizationID
-    ? `/api/organizations/${organizationID}/styles`
-    : ""
-
-  const sizesURL = organizationID
-    ? `/api/organizations/${organizationID}/sizes`
-    : ""
-
-  // GET bundles
   const {
-    data: bundlesData,
-    isLoading: isBundlesLoading,
+    data: bundlesResponse,
     refetch: fetchBundles,
-  } = useFetch({
-    url: bundlesURL,
-    method: "GET",
-  })
-
-  // GET styles
+    isLoading: bundlesLoading,
+  } = useFetch<unknown>({ auto: false })
   const {
-    data: stylesData,
-    isLoading: isStylesLoading,
+    data: stylesResponse,
     refetch: fetchStyles,
-  } = useFetch({
-    url: stylesURL,
-    method: "GET",
-  })
-
-  // GET sizes
+    isLoading: stylesLoading,
+  } = useFetch<unknown>({ auto: false })
   const {
-    data: sizesData,
-    isLoading: isSizesLoading,
+    data: sizesResponse,
     refetch: fetchSizes,
-  } = useFetch({
-    url: sizesURL,
-    method: "GET",
+    isLoading: sizesLoading,
+  } = useFetch<unknown>({ auto: false })
+  const { refetch: mutateBundle, isLoading: isSaving } = useFetch({
+    auto: false,
   })
 
-  // POST, PUT and DELETE
-  const { isLoading: isSaving, refetch: mutateBundle } = useFetch()
+  const bundles = useMemo(
+    () => unwrapList<Bundle>(bundlesResponse, ["bundles"]),
+    [bundlesResponse]
+  )
+  const styles = useMemo(
+    () => unwrapList<Style>(stylesResponse, ["styles"]),
+    [stylesResponse]
+  )
+  const sizes = useMemo(
+    () => unwrapList<Size>(sizesResponse, ["sizes"]),
+    [sizesResponse]
+  )
 
-  const bundles: Bundle[] = Array.isArray(bundlesData)
-    ? bundlesData
-    : (bundlesData?.bundles ?? [])
+  // Hydrate filters and pagination from the incoming URL.
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    setFilters(readInitialFilters(params))
+    const initialLimit = Number(params.get("limit"))
+    const initialOffset = Number(params.get("offset"))
+    if (Number.isInteger(initialLimit) && initialLimit > 0)
+      setLimit(initialLimit)
+    if (Number.isInteger(initialOffset) && initialOffset >= 0)
+      setOffset(initialOffset)
+    setFiltersInitialized(true)
+  }, [searchParams])
 
-  const styles: Style[] = Array.isArray(stylesData)
-    ? stylesData
-    : (stylesData?.styles ?? [])
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => setDebouncedSearch(filters.search),
+      350
+    )
+    return () => window.clearTimeout(timer)
+  }, [filters.search])
 
-  const sizes: Size[] = Array.isArray(sizesData)
-    ? sizesData
-    : (sizesData?.sizes ?? [])
+  const updateFilter = useCallback(
+    <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
+      setFilters((current) => ({ ...current, [key]: value }))
+      setOffset(0)
+    },
+    []
+  )
 
-  // Fetch organization resources
+  // Fetch dropdown options once; list data remains backend-filtered and paginated.
   useEffect(() => {
     if (!organizationID) return
-
-    fetchBundles({
-      url: bundlesURL,
-      method: "GET",
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to fetch bundles")
-      },
-    })
-
     fetchStyles({
-      url: stylesURL,
+      url: `${base}/styles?limit=${MAX_OPTION_LIMIT}&offset=0`,
       method: "GET",
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to fetch styles")
-      },
+      onError: (error: any) =>
+        toast.error(error?.message || "Failed to load styles"),
     })
-
     fetchSizes({
-      url: sizesURL,
+      url: `${base}/sizes?limit=${MAX_OPTION_LIMIT}&offset=0`,
       method: "GET",
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to fetch sizes")
-      },
+      onError: (error: any) =>
+        toast.error(error?.message || "Failed to load sizes"),
     })
-  }, [organizationID, fetchBundles, fetchStyles, fetchSizes])
+  }, [organizationID, base, fetchStyles, fetchSizes])
 
-  // Style and size lookup
-  const styleMap = useMemo(
-    () => new Map(styles.map((style) => [style.id, style.name])),
-    [styles]
-  )
-
-  const sizeMap = useMemo(
-    () => new Map(sizes.map((size) => [size.id, size.name])),
-    [sizes]
-  )
-
-  // Search and filters
-  const filteredBundles = useMemo(() => {
-    const query = search.toLowerCase().trim()
-
-    return bundles.filter((bundle) => {
-      const matchesSearch =
-        !query ||
-        bundle.bundle_number?.toLowerCase().includes(query) ||
-        styleMap.get(bundle.style_id)?.toLowerCase().includes(query) ||
-        sizeMap.get(bundle.size_id)?.toLowerCase().includes(query)
-
-      const matchesStyle =
-        styleFilter === "all" || bundle.style_id === styleFilter
-
-      const matchesSize = sizeFilter === "all" || bundle.size_id === sizeFilter
-
-      const matchesStatus =
-        statusFilter === "all" || bundle.status === statusFilter
-
-      return matchesSearch && matchesStyle && matchesSize && matchesStatus
+  const loadBundles = useCallback(() => {
+    if (!bundlesURL || !filtersInitialized) return
+    fetchBundles({
+      url: `${bundlesURL}?${buildQuery(
+        { ...filters, search: debouncedSearch },
+        limit,
+        offset
+      )}`,
+      method: "GET",
+      onError: (error: any) =>
+        toast.error(error?.message || "Failed to load bundles"),
     })
   }, [
-    bundles,
-    search,
-    styleFilter,
-    sizeFilter,
-    statusFilter,
-    styleMap,
-    sizeMap,
+    bundlesURL,
+    filtersInitialized,
+    fetchBundles,
+    filters.styleID,
+    filters.sizeID,
+    filters.status,
+    filters.createdFrom,
+    filters.createdTo,
+    debouncedSearch,
+    limit,
+    offset,
   ])
 
-  // Create
+  useEffect(() => {
+    if (!filtersInitialized) return
+    loadBundles()
+  }, [loadBundles, filtersInitialized])
+
+  const totalItems = readTotal(bundlesResponse)
+  const hasNextPage =
+    totalItems !== undefined
+      ? offset + bundles.length < totalItems
+      : bundles.length === limit
+
   const openCreateDialog = () => {
     setEditingBundle(null)
     setDialogOpen(true)
   }
 
-  // Edit
   const openEditDialog = (bundle: Bundle) => {
     setEditingBundle(bundle)
     setDialogOpen(true)
   }
 
-  // View
-
-
-  // Save (POST / PUT)
   const handleSave = async (values: BundleFormValues) => {
     if (!organizationID) {
       toast.error("Organization not found")
@@ -192,21 +238,17 @@ export default function BundlesPage() {
     }
 
     const bundleNumber = values.bundle_number.trim()
-
-    // Prevent duplicate bundle numbers within organization
     const duplicateBundle = bundles.some(
       (bundle) =>
         bundle.bundle_number.trim().toLowerCase() ===
           bundleNumber.toLowerCase() && bundle.id !== editingBundle?.id
     )
-
     if (duplicateBundle) {
       toast.error("This bundle number already exists")
       return
     }
 
     const isEditing = !!editingBundle
-
     const payload = {
       bundle_number: bundleNumber,
       style_id: values.style_id,
@@ -218,57 +260,49 @@ export default function BundlesPage() {
 
     await mutateBundle({
       url: isEditing ? `${bundlesURL}/${editingBundle.id}` : bundlesURL,
-
       method: isEditing ? "PUT" : "POST",
-
       payload,
-
       onSuccess: () => {
         toast.success(
           isEditing
             ? "Bundle updated successfully"
             : "Bundle created successfully"
         )
-
         setDialogOpen(false)
         setEditingBundle(null)
-
-        fetchBundles({
-          url: bundlesURL,
-          method: "GET",
-        })
+        loadBundles()
       },
-
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to save bundle")
-      },
+      onError: (error: any) =>
+        toast.error(error?.message || "Failed to save bundle"),
     })
   }
 
-  // Delete
   const handleDelete = async () => {
     if (!deletingBundle || !organizationID) return
-
     await mutateBundle({
       url: `${bundlesURL}/${deletingBundle.id}`,
       method: "DELETE",
-
       onSuccess: () => {
         toast.success("Bundle deleted successfully")
-
         setDeleteDialogOpen(false)
         setDeletingBundle(null)
-
-        fetchBundles({
-          url: bundlesURL,
-          method: "GET",
-        })
+        loadBundles()
       },
-
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to delete bundle")
-      },
+      onError: (error: any) =>
+        toast.error(error?.message || "Failed to delete bundle"),
     })
+  }
+
+  const clearFilters = () => {
+    setFilters({
+      search: "",
+      styleID: "",
+      sizeID: "",
+      status: "",
+      createdFrom: "",
+      createdTo: "",
+    })
+    setOffset(0)
   }
 
   if (!organizationID) {
@@ -276,97 +310,128 @@ export default function BundlesPage() {
       <StateComponent
         className="rounded-none"
         message="Error"
-        description="Something went wrong "
+        description="Something went wrong"
       />
     )
   }
 
   const isLoading =
-    (isBundlesLoading && !bundlesData) ||
-    (isStylesLoading && !stylesData) ||
-    (isSizesLoading && !sizesData)
+    (bundlesLoading && !bundlesResponse) ||
+    (stylesLoading && !stylesResponse) ||
+    (sizesLoading && !sizesResponse)
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <BundlesHeader count={bundles.length} onCreate={openCreateDialog} />
-
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-
-        <Input
-          placeholder="Search bundles..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-
-      {/* Filters */}
-      <BundleFilters
-        styles={styles}
-        sizes={sizes}
-        styleFilter={styleFilter}
-        sizeFilter={sizeFilter}
-        statusFilter={statusFilter}
-        onStyleChange={setStyleFilter}
-        onSizeChange={setSizeFilter}
-        onStatusChange={setStatusFilter}
-        onClear={() => {
-          setStyleFilter("all")
-          setSizeFilter("all")
-          setStatusFilter("all")
-          setSearch("")
-        }}
+      <BundlesHeader
+        count={totalItems ?? bundles.length}
+        onCreate={openCreateDialog}
       />
 
-      <div className="relative flex flex-1">
-        {isLoading ? (
-          <Loader text="Loading bundles" />
-        ) : bundles.length === 0 ? (
-          <State
-            message="No bundles yet"
-            ICON={<PackagePlus />}
-            description="Create your first garment bundle by assigning an existing style, size, quantity, and manufacturing attributes."
-            PortalButton={
-              <Button variant="outline" onClick={openCreateDialog}>
-                Create your first bundle
-              </Button>
-            }
-          />
-        ) : filteredBundles.length === 0 ? (
-          <State
-            message="No bundles found"
-            description="Try changing your search or filters."
-            PortalButton={
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearch("")
-                  setStyleFilter("all")
-                  setSizeFilter("all")
-                  setStatusFilter("all")
+      <div className="flex h-full gap-4">
+        <BundleFilters
+          styles={styles}
+          sizes={sizes}
+          styleFilter={filters.styleID || "all"}
+          sizeFilter={filters.sizeID || "all"}
+          statusFilter={filters.status || "all"}
+          createdFrom={filters.createdFrom}
+          createdTo={filters.createdTo}
+          search={filters.search}
+          onSearchChange={(value) => updateFilter("search", value)}
+          onStyleChange={(value) =>
+            updateFilter("styleID", value === "all" ? "" : value)
+          }
+          onSizeChange={(value) =>
+            updateFilter("sizeID", value === "all" ? "" : value)
+          }
+          onStatusChange={(value) =>
+            updateFilter("status", value === "all" ? "" : value)
+          }
+          onCreatedFromChange={(value) => updateFilter("createdFrom", value)}
+          onCreatedToChange={(value) => updateFilter("createdTo", value)}
+          onClear={clearFilters}
+        />
+
+        <div className="relative flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+          {isLoading ? (
+            <Loader text="Loading bundles" />
+          ) : bundles.length === 0 ? (
+            <StateComponent
+              message={
+                filters.search ||
+                filters.styleID ||
+                filters.sizeID ||
+                filters.status ||
+                filters.createdFrom ||
+                filters.createdTo
+                  ? "No bundles found"
+                  : "No bundles yet"
+              }
+              ICON={<PackagePlus />}
+              description={
+                filters.search ||
+                filters.styleID ||
+                filters.sizeID ||
+                filters.status ||
+                filters.createdFrom ||
+                filters.createdTo
+                  ? "Try changing your search or filters."
+                  : "Create your first garment bundle by assigning an existing style, size, quantity, and manufacturing attributes."
+              }
+              PortalButton={
+                <Button
+                  variant="outline"
+                  onClick={
+                    filters.search ||
+                    filters.styleID ||
+                    filters.sizeID ||
+                    filters.status ||
+                    filters.createdFrom ||
+                    filters.createdTo
+                      ? clearFilters
+                      : openCreateDialog
+                  }
+                >
+                  {filters.search ||
+                  filters.styleID ||
+                  filters.sizeID ||
+                  filters.status ||
+                  filters.createdFrom ||
+                  filters.createdTo
+                    ? "Clear filters"
+                    : "Create your first bundle"}
+                </Button>
+              }
+            />
+          ) : (
+            <>
+              <BundlesTable
+                bundles={bundles}
+                styles={styles}
+                sizes={sizes}
+                onEdit={openEditDialog}
+                onDelete={(bundle) => {
+                  setDeletingBundle(bundle)
+                  setDeleteDialogOpen(true)
                 }}
-              >
-                Clear filters
-              </Button>
-            }
-          />
-        ) : (
-          <BundlesTable
-            bundles={filteredBundles}
-            styles={styles}
-            sizes={sizes}
-            onEdit={openEditDialog}
-            onDelete={(bundle) => {
-              setDeletingBundle(bundle)
-              setDeleteDialogOpen(true)
-            }}
-          />
-        )}
+              />
+              <Pagination
+                limit={limit}
+                offset={offset}
+                itemCount={bundles.length}
+                totalItems={totalItems}
+                hasNextPage={hasNextPage}
+                onPageChange={setOffset}
+                onLimitChange={(nextLimit) => {
+                  setLimit(nextLimit)
+                  setOffset(0)
+                }}
+              />
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Create / Edit */}
       <BundleFormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -377,7 +442,6 @@ export default function BundlesPage() {
         isSaving={isSaving}
       />
 
-      {/* Delete */}
       <DeleteBundleDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}

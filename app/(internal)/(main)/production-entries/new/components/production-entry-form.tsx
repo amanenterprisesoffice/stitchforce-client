@@ -1,19 +1,26 @@
 "use client"
 
-import { use, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { CheckCircle2, Scissors } from "lucide-react"
+import { CheckCircle2, UserRound } from "lucide-react"
 import { toast } from "sonner"
 
 import useFetch from "@/hooks/useFetch"
 import { useUser } from "@/contexts/UserContext"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card"
 
 import FormSelect from "@/components/ui/FormSelect"
 import FormField from "@/components/ui/FormField"
+import FormDatePicker from "@/components/ui/FormDatePicker"
 import StateComponent from "@/components/StateComponent"
 
 import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
@@ -29,7 +36,7 @@ import type { Bundle } from "@/utils/zodSchema/bundle"
 import type { Style } from "@/utils/zodSchema/style"
 import type { StyleOperation } from "@/utils/zodSchema/styleops"
 
-import { formatMoney, unwrapList } from "@/utils/utils"
+import { formatMoney } from "@/utils/utils"
 
 import {
   BundleFormInfo,
@@ -37,7 +44,6 @@ import {
   StyleFormInfo,
   WorkerFormInfo,
 } from "./form-info"
-import { useRouter } from "next/navigation"
 
 function getLocalDateTime() {
   const now = new Date()
@@ -48,7 +54,7 @@ function getLocalDateTime() {
 
 export default function NewProductionEntriesPage() {
   const { user } = useUser()
-  const router = useRouter()
+
   const orgID = user?.organization_id
   const base = orgID ? `/api/organizations/${orgID}` : ""
 
@@ -79,27 +85,21 @@ export default function NewProductionEntriesPage() {
   const operationID = watch("style_operation_id")
   const workerID = watch("worker_id")
 
-  // Fetch styles
-  const {
-    data: styles,
-    refetch: fetchStyles,
-    isLoading: stylesLoading,
-  } = useFetch<Style[]>({
+  // Styles
+  const { data: styles, isLoading: stylesLoading } = useFetch<Style[]>({
     auto: true,
     url: `${base}/styles`,
   })
 
-  // Fetch workers
-  const {
-    data: workers,
-    refetch: fetchWorkers,
-    isLoading: workersLoading,
-  } = useFetch<GarmentWorker[]>({
+  // Workers
+  const { data: workers, isLoading: workersLoading } = useFetch<
+    GarmentWorker[]
+  >({
     auto: true,
     url: `${base}/garment-workers`,
   })
 
-  // Fetch bundles for selected style
+  // Bundles
   const {
     data: bundles,
     refetch: fetchBundles,
@@ -108,7 +108,7 @@ export default function NewProductionEntriesPage() {
     auto: false,
   })
 
-  // Fetch operations for selected style
+  // Operations
   const {
     data: operations,
     refetch: fetchOperations,
@@ -117,68 +117,72 @@ export default function NewProductionEntriesPage() {
     auto: false,
   })
 
-  // Create production entry
+  // Create entry
   const { refetch: createEntry, isLoading: saving } = useFetch({
     auto: false,
   })
 
+  // Selected records
   const selectedStyle = useMemo(
-    () => styles?.find((style) => style.id === styleID),
+    () => styles?.find((item) => item.id === styleID),
     [styles, styleID]
   )
 
   const selectedBundle = useMemo(
-    () => bundles?.find((bundle) => bundle.id === bundleID),
+    () => bundles?.find((item) => item.id === bundleID),
     [bundles, bundleID]
   )
 
   const selectedOperation = useMemo(
-    () => operations?.find((operation) => operation.id === operationID),
+    () => operations?.find((item) => item.id === operationID),
     [operations, operationID]
   )
 
   const selectedWorker = useMemo(
-    () => workers?.find((worker) => worker.id === workerID),
+    () => workers?.find((item) => item.id === workerID),
     [workers, workerID]
   )
 
-  const bundleCount = bundles?.length || null
-  const operationCount = operations?.length || null
-
-  // use initial style id & bundle id from query
+  // Initial query parameters
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+
     const initialStyleID = params.get("style_id")
     const initialBundleID = params.get("bundle_id")
+
     if (initialStyleID) {
       setValue("style_id", initialStyleID)
     }
+
     if (initialBundleID) {
       setValue("bundle_id", initialBundleID)
     }
   }, [setValue])
 
-  // When the selected style changes, load its bundles and operations.
+  // Load bundles and operations
   useEffect(() => {
     if (!base || !styleID) return
 
     fetchBundles({
       url: `${base}/bundles?style_id=${encodeURIComponent(styleID)}`,
-      onSuccess: (bundles) => {
-        // if bundle id exists in bundles then dont clear it
-        if (!bundles.some((bundle) => bundle.id === bundleID)) {
+
+      onSuccess: (result) => {
+        if (!result.some((item) => item.id === bundleID)) {
           setValue("bundle_id", "")
         }
       },
     })
+
     fetchOperations({
-      url: `${base}/styles/${styleID}/operations`,
+      url: `${base}/styles/${encodeURIComponent(styleID)}/operations`,
+
       onSuccess: () => {
         setValue("style_operation_id", "")
       },
     })
   }, [styleID, orgID])
 
+  // Submit
   const submit = async (values: ProductionEntryFormValues) => {
     if (!base || !selectedBundle || !selectedOperation) {
       toast.error("Please select a style, bundle, and operation")
@@ -197,6 +201,7 @@ export default function NewProductionEntriesPage() {
       url: `${base}/production-entries`,
       method: "POST",
       payload,
+
       onSuccess: () => {
         toast.success("Production entry added")
 
@@ -208,8 +213,8 @@ export default function NewProductionEntriesPage() {
           production_date: getLocalDateTime(),
           remarks: "",
         })
-        // router.push("/production-entries")
       },
+
       onError: (e: any) => {
         toast.error(e?.message || "Failed to create production entry")
       },
@@ -226,19 +231,28 @@ export default function NewProductionEntriesPage() {
     )
   }
 
-  return (
-    <div className="relative flex flex-1 flex-col gap-6">
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Scissors className="size-4" />
-              Production context
-            </CardTitle>
-          </CardHeader>
+  const earnings =
+    selectedOperation && selectedBundle
+      ? selectedOperation.rate_per_piece * selectedBundle.quantity
+      : null
 
-          <CardContent className="space-y-5">
-            <div className="space-y-2">
+  const canSubmit =
+    !!styleID &&
+    !!bundleID &&
+    !!operationID &&
+    !!workerID &&
+    !!watch("production_date") &&
+    !saving &&
+    !operationsLoading &&
+    !bundlesLoading
+
+  return (
+    <div className="mx-auto h-full w-full min-w-0">
+      <form onSubmit={handleSubmit(submit)} className="h-full w-full min-w-0">
+        <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.8fr)] 2xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
+          {/* WORKER PRODUCTION */}
+          <Card className="min-w-0 overflow-hidden shadow-sm">
+            <CardHeader className="grid min-w-0 grid-cols-1 gap-3 border-b sm:grid-cols-2">
               <FormSelect
                 id="style_id"
                 label="Style"
@@ -255,15 +269,12 @@ export default function NewProductionEntriesPage() {
                 }))}
                 errors={errors}
                 showLoader={stylesLoading}
+                searchBar
               />
 
-              {selectedStyle && <StyleFormInfo style={selectedStyle} />}
-            </div>
-
-            <div className="space-y-2">
               <FormSelect
                 id="bundle_id"
-                label={`Bundle ${bundleCount ? `(${bundleCount})` : ""}`}
+                label={`Bundle${bundles?.length ? ` (${bundles.length})` : ""}`}
                 placeholder={
                   !styleID
                     ? "Select a style first"
@@ -278,15 +289,13 @@ export default function NewProductionEntriesPage() {
                   value: bundle.id,
                   label: `${bundle.bundle_number} · ${bundle.quantity} pcs`,
                 }))}
+                searchBar
+                disabled={!styleID || bundlesLoading}
               />
 
-              {selectedBundle && <BundleFormInfo bundle={selectedBundle} />}
-            </div>
-
-            <div className="space-y-2">
               <FormSelect
                 id="style_operation_id"
-                label={`Operation ${operationCount ? `(${operationCount})` : ""}`}
+                label={`Operation${operations?.length ? ` (${operations.length})` : ""}`}
                 placeholder={
                   !styleID
                     ? "Select a style first"
@@ -302,23 +311,26 @@ export default function NewProductionEntriesPage() {
                 }))}
                 errors={errors}
                 showLoader={operationsLoading}
+                searchBar
+                disabled={!styleID || operationsLoading}
               />
 
-              {selectedOperation && (
-                <OperationFormInfo operation={selectedOperation} />
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              <FormDatePicker
+                id="production_date"
+                label="Production date"
+                control={control}
+                errors={errors}
+                disabled={saving}
+                placeholder="Select production date"
+                captionLayout="dropdown"
+              />
+            </CardHeader>
 
-        <Card className="sticky top-1/4 h-fit shadow-none">
-          <CardHeader>
-            <CardTitle className="text-base">Worker production</CardTitle>
-          </CardHeader>
+            <CardContent className="min-w-0 space-y-4">
+              {/* Production inputs */}
 
-          <CardContent>
-            <form onSubmit={handleSubmit(submit)} className="space-y-4">
-              <div className="space-y-2">
+              {/* Worker selection */}
+              <div className="">
                 <FormSelect
                   id="worker_id"
                   label="Worker"
@@ -335,36 +347,11 @@ export default function NewProductionEntriesPage() {
                     value: worker.id,
                     label: getWorkerName(worker),
                   }))}
+                  searchBar
                 />
-
-                {selectedWorker && <WorkerFormInfo worker={selectedWorker} />}
               </div>
 
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Production quantity</p>
-
-                <div className="rounded-md border bg-muted/30 px-3 py-3">
-                  <p className="text-lg font-semibold tabular-nums">
-                    {selectedBundle
-                      ? `${selectedBundle.quantity.toLocaleString("en-IN")} pcs`
-                      : "—"}
-                  </p>
-
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    The full bundle quantity will be recorded for this
-                    operation.
-                  </p>
-                </div>
-              </div>
-
-              <FormField
-                id="production_date"
-                label="Production date"
-                type="datetime-local"
-                register={register}
-                errors={errors}
-              />
-
+              {/* Remarks */}
               <FormField
                 id="remarks"
                 label="Remarks (optional)"
@@ -374,58 +361,65 @@ export default function NewProductionEntriesPage() {
                 isTextArea
                 rows={3}
               />
+            </CardContent>
 
-              <div className="rounded-lg bg-muted/50 p-4">
-                <div className="flex items-center justify-between text-sm">
+            <CardFooter className="flex flex-col items-stretch gap-4">
+              <div className="w-full min-w-0 space-y-3">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-muted-foreground">
+                    Production quantity
+                  </span>
+
+                  <span className="shrink-0 font-semibold tabular-nums">
+                    {selectedBundle
+                      ? `${Number(selectedBundle.quantity).toLocaleString(
+                          "en-IN"
+                        )} pcs`
+                      : "—"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-muted-foreground">Rate per piece</span>
-                  <strong>
+
+                  <span className="shrink-0 font-semibold tabular-nums">
                     {selectedOperation
                       ? formatMoney(selectedOperation.rate_per_piece)
                       : "—"}
-                  </strong>
-                </div>
-
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Estimated earnings
                   </span>
-
-                  <strong className="text-xl tabular-nums">
-                    {selectedOperation && selectedBundle
-                      ? formatMoney(
-                          selectedOperation.rate_per_piece *
-                            selectedBundle.quantity
-                        )
-                      : "—"}
-                  </strong>
                 </div>
 
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Quantity and rate are taken from the selected bundle and
-                  operation.
-                </p>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">Estimated earnings</p>
+
+                    <p className="text-xs text-muted-foreground">
+                      Quantity × operation rate
+                    </p>
+                  </div>
+
+                  <p className="shrink-0 text-xl font-bold tabular-nums">
+                    {earnings !== null ? formatMoney(earnings) : "—"}
+                  </p>
+                </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={
-                  saving ||
-                  !styleID ||
-                  !bundleID ||
-                  !operationID ||
-                  !workerID ||
-                  !watch("production_date") ||
-                  operationsLoading
-                }
-              >
+              <Button type="submit" className="w-full" disabled={!canSubmit}>
                 <CheckCircle2 className="mr-2 size-4" />
                 {saving ? "Saving entry..." : "Add production entry"}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            </CardFooter>
+          </Card>
+
+          {/* PRODUCTION INFORMATION */}
+          <div className="flex min-w-0 flex-col gap-5">
+            <WorkerFormInfo worker={selectedWorker} />
+            <StyleFormInfo style={selectedStyle} />
+            <BundleFormInfo bundle={selectedBundle} />
+            <OperationFormInfo operation={selectedOperation} />
+          </div>
+        </div>
+      </form>
     </div>
   )
 }

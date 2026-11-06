@@ -5,11 +5,7 @@ import { useEffect, useState } from "react"
 import { useForm, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-import type {
-  Bundle,
-  BundleAttribute,
-  BundleFormValues,
-} from "@/utils/zodSchema/bundle"
+import type { Bundle, BundleFormValues } from "@/utils/zodSchema/bundle"
 
 import { bundleSchema, initialBundleValues } from "@/utils/zodSchema/bundle"
 
@@ -68,7 +64,6 @@ export default function BundleFormDialog({
     defaultValues: initialBundleValues,
   })
 
-  // Populate form when editing, reset when creating
   useEffect(() => {
     if (!open) return
 
@@ -96,7 +91,6 @@ export default function BundleFormDialog({
     }
   }, [open, editingBundle, reset])
 
-  // Convert dynamic fields into an object
   const handleAttributesChange = (nextAttributes: DynamicField[]) => {
     setAttributes(nextAttributes)
 
@@ -120,13 +114,10 @@ export default function BundleFormDialog({
     await onSubmit(values)
   }
 
-  const selectClass =
-    "h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90dvh] w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden sm:max-w-[620px]">
+        <DialogHeader className="shrink-0 border-b pb-3">
           <DialogTitle>
             {editingBundle ? "Edit Bundle" : "Create Bundle"}
           </DialogTitle>
@@ -138,101 +129,114 @@ export default function BundleFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
-          {/* Bundle number */}
-          <FormField
-            id="bundle_number"
-            label="Bundle Number"
-            placeholder="e.g. BND-001"
-            register={register}
-            errors={errors}
-          />
+        {/* Scrollable Form */}
+        <form
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden py-5"
+        >
+          <div className="flex-1 space-y-5 overflow-x-hidden overflow-y-auto overscroll-contain">
+            {/* Basic Details */}
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FormSelect
+                  id="style_id"
+                  label="Style"
+                  placeholder="Select a style"
+                  control={control}
+                  register={register}
+                  errors={errors}
+                  options={styles.map((style) => ({
+                    value: style.id,
+                    label: style.style_number
+                      ? `${style.style_number} - ${style.name}`
+                      : style.name,
+                  }))}
+                  searchBar
+                />
 
-          {/* Style */}
-          <FormSelect
-            id="style_id"
-            label="Style"
-            placeholder="Select a style"
-            control={control}
-            register={register}
-            errors={errors}
-            options={styles.map((style) => ({
-              value: style.id,
-              label: style.style_number
-                ? `${style.style_number} - ${style.name}`
-                : style.name,
-            }))}
-          />
+                <FormSelect
+                  id="size_id"
+                  label="Size"
+                  placeholder="Select a size"
+                  control={control}
+                  register={register}
+                  errors={errors}
+                  options={sizes.map((size) => ({
+                    value: size.id,
+                    label: size.name,
+                  }))}
+                  searchBar
+                />
+              </div>
 
-          {/* Size */}
-          <FormSelect
-            id="size_id"
-            label="Size"
-            placeholder="Select a size"
-            control={control}
-            register={register}
-            errors={errors}
-            options={sizes.map((size) => ({
-              value: size.id,
-              label: size.name,
-            }))}
-          />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FormField
+                  id="bundle_number"
+                  label="Bundle Number"
+                  placeholder="e.g. BND-001"
+                  register={register}
+                  errors={errors}
+                />
+                <FormField
+                  id="quantity"
+                  label="Quantity"
+                  placeholder="Enter garment quantity"
+                  register={register}
+                  registerOptions={{ valueAsNumber: true }}
+                  errors={errors}
+                  type="number"
+                  step={1}
+                />
+              </div>
+            </div>
 
-          {/* Quantity */}
-          <FormField
-            id="quantity"
-            label="Quantity"
-            placeholder="Enter garment quantity"
-            register={register}
-            registerOptions={{ valueAsNumber: true }}
-            errors={errors}
-            type="number"
-            step={1}
-          />
+            {/* Manufacturing Attributes */}
+            <div className="space-y-3 border-t pt-4">
+              <DynamicAttributeFields
+                title="Manufacturing Attributes"
+                description="Add optional custom attributes to this bundle."
+                fields={attributes}
+                onChange={handleAttributesChange}
+                keyPlaceholder="Attribute name"
+                valuePlaceholder="Attribute value"
+                addButtonLabel="Add"
+                emptyMessage="No attributes added yet."
+              />
+            </div>
 
-          {/* Dynamic Attributes */}
-          <DynamicAttributeFields
-            title="Manufacturing Attributes"
-            description="Add optional custom attributes to this bundle."
-            fields={attributes}
-            onChange={handleAttributesChange}
-            keyPlaceholder="Attribute name"
-            valuePlaceholder="Attribute value"
-            addButtonLabel="Add"
-            emptyMessage="No attributes added yet."
-          />
-
-          {/* Remarks */}
-          <FormField
-            id="remarks"
-            label="Remarks"
-            placeholder="Additional bundle notes..."
-            register={register}
-            errors={errors}
-            isTextArea
-            rows={3}
-          />
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSaving}
-            >
-              Cancel
-            </Button>
-
-            <Button
-              type="submit"
-              disabled={isSaving || styles.length === 0 || sizes.length === 0}
-            >
-              {isSaving && <Loader />}
-
-              {editingBundle ? "Save Changes" : "Create Bundle"}
-            </Button>
-          </DialogFooter>
+            {/* Remarks */}
+            <div className="space-y-3 border-t pt-4">
+              <FormField
+                id="remarks"
+                label="Additional Notes / Remarks"
+                placeholder="Additional bundle notes..."
+                register={register}
+                errors={errors}
+                isTextArea
+                rows={3}
+              />
+            </div>
+          </div>
         </form>
+        {/* Fixed Footer */}
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            type="submit"
+            disabled={isSaving || styles.length === 0 || sizes.length === 0}
+          >
+            {isSaving && <Loader />}
+            {editingBundle ? "Save Changes" : "Create Bundle"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

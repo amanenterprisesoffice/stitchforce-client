@@ -12,7 +12,7 @@ interface FormFieldProps {
   label?: string
   placeholder?: string
   register?: any
-    registerOptions?: Record<string, any>;
+  registerOptions?: Record<string, any>
   icon?: ReactNode
   parentClass?: string
   errors?: any
@@ -78,7 +78,7 @@ const FormField: React.FC<FormFieldProps> = ({
 
         {hasEndIcon && (
           <div
-            className="absolute inset-y-0 right-3 flex cursor-pointer items-center pr-1 peer-focus:text-foreground"
+            className="absolute inset-y-0 right-3 z-1 flex cursor-pointer items-center pr-1 peer-focus:text-foreground"
             {...endProps}
           >
             {endChildren}
@@ -105,7 +105,7 @@ const FormField: React.FC<FormFieldProps> = ({
             placeholder={placeholder}
             {...(register ? register(id, registerOptions) : {})}
             className={clsx(
-              "peer w-full text-sm",
+              "peer w-full! max-w-full! text-sm",
               icon ? "pl-9" : "pl-3",
               errors[id] ? "border-destructive/80" : "",
               className

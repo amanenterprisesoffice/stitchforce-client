@@ -1,349 +1,524 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Search, Scissors, Plus } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { Scissors } from "lucide-react"
 import { toast } from "sonner"
 
 import useFetch from "@/hooks/useFetch"
 import { useUser } from "@/contexts/UserContext"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import Loader from "@/components/ui/Loader"
 import State from "@/components/StateComponent"
+import StateComponent from "@/components/StateComponent"
+import Pagination from "@/components/ui/pagination"
 
 import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
-import {
-  unwrapList,
-} from "@/utils/utils"
-
 import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
 import type { Bundle } from "@/utils/zodSchema/bundle"
 import type { Style } from "@/utils/zodSchema/style"
 import type { StyleOperation } from "@/utils/zodSchema/styleops"
 
+import { unwrapList } from "@/utils/utils"
+
 import ProductionEntriesHeader from "./components/header"
 import ProductionEntriesTable from "./components/table"
 import ProductionEntryFilters from "./components/filters"
 import DeleteProductionEntryDialog from "./components/delete-dialog"
-import StateComponent from "@/components/StateComponent"
+import DebouncedSearch from "@/components/ui/debounced-search"
+
+const DEFAULT_LIMIT = 25
+const MAX_OPTION_LIMIT = 100
+
+type FilterState = {
+  search: string
+  workerID: string
+  styleID: string
+  bundleID: string
+  operationID: string
+  fromDate: string
+  toDate: string
+}
+
+const EMPTY_FILTERS: FilterState = {
+  search: "",
+  workerID: "",
+  styleID: "",
+  bundleID: "",
+  operationID: "",
+  fromDate: "",
+  toDate: "",
+}
+
+function readInitialFilters(params: URLSearchParams): FilterState {
+  return {
+    search: params.get("search") || "",
+    workerID: params.get("worker_id") || "",
+    styleID: params.get("style_id") || "",
+    bundleID: params.get("bundle_id") || "",
+    operationID: params.get("style_operation_id") || "",
+    fromDate: params.get("from_date") || "",
+    toDate: params.get("to_date") || "",
+  }
+}
+
+function buildQuery(
+  filters: FilterState,
+  limit: number,
+  offset: number
+) {
+  const params = new URLSearchParams()
+
+  if (filters.search.trim()) {
+    params.set("search", filters.search.trim())
+  }
+
+  if (filters.workerID) params.set("worker_id", filters.workerID)
+  if (filters.styleID) params.set("style_id", filters.styleID)
+  if (filters.bundleID) params.set("bundle_id", filters.bundleID)
+
+  if (filters.operationID) {
+    params.set("style_operation_id", filters.operationID)
+  }
+
+  if (filters.fromDate) params.set("from_date", filters.fromDate)
+  if (filters.toDate) params.set("to_date", filters.toDate)
+
+  params.set("limit", String(limit))
+  params.set("offset", String(offset))
+
+  return params.toString()
+}
+
+function readTotal(response: unknown): number | undefined {
+  if (!response || typeof response !== "object") return undefined
+
+  const value = response as Record<string, any>
+
+  const candidates = [
+    value.total,
+    value.total_count,
+    value.count,
+    value.pagination?.total,
+    value.meta?.total,
+    value.meta?.total_count,
+  ]
+
+  const total = candidates.find(
+    (candidate) =>
+      candidate !== null &&
+      candidate !== undefined &&
+      candidate !== "" &&
+      Number.isFinite(Number(candidate))
+  )
+
+  return total === undefined ? undefined : Number(total)
+}
 
 export default function ProductionEntriesPage() {
   const { user } = useUser()
   const organizationID = user?.organization_id
 
-  const baseURL = organizationID
-    ? `/api/organizations/${organizationID}/production-entries`
+  const searchParams = useSearchParams()
+
+  const base = organizationID
+    ? `/api/organizations/${organizationID}`
     : ""
 
-  const [search, setSearch] = useState("")
+  const entriesURL = `${base}/production-entries`
 
-  const [workerFilter, setWorkerFilter] = useState("all")
-  const [bundleFilter, setBundleFilter] = useState("all")
-  const [operationFilter, setOperationFilter] = useState("all")
+  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS)
 
-  const [viewing, setViewing] = useState<ProductionEntry | null>(null)
-  const [editing, setEditing] = useState<ProductionEntry | null>(null)
+  const [filtersInitialized, setFiltersInitialized] = useState(false)
+
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  const [limit, setLimit] = useState(DEFAULT_LIMIT)
+  const [offset, setOffset] = useState(0)
+
   const [deleting, setDeleting] = useState<ProductionEntry | null>(null)
 
-  const [entries, setEntries] = useState<ProductionEntry[]>([])
-  const [workers, setWorkers] = useState<GarmentWorker[]>([])
-  const [bundles, setBundles] = useState<Bundle[]>([])
-  const [styles, setStyles] = useState<Style[]>([])
+  // Initialize filters and pagination from URL.
+  useEffect(() => {
+    const initialFilters = readInitialFilters(
+      new URLSearchParams(searchParams.toString())
+    )
 
-  const [operationsByStyle, setOperationsByStyle] = useState<
-    Record<string, StyleOperation[]>
-  >({})
+    setFilters(initialFilters)
+    setDebouncedSearch(initialFilters.search)
 
-  // Fetch production entries
+    const initialLimit = Number(searchParams.get("limit"))
+    const initialOffset = Number(searchParams.get("offset"))
+
+    if (Number.isInteger(initialLimit) && initialLimit > 0) {
+      setLimit(initialLimit)
+    }
+
+    if (Number.isInteger(initialOffset) && initialOffset >= 0) {
+      setOffset(initialOffset)
+    }
+
+    setFiltersInitialized(true)
+  }, [searchParams])
+
+  // Debounce only search.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(filters.search.trim())
+    }, 350)
+
+    return () => window.clearTimeout(timer)
+  }, [filters.search])
+
+  // Update filters.
+  const updateFilter = useCallback(
+    <K extends keyof FilterState>(
+      key: K,
+      value: FilterState[K]
+    ) => {
+      setFilters((current) => {
+        const next = {
+          ...current,
+          [key]: value,
+        }
+
+        // Reset dependent filters when style changes.
+        if (key === "styleID") {
+          next.bundleID = ""
+          next.operationID = ""
+        }
+
+        return next
+      })
+
+      setOffset(0)
+    },
+    []
+  )
+
+  // Fetch production entries.
   const {
+    data: entriesResponse,
     refetch: fetchEntries,
     isLoading: entriesLoading,
-  } = useFetch({
-    auto: false,
-    onSuccess: (response: any) => {
-      setEntries(
-        unwrapList<ProductionEntry>(response, [
-          "production_entries",
-          "entries",
-        ])
-      )
-    },
-  })
+  } = useFetch<unknown>({ auto: false })
 
-  // Fetch workers
-  const { refetch: fetchWorkers } = useFetch({
-    auto: false,
-    onSuccess: (response: any) => {
-      setWorkers(
-        unwrapList<GarmentWorker>(response, [
-          "workers",
-          "garment_workers",
-        ])
-      )
-    },
-  })
+  // Fetch filter options.
+  const {
+    data: workersResponse,
+    refetch: fetchWorkers,
+    isLoading: workersLoading,
+  } = useFetch<unknown>({ auto: false })
 
-  // Fetch bundles
-  const { refetch: fetchBundles } = useFetch({
-    auto: false,
-    onSuccess: (response: any) => {
-      setBundles(
-        unwrapList<Bundle>(response, ["bundles"]).filter(
-          (bundle) => !bundle.deleted_at
-        )
-      )
-    },
-  })
+  const {
+    data: stylesResponse,
+    refetch: fetchStyles,
+    isLoading: stylesLoading,
+  } = useFetch<unknown>({ auto: false })
 
-  // Fetch styles
-  const { refetch: fetchStyles } = useFetch({
-    auto: false,
-    onSuccess: (response: any) => {
-      setStyles(unwrapList<Style>(response, ["styles"]))
-    },
-  })
+  const {
+    data: bundlesResponse,
+    refetch: fetchBundles,
+    isLoading: bundlesLoading,
+  } = useFetch<unknown>({ auto: false })
 
-  // Fetch operations
-  const { refetch: fetchOperations } = useFetch({
-    auto: false,
-  })
+  const {
+    data: operationsResponse,
+    refetch: fetchOperations,
+    isLoading: operationsLoading,
+  } = useFetch<unknown>({ auto: false })
 
-  // Create, update and delete
+  // Delete mutation.
   const {
     refetch: mutateEntry,
-    isLoading: isSaving,
-  } = useFetch({
-    auto: false,
-  })
+    isLoading: isDeleting,
+  } = useFetch({ auto: false })
 
-  const loadEntries = () => {
-    if (!baseURL) return
+  // Extract response data.
+  const entries = useMemo(
+    () =>
+      unwrapList<ProductionEntry>(entriesResponse, [
+        "production_entries",
+        "entries",
+      ]),
+    [entriesResponse]
+  )
+
+  const workers = useMemo(
+    () =>
+      unwrapList<GarmentWorker>(workersResponse, [
+        "workers",
+        "garment_workers",
+      ]),
+    [workersResponse]
+  )
+
+  const styles = useMemo(
+    () =>
+      unwrapList<Style>(stylesResponse, ["styles"]),
+    [stylesResponse]
+  )
+
+  const bundles = useMemo(
+    () =>
+      unwrapList<Bundle>(bundlesResponse, ["bundles"]).filter(
+        (bundle) => !bundle.deleted_at
+      ),
+    [bundlesResponse]
+  )
+
+  const operations = useMemo(
+    () =>
+      unwrapList<StyleOperation>(operationsResponse, [
+        "operations",
+        "style_operations",
+      ]),
+    [operationsResponse]
+  )
+
+  // Filters used to determine empty state.
+  const requestFilters = useMemo(
+    () => ({
+      ...filters,
+      search: debouncedSearch,
+    }),
+    [filters, debouncedSearch]
+  )
+
+  // Build request URL.
+  const requestURL = useMemo(() => {
+    return `${entriesURL}?${buildQuery(
+      {
+        ...filters,
+        search: debouncedSearch,
+      },
+      limit,
+      offset
+    )}`
+  }, [
+    entriesURL,
+    filters.workerID,
+    filters.styleID,
+    filters.bundleID,
+    filters.operationID,
+    filters.fromDate,
+    filters.toDate,
+    debouncedSearch,
+    limit,
+    offset,
+  ])
+
+  // Load entries whenever filters or pagination change.
+  const loadEntries = useCallback(() => {
+    if (!organizationID || !filtersInitialized) return
 
     fetchEntries({
-      url: baseURL,
+      url: requestURL,
       method: "GET",
-      onError: (error: any) => {
+      onError: (error: any) =>
         toast.error(
           error?.message || "Failed to load production entries"
-        )
-      },
+        ),
     })
-  }
+  }, [
+    organizationID,
+    filtersInitialized,
+    fetchEntries,
+    requestURL,
+  ])
 
-  // Initial data loading
+  useEffect(() => {
+    loadEntries()
+  }, [loadEntries])
+
+  // Load base filter options once.
   useEffect(() => {
     if (!organizationID) return
 
-    fetchEntries({
-      url: baseURL,
-      method: "GET",
-      onError: (error: any) => {
-        toast.error(
-          error?.message || "Failed to load production entries"
-        )
-      },
-    })
-
     fetchWorkers({
-      url: `/api/organizations/${organizationID}/garment-workers`,
+      url: `${base}/garment-workers?limit=${MAX_OPTION_LIMIT}&offset=0`,
       method: "GET",
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to load workers")
-      },
-    })
-
-    fetchBundles({
-      url: `/api/organizations/${organizationID}/bundles`,
-      method: "GET",
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to load bundles")
-      },
+      onError: (error: any) =>
+        toast.error(error?.message || "Failed to load workers"),
     })
 
     fetchStyles({
-      url: `/api/organizations/${organizationID}/styles`,
+      url: `${base}/styles?limit=${MAX_OPTION_LIMIT}&offset=0`,
       method: "GET",
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to load styles")
-      },
-    })
-  }, [organizationID])
-
-  // Fetch operations for each style (used by filters)
-  useEffect(() => {
-    if (!organizationID || !styles.length) return
-
-    styles.forEach((style) => {
-      if (operationsByStyle[style.id]) return
-
-      fetchOperations({
-        url: `/api/organizations/${organizationID}/styles/${style.id}/operations`,
-        method: "GET",
-        onSuccess: (response: any) => {
-          const operations = unwrapList<StyleOperation>(response, [
-            "operations",
-          ])
-
-          setOperationsByStyle((previous) => ({
-            ...previous,
-            [style.id]: operations,
-          }))
-        },
-        onError: () => undefined,
-      })
-    })
-  }, [organizationID, styles, operationsByStyle])
-
-  const operations = useMemo(
-    () => Object.values(operationsByStyle).flat(),
-    [operationsByStyle]
-  )
-
-  // Search and filters use nested entry objects directly
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase()
-
-    return entries.filter((entry) => {
-      const matchesSearch =
-        !query ||
-        [
-          entry.worker?.name,
-          entry.worker?.phone,
-          entry.bundle?.bundle_number,
-          entry.style?.name,
-          entry.style?.style_number,
-          entry.operation?.name,
-          entry.remarks,
-        ].some((value) =>
-          String(value || "")
-            .toLowerCase()
-            .includes(query)
-        )
-
-      return (
-        matchesSearch &&
-        (workerFilter === "all" ||
-          entry.worker_id === workerFilter) &&
-        (bundleFilter === "all" ||
-          entry.bundle_id === bundleFilter) &&
-        (operationFilter === "all" ||
-          entry.style_operation_id === operationFilter)
-      )
+      onError: (error: any) =>
+        toast.error(error?.message || "Failed to load styles"),
     })
   }, [
-    entries,
-    search,
-    workerFilter,
-    bundleFilter,
-    operationFilter,
+    organizationID,
+    base,
+    fetchWorkers,
+    fetchStyles,
   ])
 
+  // Load dependent options when a style is selected.
+  useEffect(() => {
+    if (!organizationID || !filters.styleID) return
 
-  // Delete entry
+    fetchBundles({
+      url: `${base}/bundles?style_id=${encodeURIComponent(
+        filters.styleID
+      )}&limit=${MAX_OPTION_LIMIT}&offset=0`,
+      method: "GET",
+      onError: (error: any) =>
+        toast.error(
+          error?.message || "Failed to load bundles for this style"
+        ),
+    })
+
+    fetchOperations({
+      url: `${base}/styles/${encodeURIComponent(
+        filters.styleID
+      )}/operations?limit=${MAX_OPTION_LIMIT}&offset=0`,
+      method: "GET",
+      onError: (error: any) =>
+        toast.error(error?.message || "Failed to load style operations"),
+    })
+  }, [
+    organizationID,
+    base,
+    filters.styleID,
+    fetchBundles,
+    fetchOperations,
+  ])
+
+  // Pagination.
+  const totalItems = useMemo(
+    () => readTotal(entriesResponse),
+    [entriesResponse]
+  )
+
+  const hasNextPage =
+    totalItems !== undefined
+      ? offset + entries.length < totalItems
+      : entries.length === limit
+
+  // Delete entry.
   const deleteEntry = async () => {
-    if (!deleting || !baseURL) return
+    if (!deleting || !entriesURL) return
 
     await mutateEntry({
-      url: `${baseURL}/${deleting.id}`,
+      url: `${entriesURL}/${deleting.id}`,
       method: "DELETE",
+
       onSuccess: () => {
         toast.success("Production entry deleted")
         setDeleting(null)
-        loadEntries()
+
+        // Move to previous page if the current page becomes empty.
+        if (entries.length === 1 && offset > 0) {
+          setOffset(Math.max(0, offset - limit))
+        } else {
+          loadEntries()
+        }
       },
-      onError: (error: any) => {
+
+      onError: (error: any) =>
         toast.error(
           error?.message || "Failed to delete entry"
-        )
-      },
+        ),
     })
+  }
+
+  // Clear all filters.
+  const clearFilters = () => {
+    setFilters(EMPTY_FILTERS)
+    setDebouncedSearch("")
+    setOffset(0)
   }
 
   if (!organizationID) {
     return (
       <StateComponent
         className="rounded-none"
-        message="Error"
-        description="Something went wrong "
+        message="Organization unavailable"
+        description="Your organization information could not be loaded."
       />
     )
   }
 
+  const hasActiveFilters = Object.values(requestFilters).some(Boolean)
+
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <ProductionEntriesHeader count={entries.length} />
-
-      {/* Search and create */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-
-          <Input
-            className="pl-9"
-            placeholder="Search worker, bundle, style, operation..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
-
-        <Button render={<Link href="/production-entries/new" />}>
-          <Plus className="size-4" />
-          Add production entries
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <ProductionEntryFilters
-        workers={workers}
-        bundles={bundles}
-        entries={entries}
-        operations={operations}
-        workerFilter={workerFilter}
-        bundleFilter={bundleFilter}
-        operationFilter={operationFilter}
-        onWorkerChange={setWorkerFilter}
-        onBundleChange={setBundleFilter}
-        onOperationChange={setOperationFilter}
-        onClear={() => {
-          setWorkerFilter("all")
-          setBundleFilter("all")
-          setOperationFilter("all")
-          setSearch("")
-        }}
+      <ProductionEntriesHeader
+        count={totalItems ?? entries.length}
       />
 
-      {/* Table */}
-      <div className="min-h-0 flex-1">
-        {entriesLoading && !entries.length ? (
-          <Loader text="Loading production entries" />
-        ) : !entries.length ? (
-          <State
-            message="No production entries yet"
-            ICON={<Scissors />}
-            description="Start recording completed work against a bundle, operation, and worker."
-            PortalButton={
-              <Button render={<Link href="/production-entries/new" />}>
-                Create first entry
-              </Button>
-            }
-          />
-        ) : !filtered.length ? (
-          <State
-            message="No entries found"
-            description="Try adjusting your search or filters."
-          />
-        ) : (
-          <ProductionEntriesTable
-            entries={filtered}
-            onView={setViewing}
-          />
-        )}
+      <div className="flex h-full gap-4">
+        <ProductionEntryFilters
+          filters={filters}
+          workers={workers}
+          styles={styles}
+          bundles={bundles}
+          operations={operations}
+          workersLoading={workersLoading}
+          stylesLoading={stylesLoading}
+          bundlesLoading={bundlesLoading}
+          operationsLoading={operationsLoading}
+          onChange={updateFilter}
+          onClear={clearFilters}
+        />
+
+        <div className="relative flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+
+
+          <div className="min-h-0 flex-1">
+            {entriesLoading && !entriesResponse ? (
+              <Loader text="Loading production entries" />
+            ) : !entries.length ? (
+              <State
+                message={
+                  hasActiveFilters
+                    ? "No entries found"
+                    : "No production entries yet"
+                }
+                ICON={<Scissors />}
+                description={
+                  hasActiveFilters
+                    ? "Try changing or clearing your filters."
+                    : "Start recording completed work against a bundle, operation, and worker."
+                }
+                PortalButton={
+                  !hasActiveFilters ? (
+                    <Button
+                      render={
+                        <Link href="/production-entries/new" />
+                      }
+                    >
+                      Create first entry
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
+              <ProductionEntriesTable entries={entries} />
+            )}
+          </div>
+
+          {(entries.length > 0 || offset > 0) && (
+            <Pagination
+              limit={limit}
+              offset={offset}
+              itemCount={entries.length}
+              totalItems={totalItems}
+              hasNextPage={hasNextPage}
+              onPageChange={setOffset}
+              onLimitChange={(nextLimit) => {
+                setLimit(nextLimit)
+                setOffset(0)
+              }}
+            />
+          )}
+        </div>
       </div>
 
-
-      {/* Delete */}
       <DeleteProductionEntryDialog
         entry={deleting}
         open={!!deleting}
@@ -351,7 +526,7 @@ export default function ProductionEntriesPage() {
           if (!open) setDeleting(null)
         }}
         onDelete={deleteEntry}
-        isDeleting={isSaving}
+        isDeleting={isDeleting}
       />
     </div>
   )

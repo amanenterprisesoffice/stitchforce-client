@@ -23,6 +23,15 @@ import {
 } from "@/components/ui/select"
 
 import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox"
+
+import {
   MultiSelect,
   MultiSelectContent,
   MultiSelectGroup,
@@ -57,6 +66,7 @@ interface BaseProps {
   parentClass?: string
   valueClass?: string
   type?: "single" | "multiple"
+  searchBar?: boolean
   dropdownContent?: React.ReactNode
   showLoader?: boolean
   emptyMessage?: string
@@ -93,6 +103,7 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
   parentClass = "",
   valueClass = "",
   type = "single",
+  searchBar = false,
   dropdownContent,
   showLoader = false,
   emptyMessage,
@@ -111,26 +122,28 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
     emptyMessage || `No ${label?.toLowerCase() || "options"} available`
 
   const selectClassName = clsx(
-    "w-full",
+    "w-full min-w-0",
     hasError ? "border-[#A90F26]" : "",
     className
   )
 
+  // Regular Select options
   const renderOptions = () =>
     options.map((option) => (
       <SelectItem
         key={option.value}
         value={option.value}
         disabled={option.disabled}
-        className="flex items-center justify-start gap-2"
+        className="flex cursor-pointer items-center justify-start gap-2"
       >
-        <div className="flex w-full items-center gap-1.5">
+        <div className="flex w-full min-w-0 items-center gap-1.5">
           {option.disabled && <Lock size={10} className="shrink-0" />}
           <span className="truncate">{option.label}</span>
         </div>
       </SelectItem>
     ))
 
+  // MultiSelect options
   const renderMultiOptions = () =>
     options.map((option) => (
       <MultiSelectItem
@@ -138,7 +151,7 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
         value={option.value}
         disabled={option.disabled}
         badgeLabel={option.label}
-        className="flex items-center justify-start gap-2"
+        className="flex cursor-pointer items-center justify-start gap-2"
       >
         <div className="flex w-full items-center gap-1.5">
           {option.disabled && <Lock size={10} className="shrink-0" />}
@@ -147,6 +160,7 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
       </MultiSelectItem>
     ))
 
+  // Regular single Select
   const renderSingleSelect = (
     selectedValue: string,
     handleChange: (value: string) => void
@@ -168,7 +182,13 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
           </SelectValue>
         </SelectTrigger>
 
-        <SelectContent>
+        <SelectContent
+          side="bottom"
+          align="start"
+          sideOffset={4}
+          alignItemWithTrigger={false}
+          className="max-h-60"
+        >
           {showLoader && dropdownContent}
 
           {!showLoader && hasOptions && (
@@ -188,8 +208,86 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
     )
   }
 
+  // Searchable single Combobox
+  const renderSearchableSelect = (
+    selectedValue: string,
+    handleChange: (value: string) => void
+  ) => {
+    const selectedOption =
+      options.find((option) => option.value === selectedValue) ?? null
+
+    return (
+      <Combobox
+        items={options}
+        value={selectedOption}
+        onValueChange={(selectedOption) => {
+          handleChange(selectedOption?.value ?? "")
+        }}
+        itemToStringValue={(option) => option.label}
+        disabled={disabled}
+        {...props}
+      >
+        <ComboboxInput
+          placeholder={selectPlaceholder}
+          className={selectClassName}
+          aria-invalid={hasError}
+        />
+
+        <ComboboxContent>
+          {showLoader && dropdownContent}
+
+          {!showLoader && dropdownContent}
+
+          {!showLoader && (
+            <>
+              <ComboboxEmpty>
+                {!hasOptions ? (
+                  <State2 color="yellow" isEmpty>
+                    {noOptionsMessage}
+                  </State2>
+                ) : (
+                  emptyMessage || "No matching options found"
+                )}
+              </ComboboxEmpty>
+
+              {hasOptions && (
+                <ComboboxList>
+                  {(option) => (
+                    <ComboboxItem
+                      key={option.value}
+                      value={option}
+                      disabled={option.disabled}
+                      className="flex cursor-pointer items-center justify-start gap-2"
+                    >
+                      <div className="flex w-full items-center gap-1.5">
+                        {option.disabled && (
+                          <Lock size={10} className="shrink-0" />
+                        )}
+                        <span className="truncate">{option.label}</span>
+                      </div>
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              )}
+            </>
+          )}
+        </ComboboxContent>
+      </Combobox>
+    )
+  }
+
+  // Single select renderer
+  const renderSingle = (
+    selectedValue: string,
+    handleChange: (value: string) => void
+  ) => {
+    return searchBar
+      ? renderSearchableSelect(selectedValue, handleChange)
+      : renderSingleSelect(selectedValue, handleChange)
+  }
+
   return (
-    <div className={clsx("w-full", parentClass)}>
+    <div className={clsx("w-full min-w-0", parentClass)}>
       {label && (
         <div className="mb-1.5 flex items-center gap-1.5">
           <Label
@@ -246,7 +344,7 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
                 </MultiSelectContent>
               </MultiSelect>
             ) : (
-              renderSingleSelect(field.value ?? "", field.onChange)
+              renderSingle(field.value ?? "", field.onChange)
             )
           }
         />
@@ -274,7 +372,7 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
           </MultiSelectContent>
         </MultiSelect>
       ) : (
-        renderSingleSelect((value as string) ?? "", onChange ?? (() => {}))
+        renderSingle((value as string) ?? "", onChange ?? (() => {}))
       )}
 
       {hasError && (

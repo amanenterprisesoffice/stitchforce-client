@@ -7,7 +7,7 @@ export default function NewProductionEntriesPage() {
     <div className="flex flex-1 flex-col gap-6 p-6">
       <AddNewProdEntryHeader />
 
-      <div className="mx-auto w-full">
+      <div className="mx-auto w-full h-full">
         <NewProductionEntryForm />
       </div>
     </div>

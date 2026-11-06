@@ -27,9 +27,11 @@ const StateComponent: React.FC<StateProps> = ({
   className,
 }) => {
   return (
-    <Card className={`flex h-full w-full flex-1 items-center justify-center border-dashed shadow-none ${className}`}>
-      <CardContent className="flex max-w-md flex-col items-center space-y-0! text-center">
-        <div className="mb-5 flex size-16 items-center justify-center rounded-2xl bg-muted">
+    <Card
+      className={`flex h-full w-full flex-1 items-center justify-center border-dashed shadow-none ${className}`}
+    >
+      <CardContent className="flex max-w-md flex-col items-center space-y-3! text-center">
+        <div className="flex size-16 items-center justify-center rounded-2xl bg-muted">
           {ICON || (
             <FlameKindlingIcon className="size-8 text-muted-foreground" />
           )}
@@ -37,10 +39,10 @@ const StateComponent: React.FC<StateProps> = ({
 
         <h3 className="text-lg font-semibold">{message || ""}</h3>
 
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {description || ""}
         </p>
-        {PortalButton}
+        <div>{PortalButton}</div>
       </CardContent>
     </Card>
   )

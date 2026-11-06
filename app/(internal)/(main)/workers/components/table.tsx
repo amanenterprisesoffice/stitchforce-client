@@ -1,32 +1,14 @@
 "use client"
+
 import { useRouter } from "next/navigation"
+import { Users } from "lucide-react"
 
-import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react"
-
-import type { GarmentWorker } from "../../../../../utils/zodSchema/garmentWorker"
-
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import DataTable from "@/components/ui/DataTable"
 
-import { Card, CardContent } from "@/components/ui/card"
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { getInitials } from "@/utils/utils"
 
 interface Props {
@@ -35,64 +17,54 @@ interface Props {
 
 export default function WorkersTable({ workers }: Props) {
   const router = useRouter()
+
+  const columns = [
+    {
+      header: "Worker",
+      render: (worker: GarmentWorker) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="size-9">
+            {worker.photo_url && (
+              <AvatarImage
+                src={worker.photo_url}
+                alt={worker.name}
+              />
+            )}
+
+            <AvatarFallback>
+              {getInitials(worker.name) || (
+                <Users className="size-4" />
+              )}
+            </AvatarFallback>
+          </Avatar>
+
+          <span className="font-medium">{worker.name}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Phone Number",
+      className: "text-muted-foreground",
+      render: (worker: GarmentWorker) => worker.phone || "—",
+    },
+    {
+      header: "Gender",
+      className: "hidden sm:table-cell",
+      render: (worker: GarmentWorker) => (
+        <Badge variant="outline" className="capitalize">
+          {worker.gender}
+        </Badge>
+      ),
+    },
+  ]
+
   return (
-    <Card className="w-full pt-0 shadow-none">
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Worker</TableHead>
-
-              <TableHead>Phone Number</TableHead>
-
-              <TableHead className="hidden sm:table-cell">Gender</TableHead>
-
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {workers.map((worker) => (
-              <TableRow
-                key={worker.id}
-                className="cursor-pointer"
-                onClick={() => router.push(`/workers/${worker.id}`)}
-              >
-                {/* Worker */}
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="size-9">
-                      {worker.photo_url && (
-                        <AvatarImage src={worker.photo_url} alt={worker.name} />
-                      )}
-
-                      <AvatarFallback>
-                        {getInitials(worker.name) || (
-                          <Users className="size-4" />
-                        )}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <span className="font-medium">{worker.name}</span>
-                  </div>
-                </TableCell>
-
-                {/* Phone */}
-                <TableCell className="text-muted-foreground">
-                  {worker.phone || "—"}
-                </TableCell>
-
-                {/* Gender */}
-                <TableCell className="hidden sm:table-cell">
-                  <Badge variant="outline" className="capitalize">
-                    {worker.gender}
-                  </Badge>
-                </TableCell>
-
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <DataTable
+      data={workers}
+      columns={columns}
+      getRowId={(worker) => worker.id}
+      onRowClick={(worker) => router.push(`/workers/${worker.id}`)}
+      emptyMessage="No workers found."
+    />
   )
 }

@@ -9,6 +9,7 @@ import {
   Pencil,
   Trash2,
   UserRound,
+  UserRoundXIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -141,7 +142,7 @@ export default function GarmentWorkerDetailsPage() {
       method: "DELETE",
       onSuccess: () => {
         toast.success("Worker deleted")
-        router.push("/garment-workers")
+        router.push("/workers")
       },
       onError: (error: any) =>
         toast.error(error?.message || "Failed to delete worker"),
@@ -159,24 +160,22 @@ export default function GarmentWorkerDetailsPage() {
   }
 
   if (isLoading && !worker) {
-    return (
-        <Loader text="Loading worker" />
-    )
+    return <Loader text="Loading worker" />
   }
 
   if (!worker) {
     return (
-      <div className="p-6">
-        <State
-          message="Worker not found"
-          description="This worker may have been deleted or you may not have access to it."
-          PortalButton={
-            <Button variant="outline" render={<Link href="/garment-workers" />}>
-              Back to workers
-            </Button>
-          }
-        />
-      </div>
+      <StateComponent
+        className="rounded-none"
+        ICON={<UserRoundXIcon className="size-6" />}
+        message="Worker not found"
+        description="This worker may have been deleted or not accessible."
+        PortalButton={
+          <Button variant="outline" render={<Link href="/workers" />}>
+            Back to workers
+          </Button>
+        }
+      />
     )
   }
 

@@ -131,7 +131,6 @@ export default function ProductionEntryDetailsPage() {
                 ...(updated || {}),
                 bundle_id: values.bundle_id,
                 worker_id: values.worker_id,
-                quantity: values.quantity,
                 production_date: values.production_date,
                 remarks: values.remarks || "",
               }

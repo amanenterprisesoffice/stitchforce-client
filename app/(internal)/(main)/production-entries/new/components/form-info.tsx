@@ -1,191 +1,260 @@
+
 "use client"
 
-import type { ReactNode } from "react"
-
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import type { ReactNode, ElementType } from "react"
+import Link from "next/link"
 
 import {
   Shirt,
   Package,
   Scissors,
+  UserRound,
+  ArrowUpRight,
 } from "lucide-react"
 
-import {
-  formatMoney,
-  getInitials,
-} from "@/utils/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+
+import { formatMoney, getInitials } from "@/utils/utils"
 
 import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
 import type { Bundle } from "@/utils/zodSchema/bundle"
 import type { Style } from "@/utils/zodSchema/style"
 import type { StyleOperation } from "@/utils/zodSchema/styleops"
 
-function Detail({
-  label,
-  children,
-}: {
-  label: string
-  children: ReactNode
-}) {
-  if (children === undefined || children === null || children === "") {
-    return null
-  }
+// -------------------------------------
+// REUSABLE COMPONENTS
+// -------------------------------------
 
+function EmptyInfo({
+  title,
+  text,
+  icon: Icon = UserRound,
+}: {
+  title: string
+  text: string
+  icon?: ElementType
+}) {
   return (
     <div className="min-w-0">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-0.5 truncate text-sm font-medium">{children}</p>
-    </div>
-  )
-}
+      <p className="mb-2 text-xs font-medium text-muted-foreground">
+        {title}
+      </p>
 
-function Summary({
-  icon: Icon,
-  title,
-  subtitle,
-  children,
-}: {
-  icon: React.ElementType
-  title: string
-  subtitle?: string
-  children?: ReactNode
-}) {
-  return (
-    <div className="rounded-lg border bg-muted/30 p-3">
-      <div className="flex items-center gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-background border">
+      <div className="flex min-w-0 items-center gap-3 rounded-xl border border-dashed bg-muted/20 px-4 py-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/50">
           <Icon className="size-4 text-muted-foreground" />
         </div>
 
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{title}</p>
-          {subtitle && (
-            <p className="truncate text-xs text-muted-foreground">
-              {subtitle}
-            </p>
-          )}
-        </div>
+        <p className="min-w-0 break-words text-xs text-muted-foreground">
+          {text}
+        </p>
       </div>
+    </div>
+  )
+}
 
-      {children && (
-        <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3 sm:grid-cols-3">
-          {children}
-        </div>
+function CompactInfo({
+  title,
+  href,
+  children,
+  className = "",
+}: {
+  title: string
+  href?: string
+  children: ReactNode
+  className?: string
+}) {
+  const content = (
+    <div
+      className={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border p-3 transition-all ${href && "hover:border-primary/40 hover:bg-muted/30 hover:shadow-sm"} sm:p-4 ${className}`}
+    >
+      {children}
+
+   {href && <ArrowUpRight className="absolute right-3 top-3 size-4 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />}
+    </div>
+  )
+
+  return (
+    <div className="min-w-0">
+      <p className="mb-2 text-xs font-medium text-muted-foreground">
+        {title}
+      </p>
+
+      {href ? (
+        <Link
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group block h-full rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {content}
+        </Link>
+      ) : (
+        <div className="group h-full">{content}</div>
       )}
     </div>
   )
 }
 
-export function StyleFormInfo({ style }: { style: Style }) {
+function InfoHeader({
+  icon: Icon,
+  title,
+  subtitle,
+  badge,
+  avatar,
+}: {
+  icon?: ElementType
+  title: string
+  subtitle?: string
+  badge?: ReactNode
+  avatar?: ReactNode
+}) {
   return (
-    <Summary
-      icon={Shirt}
-      title={style.name}
-      subtitle={
-        style.style_number
-          ? `Style ${style.style_number}`
-          : "Selected style"
-      }
-    >
-      {style.description && (
-        <div className="col-span-full">
-          <Detail label="Description">{style.description}</Detail>
+    <div className="flex min-w-0 items-center gap-3">
+      {avatar ?? (
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/40">
+          {Icon && <Icon className="size-4 text-muted-foreground" />}
         </div>
       )}
-    </Summary>
+
+      <div className="min-w-0 flex-1">
+        <p className="break-words text-sm font-semibold leading-snug">
+          {title}
+        </p>
+
+        {subtitle && (
+          <p className="mt-1 break-words text-xs text-muted-foreground">
+            {subtitle}
+          </p>
+        )}
+      </div>
+
+      {badge && <div className="ml-auto shrink-0">{badge}</div>}
+    </div>
   )
 }
 
-export function BundleFormInfo({ bundle }: { bundle: Bundle }) {
-  const attributes = Object.entries(bundle.attributes ?? {})
+function InfoBadge({ children }: { children: ReactNode }) {
+  return (
+    <Badge
+      variant="outline"
+      className="max-w-[100px] shrink-0 text-[10px] capitalize"
+    >
+      <span className="truncate">{children}</span>
+    </Badge>
+  )
+}
+
+// -------------------------------------
+// STYLE
+// -------------------------------------
+
+export function StyleFormInfo({ style }: { style: Style | undefined }) {
+  if (!style) {
+    return <EmptyInfo title="Style" text="No style selected" icon={Shirt} />
+  }
 
   return (
-    <Summary
-      icon={Package}
-      title={bundle.bundle_number}
-      subtitle="Selected bundle"
-    >
-      <Detail label="Quantity">
-        {Number(bundle.quantity).toLocaleString("en-IN")} pcs
-      </Detail>
+    <CompactInfo title="Style Information" href={`/styles/${style.id}`}>
+      <InfoHeader
+        icon={Shirt}
+        title={style.name}
+        subtitle={style.style_number ? `Style ${style.style_number}` : "Selected style"}
+      />
 
-      <Detail label="Status">
-        <Badge variant="outline" className="h-5 capitalize">
-          {bundle.status.replace(/_/g, " ")}
-        </Badge>
-      </Detail>
+      {style.description && (
+        <p className="mt-3 line-clamp-3 border-t pt-3 text-xs leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
+          {style.description}
+        </p>
+      )}
+    </CompactInfo>
+  )
+}
 
-      {attributes.map(([key, value]) => (
-        <Detail key={key} label={key.replace(/_/g, " ")}>
-          {String(value)}
-        </Detail>
-      ))}
+// -------------------------------------
+// BUNDLE
+// -------------------------------------
+
+export function BundleFormInfo({ bundle }: { bundle: Bundle | undefined }) {
+  if (!bundle) {
+    return <EmptyInfo title="Bundle" text="No bundle selected" icon={Package} />
+  }
+
+  return (
+    <CompactInfo title="Bundle Information" href={`/bundles/${bundle.id}`}>
+      <InfoHeader
+        icon={Package}
+        title={bundle.bundle_number}
+        subtitle={`${Number(bundle.quantity).toLocaleString("en-IN")} pieces`}
+        badge={<InfoBadge>{bundle.status.replace(/_/g, " ")}</InfoBadge>}
+      />
 
       {bundle.remarks && (
-        <div className="col-span-full">
-          <Detail label="Remarks">{bundle.remarks}</Detail>
-        </div>
+        <p className="mt-3 line-clamp-3 border-t pt-3 text-xs leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
+          {bundle.remarks}
+        </p>
       )}
-    </Summary>
+    </CompactInfo>
   )
 }
+
+// -------------------------------------
+// OPERATION
+// -------------------------------------
 
 export function OperationFormInfo({
   operation,
 }: {
-  operation: StyleOperation
+  operation: StyleOperation | undefined
 }) {
+  if (!operation) {
+    return <EmptyInfo title="Operation" text="No operation selected" icon={Scissors} />
+  }
+
   return (
-    <Summary
-      icon={Scissors}
-      title={operation.name}
-      subtitle="Selected operation"
-    >
-      <Detail label="Rate per piece">
-        {formatMoney(operation.rate_per_piece)}
-      </Detail>
-    </Summary>
+    <CompactInfo title="Operation Information">
+      <InfoHeader
+        icon={Scissors}
+        title={operation.name}
+        subtitle="Selected operation"
+        badge={<InfoBadge>{formatMoney(operation.rate_per_piece)}</InfoBadge>}
+      />
+    </CompactInfo>
   )
 }
 
-export function WorkerFormInfo({ worker }: { worker: GarmentWorker }) {
+// -------------------------------------
+// WORKER
+// -------------------------------------
+
+export function WorkerFormInfo({
+  worker,
+}: {
+  worker: GarmentWorker | undefined
+}) {
+  if (!worker) {
+    return <EmptyInfo title="Worker" text="No worker selected" />
+  }
+
   return (
-    <div className="rounded-lg border bg-muted/30 p-3">
-      <div className="flex items-center gap-3">
-        <Avatar className="size-10 shrink-0">
-          <AvatarImage
-            src={worker.photo_url || undefined}
-            alt={worker.name}
-          />
-          <AvatarFallback>
-            {getInitials(worker.name)}
-          </AvatarFallback>
-        </Avatar>
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{worker.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {worker.phone || "No phone number"}
-          </p>
-        </div>
-
-        <Badge variant="outline" className="capitalize">
-          {worker.status}
-        </Badge>
-      </div>
-
-      {worker.gender && (
-        <div className="mt-3 border-t pt-3">
-          <Detail label="Gender">
-            <span className="capitalize">{worker.gender}</span>
-          </Detail>
-        </div>
-      )}
-    </div>
+    <CompactInfo
+      title="Worker Information"
+      href={`/workers/${worker.id}`}
+    >
+      <InfoHeader
+        title={worker.name}
+        subtitle={worker.phone || "No phone number"}
+        avatar={
+          <Avatar className="size-10 shrink-0">
+            <AvatarImage src={worker.photo_url || undefined} alt={worker.name} />
+            <AvatarFallback className="text-xs">
+              {getInitials(worker.name)}
+            </AvatarFallback>
+          </Avatar>
+        }
+        badge={<InfoBadge>{worker.gender}</InfoBadge>}
+      />
+    </CompactInfo>
   )
 }

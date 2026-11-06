@@ -1,6 +1,6 @@
 "use client"
 
-import { MoreHorizontal, Pencil, Trash2, Eye, Package } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2, Package } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import type { Bundle } from "@/utils/zodSchema/bundle"
@@ -9,9 +9,7 @@ import type { Size } from "@/utils/zodSchema/size"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-
-import { Card, CardContent } from "@/components/ui/card"
-
+import DataTable from "@/components/ui/DataTable"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,20 +17,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-
 interface Props {
   bundles: Bundle[]
   styles: Style[]
   sizes: Size[]
-
   onEdit: (bundle: Bundle) => void
   onDelete: (bundle: Bundle) => void
 }
@@ -68,114 +56,110 @@ export default function BundlesTable({
   onDelete,
 }: Props) {
   const router = useRouter()
-  const styleMap = new Map(styles.map((style) => [style.id, style.name]))
 
+  const styleMap = new Map(styles.map((style) => [style.id, style.name]))
   const sizeMap = new Map(sizes.map((size) => [size.id, size.name]))
 
+  const columns = [
+    {
+      header: "Bundle Number",
+      render: (bundle: Bundle) => (
+        <div className="flex items-center gap-2">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
+            <Package className="size-4 text-muted-foreground" />
+          </div>
+
+          <span className="font-mono font-medium">{bundle.bundle_number}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Style",
+      render: (bundle: Bundle) =>
+        styleMap.get(bundle.style_id) || "Unknown style",
+    },
+    {
+      header: "Size",
+      render: (bundle: Bundle) => (
+        <Badge variant="outline">
+          {sizeMap.get(bundle.size_id) || "Unknown size"}
+        </Badge>
+      ),
+    },
+    {
+      header: "Quantity",
+      className: "font-medium tabular-nums",
+      render: (bundle: Bundle) => bundle.quantity.toLocaleString(),
+    },
+    {
+      header: "Status",
+      render: (bundle: Bundle) => {
+        const status = statusConfig[bundle.status] || {
+          label: bundle.status || "Unknown",
+          className: "",
+        }
+
+        return (
+          <Badge variant="outline" className={status.className}>
+            {status.label}
+          </Badge>
+        )
+      },
+    },
+    {
+      header: "Created",
+      className: "hidden text-muted-foreground md:table-cell",
+      render: (bundle: Bundle) =>
+        bundle.created_at
+          ? new Date(bundle.created_at).toLocaleDateString()
+          : "—",
+    },
+    {
+      header: "",
+      className: "w-[60px]",
+      render: (bundle: Bundle) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={(e) => e.stopPropagation()}
+              />
+            }
+          >
+            <MoreHorizontal className="size-4" />
+            <span className="sr-only">Open menu</span>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onClick={() => onEdit(bundle)}>
+              <Pencil className="mr-2 size-4" />
+              Edit
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => onDelete(bundle)}
+            >
+              <Trash2 className="mr-2 size-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ]
+
   return (
-    <Card className="w-full pt-0 shadow-none">
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Bundle Number</TableHead>
-              <TableHead>Style</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="hidden md:table-cell">Created</TableHead>
-              <TableHead className="w-[60px]" />
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {bundles.map((bundle) => {
-              const status = statusConfig[bundle.status] || {
-                label: bundle.status || "Unknown",
-                className: "",
-              }
-
-              return (
-                <TableRow
-                  className="cursor-pointer"
-                  key={bundle.id}
-                  onClick={() => router.push(`/bundles/${bundle.id}`)}
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
-                        <Package className="size-4 text-muted-foreground" />
-                      </div>
-
-                      <span className="font-mono font-medium">
-                        {bundle.bundle_number}
-                      </span>
-                    </div>
-                  </TableCell>
-
-                  <TableCell>
-                    {styleMap.get(bundle.style_id) || "Unknown style"}
-                  </TableCell>
-
-                  <TableCell>
-                    <Badge variant="outline">
-                      {sizeMap.get(bundle.size_id) || "Unknown size"}
-                    </Badge>
-                  </TableCell>
-
-                  <TableCell className="font-medium tabular-nums">
-                    {bundle.quantity.toLocaleString()}
-                  </TableCell>
-
-                  <TableCell>
-                    <Badge variant="outline" className={status.className}>
-                      {status.label}
-                    </Badge>
-                  </TableCell>
-
-                  <TableCell className="hidden text-muted-foreground md:table-cell">
-                    {bundle.created_at
-                      ? new Date(bundle.created_at).toLocaleDateString()
-                      : "—"}
-                  </TableCell>
-
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                          />
-                        }
-                      >
-                        <MoreHorizontal className="size-4" />
-                        <span className="sr-only">Open menu</span>
-                      </DropdownMenuTrigger>
-
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onEdit(bundle)}>
-                          <Pencil className="mr-2 size-4" />
-                          Edit
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => onDelete(bundle)}
-                        >
-                          <Trash2 className="mr-2 size-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <DataTable
+      data={bundles}
+      columns={columns}
+      getRowId={(bundle) => bundle.id}
+      onRowClick={(bundle) => router.push(`/bundles/${bundle.id}`)}
+      emptyMessage="No bundles found."
+      tableContainerClassName="flex-1"
+    />
   )
 }

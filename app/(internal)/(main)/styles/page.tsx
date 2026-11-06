@@ -1,98 +1,168 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { Plus, Search, Shirt } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Plus, Shirt } from "lucide-react"
 import { toast } from "sonner"
+import { useSearchParams } from "next/navigation"
 
 import useFetch from "@/hooks/useFetch"
 import { useUser } from "@/contexts/UserContext"
 
 import Loader from "@/components/ui/Loader"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import StateComponent from "@/components/StateComponent"
+import Pagination from "@/components/ui/pagination"
+import DebouncedSearch from "@/components/ui/debounced-search"
 
-import type { Style } from "../../../../utils/zodSchema/style"
+import type { Style } from "@/utils/zodSchema/style"
 
 import StylesHeader from "./components/header"
 import StylesTable from "./components/table"
 import StyleFormDialog from "./components/form-dialog"
 import DeleteStyleDialog from "./components/delete-style-dialog"
-import State from "@/components/StateComponent"
-import StateComponent from "@/components/StateComponent"
+
+const DEFAULT_LIMIT = 10
+
+function readTotal(response: unknown): number | undefined {
+  if (!response || typeof response !== "object") return undefined
+
+  const value = response as Record<string, any>
+
+  const candidates = [
+    value.total,
+    value.total_count,
+    value.count,
+    value.pagination?.total,
+    value.meta?.total,
+    value.meta?.total_count,
+  ]
+
+  const total = candidates.find(
+    (candidate) =>
+      candidate !== null &&
+      candidate !== undefined &&
+      candidate !== "" &&
+      Number.isFinite(Number(candidate))
+  )
+
+  return total === undefined ? undefined : Number(total)
+}
+
+function unwrapStyles(response: any): Style[] {
+  if (Array.isArray(response)) return response
+  if (Array.isArray(response?.styles)) return response.styles
+  return []
+}
+
+function buildQuery(search: string, limit: number, offset: number) {
+  const params = new URLSearchParams()
+
+  if (search.trim()) {
+    params.set("search", search.trim())
+  }
+
+  params.set("limit", String(limit))
+  params.set("offset", String(offset))
+
+  return params.toString()
+}
 
 export default function StylesPage() {
   const { user } = useUser()
   const organizationID = user?.organization_id
 
+  const searchParams = useSearchParams()
+
+  const stylesURL = organizationID
+    ? `/api/organizations/${organizationID}/styles`
+    : ""
+
   const [search, setSearch] = useState("")
+
+  const [filtersInitialized, setFiltersInitialized] = useState(false)
+
+  const [limit, setLimit] = useState(DEFAULT_LIMIT)
+  const [offset, setOffset] = useState(0)
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const [editingStyle, setEditingStyle] = useState<Style | null>(null)
   const [deletingStyle, setDeletingStyle] = useState<Style | null>(null)
 
-  const stylesURL = organizationID
-    ? `/api/organizations/${organizationID}/styles`
-    : ""
+  // Initialize pagination and search from URL.
+  useEffect(() => {
+    setSearch(searchParams.get("search") || "")
 
-  // GET styles
+    const initialLimit = Number(searchParams.get("limit"))
+    const initialOffset = Number(searchParams.get("offset"))
+
+    if (Number.isInteger(initialLimit) && initialLimit > 0) {
+      setLimit(initialLimit)
+    }
+
+    if (Number.isInteger(initialOffset) && initialOffset >= 0) {
+      setOffset(initialOffset)
+    }
+
+    setFiltersInitialized(true)
+  }, [searchParams])
+
+  // Build request URL.
+  const requestURL = useMemo(() => {
+    if (!stylesURL) return ""
+
+    return `${stylesURL}?${buildQuery(search, limit, offset)}`
+  }, [stylesURL, search, limit, offset])
+
+  // Fetch styles.
   const {
     data: stylesData,
     isLoading,
     refetch: fetchStyles,
-  } = useFetch({
-    url: stylesURL,
-    method: "GET",
+  } = useFetch<unknown>({ auto: true, url: requestURL })
+
+  // Create, update and delete.
+  const { isLoading: isSaving, refetch: mutateStyle } = useFetch({
+    auto: false,
   })
 
-  // POST, PUT and DELETE
-  const { isLoading: isSaving, refetch: mutateStyle } = useFetch()
+  // Extract styles.
+  const styles = useMemo(() => unwrapStyles(stylesData), [stylesData])
 
-  const styles: Style[] = Array.isArray(stylesData)
-    ? stylesData
-    : (stylesData?.styles ?? [])
+  // Extract total count.
+  const totalItems = useMemo(() => readTotal(stylesData), [stylesData])
 
-  // Fetch when organization becomes available
   useEffect(() => {
-    if (!organizationID) return
+    if (!organizationID || !filtersInitialized) return
+    fetchStyles()
+  }, [requestURL, organizationID, filtersInitialized, fetchStyles])
 
-    fetchStyles({
-      url: `/api/organizations/${organizationID}/styles`,
-      method: "GET",
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to fetch styles")
-      },
-    })
-  }, [organizationID, fetchStyles])
+  // Pagination.
+  const hasNextPage =
+    totalItems !== undefined
+      ? offset + styles.length < totalItems
+      : styles.length === limit
 
-  // Search
-  const filteredStyles = useMemo(() => {
-    const query = search.toLowerCase().trim()
-
-    if (!query) return styles
-
-    return styles.filter(
-      (style) =>
-        style.name?.toLowerCase().includes(query) ||
-        style.style_number?.toLowerCase().includes(query) ||
-        style.description?.toLowerCase().includes(query)
-    )
-  }, [styles, search])
-
-  // Create
+  // Create.
   const openCreateDialog = () => {
     setEditingStyle(null)
     setDialogOpen(true)
   }
 
-  // Edit
+  // Edit.
   const openEditDialog = (style: Style) => {
     setEditingStyle(style)
     setDialogOpen(true)
   }
 
-  // Save (POST / PUT)
+  // Search change.
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value)
+    setOffset(0)
+  }, [])
+
+  // Save.
   const handleSave = async (values: any) => {
     if (!organizationID) {
       toast.error("Organization not found")
@@ -122,10 +192,7 @@ export default function StylesPage() {
         setDialogOpen(false)
         setEditingStyle(null)
 
-        fetchStyles({
-          url: stylesURL,
-          method: "GET",
-        })
+        fetchStyles()
       },
 
       onError: (error: any) => {
@@ -134,7 +201,7 @@ export default function StylesPage() {
     })
   }
 
-  // Delete
+  // Delete.
   const handleDelete = async () => {
     if (!deletingStyle || !organizationID) return
 
@@ -148,10 +215,12 @@ export default function StylesPage() {
         setDeleteDialogOpen(false)
         setDeletingStyle(null)
 
-        fetchStyles({
-          url: stylesURL,
-          method: "GET",
-        })
+        // If deleting the last item on a page, go to previous page.
+        if (styles.length === 1 && offset > 0) {
+          setOffset(Math.max(0, offset - limit))
+        } else {
+          fetchStyles()
+        }
       },
 
       onError: (error: any) => {
@@ -160,38 +229,41 @@ export default function StylesPage() {
     })
   }
 
+  // Clear search.
+  const clearSearch = () => {
+    setSearch("")
+    setOffset(0)
+  }
+
   if (!organizationID) {
     return (
       <StateComponent
         className="rounded-none"
-        message="Error"
-        description="Something went wrong "
+        message="Organization unavailable"
+        description="Your organization information could not be loaded."
       />
     )
   }
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <StylesHeader count={styles.length} onCreate={openCreateDialog} />
+      <StylesHeader
+        count={totalItems ?? styles.length}
+        onCreate={openCreateDialog}
+      />
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+      <DebouncedSearch
+        value={search}
+        onChange={handleSearchChange}
+        placeholder="Search styles..."
+        label="Find Styles"
+      />
 
-        <Input
-          placeholder="Search styles..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-
-      <div className="relative flex flex-1">
-        {/* Loading */}
+      <div className="relative flex flex-1 flex-col gap-4">
         {isLoading && !stylesData ? (
           <Loader text="Loading styles" />
-        ) : styles.length === 0 ? (
-          <State
+        ) : styles.length === 0 && !search ? (
+          <StateComponent
             message="No styles yet"
             ICON={<Shirt />}
             description="Get started by creating your first garment style. You can add manufacturing operations and per-piece rates to each style."
@@ -202,27 +274,40 @@ export default function StylesPage() {
               </Button>
             }
           />
-        ) : filteredStyles.length === 0 ? (
-          /* No search results */
-          <State
+        ) : styles.length === 0 ? (
+          <StateComponent
             message="No styles found"
             description="Try searching with a different name or style number."
             PortalButton={
-              <Button variant="outline" onClick={() => setSearch("")}>
+              <Button variant="outline" onClick={clearSearch}>
                 Clear search
               </Button>
             }
           />
         ) : (
-          /* Styles table */
-          <StylesTable
-            styles={filteredStyles}
-            onEdit={openEditDialog}
-            onDelete={(style) => {
-              setDeletingStyle(style)
-              setDeleteDialogOpen(true)
-            }}
-          />
+          <>
+            <StylesTable
+              styles={styles}
+              onEdit={openEditDialog}
+              onDelete={(style) => {
+                setDeletingStyle(style)
+                setDeleteDialogOpen(true)
+              }}
+            />
+
+            <Pagination
+              limit={limit}
+              offset={offset}
+              itemCount={styles.length}
+              totalItems={totalItems}
+              hasNextPage={hasNextPage}
+              onPageChange={setOffset}
+              onLimitChange={(nextLimit) => {
+                setLimit(nextLimit)
+                setOffset(0)
+              }}
+            />
+          </>
         )}
       </div>
 

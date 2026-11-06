@@ -25,6 +25,13 @@ import { Separator } from "@/components/ui/separator"
 import Loader from "@/components/ui/Loader"
 import PageHeader from "@/components/ui/PageHeader"
 import StyleHeader from "./components/header"
+import {
+  StyleBundles,
+  StyleQuickLinks,
+  StyleWorkers,
+} from "./components/style-related-sections"
+import { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import { Bundle } from "@/utils/zodSchema/bundle"
 
 interface Style {
   id: string
@@ -62,6 +69,42 @@ export default function StyleDetailsPage() {
     organizationID && styleID
       ? `/api/organizations/${organizationID}/styles/${styleID}`
       : ""
+
+  // Related data query
+  const relatedQuery = `style_id=${encodeURIComponent(styleID)}&limit=10&offset=0`
+
+  // Fetch production entries for this style
+  const { data: productionEntriesData, isLoading: workersLoading } = useFetch({
+    auto: !!organizationID && !!styleID,
+    url: `${baseURL ? `/api/organizations/${organizationID}/production-entries?${relatedQuery}` : ""}`,
+  })
+
+  // Fetch bundles for this style
+  const { data: bundlesData, isLoading: bundlesLoading } = useFetch({
+    auto: !!organizationID && !!styleID,
+    url: `${baseURL ? `/api/organizations/${organizationID}/bundles?${relatedQuery}` : ""}`,
+  })
+
+  // Extract production entries
+  const productionEntries = Array.isArray(productionEntriesData)
+    ? productionEntriesData
+    : (productionEntriesData?.production_entries ??
+      productionEntriesData?.entries ??
+      [])
+
+  // Extract unique workers from production entries
+  const workers: GarmentWorker[] = Array.from(
+    new Map(
+      productionEntries
+        .filter((entry: any) => entry.worker?.id)
+        .map((entry: any) => [entry.worker.id, entry.worker])
+    ).values()
+  ) as GarmentWorker[]
+
+  // Extract bundles
+  const bundles: Bundle[] = Array.isArray(bundlesData)
+    ? bundlesData
+    : (bundlesData?.bundles ?? [])
 
   // Fetch style
   const { data: styleData, isLoading: styleLoading } = useFetch({
@@ -286,6 +329,13 @@ export default function StyleDetailsPage() {
           onDelete={setDeletingOperation}
         />
       )}
+
+      <div className="flex gap-4 space-y-4">
+        <StyleBundles bundles={bundles} isLoading={bundlesLoading} />
+        <StyleWorkers workers={workers} isLoading={workersLoading} />
+      </div>
+      {/* Quick links */}
+      <StyleQuickLinks styleID={styleID} />
 
       {/* Create / Edit */}
       <OperationFormDialog

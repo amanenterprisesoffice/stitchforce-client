@@ -218,6 +218,7 @@ export default function GarmentWorkersPage() {
           <State
             message="No workers found"
             description="Try searching with a different name, phone number or gender."
+            ICON={<Users2 />} // Replace SomeIcon with the appropriate icon component you want to use
             PortalButton={
               <Button variant="outline" onClick={() => setSearch("")}>
                 Clear search

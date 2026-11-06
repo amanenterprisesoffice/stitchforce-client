@@ -63,7 +63,6 @@ export default function EditProductionEntryDialog({
     await onSubmit({
       bundle_id: bundleID,
       worker_id: workerID,
-      quantity: parsedQuantity,
       production_date: new Date(productionDate).toISOString(),
       remarks: remarks.trim(),
     })

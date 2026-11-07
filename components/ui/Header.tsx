@@ -15,6 +15,7 @@ import { useUser } from "@/contexts/UserContext"
 import { Button } from "./button"
 import { ModeToggle } from "../theme-toggle"
 import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 
 const publicLinks = [
   { label: "Home", href: "/" },
@@ -30,15 +31,14 @@ const privateLinks = [
 const Header = ({ className = "" }: { className?: string }) => {
   const router = useRouter()
   const pathname = usePathname()
-  const { theme } = useTheme()
   const { user, isLoading } = useUser()
 
   const isHome = pathname === "/"
 
   return (
-    <header
-      className={`relative z-50 w-full shrink-0 border-b ${theme === "dark" ? "navbar-dark" : "navbar-light"} ${className} `}
-    >
+ <header
+  className={`navbar-light navbar-dark relative z-50 w-full shrink-0 border-b ${className}`}
+>
       <div className="my-container mx-auto flex h-[68px] w-full items-center justify-between">
         {/* Logo */}
         <Link
@@ -169,15 +169,15 @@ const UserDropdown = ({ user }: { user: any }) => {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem render={ <Link href="/dashboard">Dashboard</Link>}/>
+        <DropdownMenuItem render={<Link href="/dashboard">Dashboard</Link>} />
 
-        <DropdownMenuItem render={ <Link href="/workers">Workers</Link>}/>
+        <DropdownMenuItem render={<Link href="/workers">Workers</Link>} />
 
-        <DropdownMenuItem render={ <Link href="/styles">Styles</Link>}/>
+        <DropdownMenuItem render={<Link href="/styles">Styles</Link>} />
 
-        <DropdownMenuItem render={ <Link href="/production">Production</Link>}/>
+        <DropdownMenuItem render={<Link href="/production">Production</Link>} />
 
-        <DropdownMenuItem render={ <Link href="/payments">Payments</Link>}/>
+        <DropdownMenuItem render={<Link href="/payments">Payments</Link>} />
 
         <DropdownMenuSeparator />
 

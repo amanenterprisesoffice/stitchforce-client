@@ -144,6 +144,8 @@ export default function StylesPage() {
       ? offset + styles.length < totalItems
       : styles.length === limit
 
+  const isEmptyPage = styles.length === 0 && offset > 0
+
   // Create.
   const openCreateDialog = () => {
     setEditingStyle(null)
@@ -262,6 +264,20 @@ export default function StylesPage() {
       <div className="relative flex flex-1 flex-col gap-4">
         {isLoading && !stylesData ? (
           <Loader text="Loading styles" />
+        ) : isEmptyPage ? (
+          <StateComponent
+            message="No more styles on this page"
+            ICON={<Shirt />}
+            description="There are no styles available at this page. You can go back to the previous page to view available styles."
+            PortalButton={
+              <Button
+                variant="outline"
+                onClick={() => setOffset(0)}
+              >
+                Go to first page
+              </Button>
+            }
+          />
         ) : styles.length === 0 && !search ? (
           <StateComponent
             message="No styles yet"

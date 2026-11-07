@@ -5,12 +5,15 @@ export async function logout() {
       .replace(/^ +/, "")
       .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/")
   })
-  const res = await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+  const res = await fetch("/api/auth/logout", {
+    method: "POST",
+    credentials: "include",
+  })
   if (res.ok) {
-    window.location.href = '/login';
-  } else {
-    console.error('Failed to logout');
+    return true
   }
+
+  return false
 }
 
 export function getInitials(name: string) {
@@ -22,7 +25,6 @@ export function getInitials(name: string) {
     return (words[0][0] + words[words.length - 1][0]).toUpperCase()
   }
 }
-
 
 export function formatDate(date?: string | Date | null) {
   if (!date) return "—"
@@ -38,13 +40,19 @@ export function formatDate(date?: string | Date | null) {
   }).format(value)
 }
 
-export function formatMoney(amount: number) {
+export function formatMoney(amount: number | undefined) {
+  if (amount === undefined) return "—"
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Number(amount || 0) / 100)
+}
+
+export function getLocalDateValue() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
 }
 
 export function unwrapList<T>(value: any, keys: string[] = []): T[] {

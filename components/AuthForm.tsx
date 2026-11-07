@@ -84,9 +84,6 @@ export function AuthForm({
           toast.error("Something went wrong")
         }
       },
-      onError: (error: any) => {
-        toast.error(error?.message || "Something went wrong")
-      },
     })
   }
 

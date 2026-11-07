@@ -36,7 +36,7 @@ import type { Bundle } from "@/utils/zodSchema/bundle"
 import type { Style } from "@/utils/zodSchema/style"
 import type { StyleOperation } from "@/utils/zodSchema/styleops"
 
-import { formatMoney } from "@/utils/utils"
+import { formatMoney, getLocalDateValue } from "@/utils/utils"
 
 import {
   BundleFormInfo,
@@ -45,12 +45,7 @@ import {
   WorkerFormInfo,
 } from "./form-info"
 
-function getLocalDateTime() {
-  const now = new Date()
-  const offset = now.getTimezoneOffset()
 
-  return new Date(now.getTime() - offset * 60_000).toISOString().slice(0, 16)
-}
 
 export default function NewProductionEntriesPage() {
   const { user } = useUser()
@@ -65,7 +60,7 @@ export default function NewProductionEntriesPage() {
       bundle_id: "",
       style_operation_id: "",
       worker_id: "",
-      production_date: getLocalDateTime(),
+      production_date: getLocalDateValue(),
       remarks: "",
     },
   })
@@ -210,14 +205,11 @@ export default function NewProductionEntriesPage() {
           bundle_id: "",
           style_operation_id: "",
           worker_id: "",
-          production_date: getLocalDateTime(),
+          production_date: getLocalDateValue(),
           remarks: "",
         })
       },
 
-      onError: (e: any) => {
-        toast.error(e?.message || "Failed to create production entry")
-      },
     })
   }
 

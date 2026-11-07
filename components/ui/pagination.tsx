@@ -1,5 +1,7 @@
+
 "use client"
 
+import { useRef, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,13 +33,37 @@ export default function Pagination({
   onPageChange,
   onLimitChange,
 }: PaginationProps) {
+  const [isChangingPage, setIsChangingPage] = useState(false)
+  const clickLock = useRef(false)
+
   const start = itemCount === 0 ? 0 : offset + 1
   const end = offset + itemCount
+
   const currentPage = Math.floor(offset / limit) + 1
+
   const totalPages =
     totalItems === undefined
       ? undefined
       : Math.max(1, Math.ceil(totalItems / limit))
+
+  const handlePageChange = (nextOffset: number) => {
+    if (clickLock.current) return
+
+    clickLock.current = true
+    setIsChangingPage(true)
+
+    onPageChange(nextOffset)
+  }
+
+  // Unlock when the parent updates the pagination offset.
+  // Also handles cases where the requested offset doesn't change.
+  const previousOffset = useRef(offset)
+
+  if (previousOffset.current !== offset) {
+    previousOffset.current = offset
+    clickLock.current = false
+    setIsChangingPage(false)
+  }
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -46,13 +72,19 @@ export default function Pagination({
         <span className="font-medium text-foreground">
           {start}–{end}
         </span>
+
         {totalItems !== undefined && (
           <>
             {" "}
-            of <span className="font-medium text-foreground">{totalItems}</span>
+            of{" "}
+            <span className="font-medium text-foreground">
+              {totalItems}
+            </span>
           </>
         )}
+
         <span className="mx-2">·</span>
+
         <span>
           Page {currentPage}
           {totalPages !== undefined ? ` of ${totalPages}` : ""}
@@ -63,6 +95,7 @@ export default function Pagination({
         <span className="text-sm whitespace-nowrap text-muted-foreground">
           Rows per page
         </span>
+
         <Select
           value={String(limit)}
           onValueChange={(value) => onLimitChange(Number(value))}
@@ -70,6 +103,7 @@ export default function Pagination({
           <SelectTrigger className="h-9 w-[76px]">
             <SelectValue />
           </SelectTrigger>
+
           <SelectContent>
             {pageSizeOptions.map((size) => (
               <SelectItem key={size} value={String(size)}>
@@ -78,25 +112,31 @@ export default function Pagination({
             ))}
           </SelectContent>
         </Select>
+
         <Button
           type="button"
           variant="outline"
           size="icon"
           className="size-9"
           aria-label="Previous page"
-          disabled={offset === 0}
-          onClick={() => onPageChange(Math.max(0, offset - limit))}
+          disabled={offset === 0 || isChangingPage}
+          onClick={() =>
+            handlePageChange(Math.max(0, offset - limit))
+          }
         >
           <ChevronLeft className="size-4" />
         </Button>
+
         <Button
           type="button"
           variant="outline"
           size="icon"
           className="size-9"
           aria-label="Next page"
-          disabled={!hasNextPage}
-          onClick={() => onPageChange(offset + limit)}
+          disabled={!hasNextPage || isChangingPage}
+          onClick={() =>
+            handlePageChange(offset + limit)
+          }
         >
           <ChevronRight className="size-4" />
         </Button>

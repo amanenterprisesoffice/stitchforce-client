@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -12,44 +13,18 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+
 import {
-  GalleryVerticalEndIcon,
-  AudioLinesIcon,
-  TerminalIcon,
-  TerminalSquareIcon,
-  BotIcon,
-  BookOpenIcon,
-  Settings2Icon,
-  FrameIcon,
-  PieChartIcon,
-  MapIcon,
   LayoutDashboardIcon,
   FactoryIcon,
   UsersIcon,
-  LayoutDashboard,
+  PieChartIcon,
 } from "lucide-react"
+
 import { useUser } from "@/contexts/UserContext"
 import { Separator } from "./ui/separator"
 
-// This is sample data.
 const data = {
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: <GalleryVerticalEndIcon />,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: <AudioLinesIcon />,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: <TerminalIcon />,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
       title: "Dashboard",
@@ -76,6 +51,25 @@ const data = {
         {
           title: "Entries",
           url: "/production-entries",
+        },
+      ],
+    },
+    {
+      title: "Payments",
+      url: "#",
+      icon: <PieChartIcon />,
+      items: [
+        {
+          title: "All Payments",
+          url: "/worker-payments",
+        },
+        {
+          title: "Pending Payments",
+          url: "/worker-payments/pending",
+        },
+        {
+          title: "Payment History",
+          url: "/worker-payments/history",
         },
       ],
     },
@@ -114,38 +108,29 @@ const data = {
       ],
     },
   ],
-  projects: [
-    {
-      name: "Dashboard",
-      url: "#",
-      icon: <LayoutDashboard />,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: <PieChartIcon />,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: <MapIcon />,
-    },
-  ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useUser() // Get user from context
+export function AppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useUser()
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <OrganizationHeader />
       </SidebarHeader>
+
       <Separator />
+
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
-      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
+
+      <SidebarFooter>
+        {user && <NavUser user={user} />}
+      </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   )

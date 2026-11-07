@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { Scissors } from "lucide-react"
+import { NotebookText, Scissors } from "lucide-react"
 import { toast } from "sonner"
 
 import useFetch from "@/hooks/useFetch"
@@ -11,7 +11,6 @@ import { useUser } from "@/contexts/UserContext"
 
 import { Button } from "@/components/ui/button"
 import Loader from "@/components/ui/Loader"
-import State from "@/components/StateComponent"
 import StateComponent from "@/components/StateComponent"
 import Pagination from "@/components/ui/pagination"
 
@@ -64,11 +63,7 @@ function readInitialFilters(params: URLSearchParams): FilterState {
   }
 }
 
-function buildQuery(
-  filters: FilterState,
-  limit: number,
-  offset: number
-) {
+function buildQuery(filters: FilterState, limit: number, offset: number) {
   const params = new URLSearchParams()
 
   if (filters.search.trim()) {
@@ -123,9 +118,7 @@ export default function ProductionEntriesPage() {
 
   const searchParams = useSearchParams()
 
-  const base = organizationID
-    ? `/api/organizations/${organizationID}`
-    : ""
+  const base = organizationID ? `/api/organizations/${organizationID}` : ""
 
   const entriesURL = `${base}/production-entries`
 
@@ -174,10 +167,7 @@ export default function ProductionEntriesPage() {
 
   // Update filters.
   const updateFilter = useCallback(
-    <K extends keyof FilterState>(
-      key: K,
-      value: FilterState[K]
-    ) => {
+    <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
       setFilters((current) => {
         const next = {
           ...current,
@@ -231,10 +221,9 @@ export default function ProductionEntriesPage() {
   } = useFetch<unknown>({ auto: false })
 
   // Delete mutation.
-  const {
-    refetch: mutateEntry,
-    isLoading: isDeleting,
-  } = useFetch({ auto: false })
+  const { refetch: mutateEntry, isLoading: isDeleting } = useFetch({
+    auto: false,
+  })
 
   // Extract response data.
   const entries = useMemo(
@@ -256,8 +245,7 @@ export default function ProductionEntriesPage() {
   )
 
   const styles = useMemo(
-    () =>
-      unwrapList<Style>(stylesResponse, ["styles"]),
+    () => unwrapList<Style>(stylesResponse, ["styles"]),
     [stylesResponse]
   )
 
@@ -318,16 +306,9 @@ export default function ProductionEntriesPage() {
       url: requestURL,
       method: "GET",
       onError: (error: any) =>
-        toast.error(
-          error?.message || "Failed to load production entries"
-        ),
+        toast.error(error?.message || "Failed to load production entries"),
     })
-  }, [
-    organizationID,
-    filtersInitialized,
-    fetchEntries,
-    requestURL,
-  ])
+  }, [organizationID, filtersInitialized, fetchEntries, requestURL])
 
   useEffect(() => {
     loadEntries()
@@ -350,12 +331,7 @@ export default function ProductionEntriesPage() {
       onError: (error: any) =>
         toast.error(error?.message || "Failed to load styles"),
     })
-  }, [
-    organizationID,
-    base,
-    fetchWorkers,
-    fetchStyles,
-  ])
+  }, [organizationID, base, fetchWorkers, fetchStyles])
 
   // Load dependent options when a style is selected.
   useEffect(() => {
@@ -367,9 +343,7 @@ export default function ProductionEntriesPage() {
       )}&limit=${MAX_OPTION_LIMIT}&offset=0`,
       method: "GET",
       onError: (error: any) =>
-        toast.error(
-          error?.message || "Failed to load bundles for this style"
-        ),
+        toast.error(error?.message || "Failed to load bundles for this style"),
     })
 
     fetchOperations({
@@ -380,13 +354,7 @@ export default function ProductionEntriesPage() {
       onError: (error: any) =>
         toast.error(error?.message || "Failed to load style operations"),
     })
-  }, [
-    organizationID,
-    base,
-    filters.styleID,
-    fetchBundles,
-    fetchOperations,
-  ])
+  }, [organizationID, base, filters.styleID, fetchBundles, fetchOperations])
 
   // Pagination.
   const totalItems = useMemo(
@@ -420,9 +388,7 @@ export default function ProductionEntriesPage() {
       },
 
       onError: (error: any) =>
-        toast.error(
-          error?.message || "Failed to delete entry"
-        ),
+        toast.error(error?.message || "Failed to delete entry"),
     })
   }
 
@@ -444,12 +410,11 @@ export default function ProductionEntriesPage() {
   }
 
   const hasActiveFilters = Object.values(requestFilters).some(Boolean)
+  const isEmptyPage = entries.length === 0 && offset > 0
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <ProductionEntriesHeader
-        count={totalItems ?? entries.length}
-      />
+      <ProductionEntriesHeader count={totalItems ?? entries.length} />
 
       <div className="flex h-full gap-4">
         <ProductionEntryFilters
@@ -467,13 +432,25 @@ export default function ProductionEntriesPage() {
         />
 
         <div className="relative flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-
-
           <div className="min-h-0 flex-1">
             {entriesLoading && !entriesResponse ? (
               <Loader text="Loading production entries" />
+            ) : isEmptyPage ? (
+              <StateComponent
+                message="No more production entries on this page"
+                ICON={<NotebookText />}
+                description="There are no production entries available at this page. You can go back to the previous page to view available production entries."
+                PortalButton={
+                  <Button
+                    variant="outline"
+                    onClick={() => setOffset(0)}
+                  >
+                    Go to first page
+                  </Button>
+                }
+              />
             ) : !entries.length ? (
-              <State
+              <StateComponent
                 message={
                   hasActiveFilters
                     ? "No entries found"
@@ -487,11 +464,7 @@ export default function ProductionEntriesPage() {
                 }
                 PortalButton={
                   !hasActiveFilters ? (
-                    <Button
-                      render={
-                        <Link href="/production-entries/new" />
-                      }
-                    >
+                    <Button render={<Link href="/production-entries/new" />}>
                       Create first entry
                     </Button>
                   ) : undefined

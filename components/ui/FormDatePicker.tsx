@@ -1,29 +1,49 @@
-
 "use client"
 
 import * as React from "react"
+import type {
+  DropdownNavProps,
+  DropdownProps,
+} from "react-day-picker"
+
 import {
   Controller,
   type Control,
   type FieldValues,
   type Path,
 } from "react-hook-form"
+
 import { ChevronDownIcon, HelpCircle } from "lucide-react"
 import clsx from "clsx"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Label } from "@/components/ui/label"
+
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { formatDate } from "@/utils/utils"
+
+// --------------------------------------------------
+// TYPES
+// --------------------------------------------------
 
 interface BaseProps {
   id: string
@@ -35,9 +55,16 @@ interface BaseProps {
   className?: string
   parentClass?: string
   tooltipText?: string
-  captionLayout?: "label" | "dropdown" | "dropdown-months" | "dropdown-years"
+
+  captionLayout?:
+    | "label"
+    | "dropdown"
+    | "dropdown-months"
+    | "dropdown-years"
+
   value?: string
   onChange?: (value: string) => void
+
   [key: string]: any
 }
 
@@ -52,22 +79,109 @@ type UncontrolledProps = BaseProps & {
   control?: undefined
 }
 
-const formatDate = (date: Date | string | undefined) => {
+export type FormDatePickerProps<
+  T extends FieldValues = FieldValues,
+> = ControlledProps<T> | UncontrolledProps
+
+// --------------------------------------------------
+// HELPERS
+// --------------------------------------------------
+
+const formatDateLocal = (date: Date | string | undefined) => {
   if (!date) return ""
-  // If it's a Date object, extract the calendar date as YYYY-MM-DD
+
   if (date instanceof Date && !isNaN(date.getTime())) {
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, "0")
     const day = String(date.getDate()).padStart(2, "0")
+
     return `${year}-${month}-${day}`
   }
-  // If it's already a string (e.g., from the calendar), just return first 10 chars
-  if (typeof date === "string") return date.slice(0, 10)
+
+  if (typeof date === "string") {
+    return date.slice(0, 10)
+  }
+
   return ""
 }
 
-export type FormDatePickerProps<T extends FieldValues = FieldValues> =
-  ControlledProps<T> | UncontrolledProps
+const parseDate = (value?: string) => {
+  if (!value) return undefined
+
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number)
+
+  if (!year || !month || !day) return undefined
+
+  const date = new Date(year, month - 1, day)
+
+  return isNaN(date.getTime()) ? undefined : date
+}
+
+// --------------------------------------------------
+// CUSTOM DROPDOWN
+// --------------------------------------------------
+
+const handleCalendarChange = (
+  value: string | number,
+  onChange: React.ChangeEventHandler<HTMLSelectElement>
+) => {
+  const event = {
+    target: {
+      value: String(value),
+    },
+  } as React.ChangeEvent<HTMLSelectElement>
+
+  onChange(event)
+}
+
+const CalendarDropdown = (props: DropdownProps) => {
+  return (
+    <Select
+      value={String(props.value)}
+      onValueChange={(value) => {
+        if (props.onChange && value !== null) {
+          handleCalendarChange(value, props.onChange)
+        }
+      }}
+      disabled={props.disabled}
+    >
+      <SelectTrigger className="h-8 min-w-0 first:grow">
+        <SelectValue>
+          {props.options?.find(
+            (option) => String(option.value) === String(props.value)
+          )?.label}
+        </SelectValue>
+      </SelectTrigger>
+
+      <SelectContent align="start">
+        {props.options?.map((option) => (
+          <SelectItem
+            key={option.value}
+            value={String(option.value)}
+            disabled={option.disabled}
+          >
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
+
+const CalendarDropdownNav = (props: DropdownNavProps) => (
+  <div className="flex w-full items-center gap-2">
+    {props.children}
+  </div>
+)
+
+const calendarComponents = {
+  Dropdown: CalendarDropdown,
+  DropdownNav: CalendarDropdownNav,
+}
+
+// --------------------------------------------------
+// COMPONENT
+// --------------------------------------------------
 
 function FormDatePicker<T extends FieldValues = FieldValues>({
   id,
@@ -90,28 +204,62 @@ function FormDatePicker<T extends FieldValues = FieldValues>({
   const hasError = !!errors?.[id]
 
   const [currentMonth, setCurrentMonth] = React.useState<Date>(
-    value
-      ? new Date(value)
-      : defaultValue
-        ? new Date(defaultValue)
-        : new Date()
+    () => parseDate(value) ?? parseDate(defaultValue) ?? new Date()
   )
-
-  const handleLocalChange = (date: Date | undefined) => {
-    if (!date) return
-
-    const plainDate = formatDate(date)
-
-    onChange?.(plainDate)
-    setCurrentMonth(date)
-    setOpen(false)
-  }
 
   const triggerClassName = clsx(
     "w-full justify-between font-normal",
-    hasError ? "border-[#A90F26]" : "",
+    hasError && "border-[#A90F26]",
     className
   )
+
+  // --------------------------------------------------
+  // CALENDAR
+  // --------------------------------------------------
+
+  const renderCalendar = (
+    selectedDate: Date | undefined,
+    month: Date,
+    onSelect: (date: Date | undefined) => void,
+    onMonthChange: (date: Date) => void
+  ) => (
+    <Calendar
+      mode="single"
+      selected={selectedDate}
+      month={month}
+      captionLayout={captionLayout}
+      onMonthChange={onMonthChange}
+      onSelect={onSelect}
+      hideNavigation
+      disabled={disabled}
+      components={calendarComponents}
+      classNames={{
+        month_caption: "mx-0",
+      }}
+      {...props}
+    />
+  )
+
+  // --------------------------------------------------
+  // TRIGGER
+  // --------------------------------------------------
+
+  const renderTrigger = (displayValue?: string) => (
+    <Button
+      variant="outline"
+      id={id}
+      type="button"
+      disabled={disabled}
+      className={triggerClassName}
+    >
+      {displayValue ? formatDate(displayValue) : placeholder}
+      <ChevronDownIcon className="size-4 opacity-50" />
+    </Button>
+  )
+
+  // --------------------------------------------------
+  // RENDER
+  // --------------------------------------------------
 
   return (
     <div className={clsx("w-full", parentClass)}>
@@ -130,10 +278,11 @@ function FormDatePicker<T extends FieldValues = FieldValues>({
                 render={
                   <HelpCircle
                     size={12}
-                    className="text-xs text-muted-foreground"
+                    className="text-muted-foreground"
                   />
                 }
               />
+
               <TooltipContent side="top">
                 {tooltipText}
               </TooltipContent>
@@ -148,55 +297,30 @@ function FormDatePicker<T extends FieldValues = FieldValues>({
           control={control}
           defaultValue={defaultValue as any}
           render={({ field }) => {
-            const [controlledMonth, setControlledMonth] =
-              React.useState<Date>(
-                field.value ? new Date(field.value) : new Date()
-              )
+            const selectedDate = parseDate(field.value)
 
             return (
               <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger
-                  render={
-                    <Button
-                      variant="outline"
-                      id={id}
-                      disabled={disabled}
-                      className={triggerClassName}
-                      {...props}
-                    >
-                      {field.value
-                        ? formatDate(field.value)
-                        : placeholder}
-
-                      <ChevronDownIcon />
-                    </Button>
-                  }
-                />
+                <PopoverTrigger render={renderTrigger(field.value)} />
 
                 <PopoverContent
                   className="w-auto overflow-hidden p-0"
                   align="start"
                 >
-                  <Calendar
-                    mode="single"
-                    selected={
-                      field.value ? new Date(field.value) : undefined
-                    }
-                    month={controlledMonth}
-                    captionLayout={captionLayout}
-                    onMonthChange={setControlledMonth}
-                    onSelect={(date) => {
+                  {renderCalendar(
+                    selectedDate,
+                    currentMonth,
+                    (date) => {
                       if (!date) return
 
-                      const plainDate = formatDate(date)
+                      const formatted = formatDateLocal(date)
 
-                      field.onChange(plainDate)
-                      setControlledMonth(date)
+                      field.onChange(formatted)
+                      setCurrentMonth(date)
                       setOpen(false)
-                    }}
-                    disabled={disabled}
-                    {...props}
-                  />
+                    },
+                    setCurrentMonth
+                  )}
                 </PopoverContent>
               </Popover>
             )
@@ -204,35 +328,24 @@ function FormDatePicker<T extends FieldValues = FieldValues>({
         />
       ) : (
         <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger
-            render={
-              <Button
-                variant="outline"
-                id={id}
-                disabled={disabled}
-                className={triggerClassName}
-                {...props}
-              >
-                {value ? formatDate(value) : placeholder}
-                <ChevronDownIcon />
-              </Button>
-            }
-          />
+          <PopoverTrigger render={renderTrigger(value)} />
 
           <PopoverContent
             className="w-auto overflow-hidden p-0"
             align="start"
           >
-            <Calendar
-              mode="single"
-              selected={value ? new Date(value) : undefined}
-              month={currentMonth}
-              captionLayout={captionLayout}
-              onMonthChange={setCurrentMonth}
-              onSelect={handleLocalChange}
-              disabled={disabled}
-              {...props}
-            />
+            {renderCalendar(
+              parseDate(value),
+              currentMonth,
+              (date) => {
+                if (!date) return
+
+                onChange?.(formatDateLocal(date))
+                setCurrentMonth(date)
+                setOpen(false)
+              },
+              setCurrentMonth
+            )}
           </PopoverContent>
         </Popover>
       )}

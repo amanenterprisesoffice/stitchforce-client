@@ -29,6 +29,7 @@ import {
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar()
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -91,9 +92,14 @@ export function NavUser({ user }: { user: User }) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => {
-              logout()
-            }}>
+            <DropdownMenuItem
+              onClick={async () => {
+                const res = await logout()
+                if (res) {
+                  window.location.href = "/login"
+                }
+              }}
+            >
               <LogOutIcon />
               Log out
             </DropdownMenuItem>

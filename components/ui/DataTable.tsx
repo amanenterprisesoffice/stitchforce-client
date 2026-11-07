@@ -26,6 +26,7 @@ interface DataTableProps<T> {
   emptyMessage?: string
   className?: string
   tableContainerClassName?: string
+  frameClassName?: string
 }
 
 export default function DataTable<T>({
@@ -36,16 +37,18 @@ export default function DataTable<T>({
   emptyMessage = "No records found.",
   className = "",
   tableContainerClassName = "",
+  frameClassName = "",
 }: DataTableProps<T>) {
   return (
-    <Card className={`h-full w-full pt-0! pb-0! shadow-none ${className}`}>
-      <CardContent className="p-0">
+    <Card className={`h-full w-full pt-0! pb-0!  shadow-none ${className}`}>
+      <CardContent className="p-0 ">
         <Table
           variant="surface"
           stickyHeader
-          containerClassName={`max-h-full ${tableContainerClassName}`}
+          containerClassName={`max-h-full  ${tableContainerClassName}`}
+          frameClassName={frameClassName}
         >
-          <TableHeader>
+          <TableHeader className="bg-red-500!">
             <TableRow>
               {columns.map((column, index) => (
                 <TableHead key={index} className={column.className}>

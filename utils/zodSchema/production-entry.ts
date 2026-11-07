@@ -1,7 +1,4 @@
-import type { Bundle } from "./bundle"
 import type { GarmentWorker } from "./garmentWorker"
-import type { Style } from "./style"
-import type { StyleOperation } from "./styleops"
 
 
 
@@ -46,14 +43,41 @@ export interface ProductionEntry {
   production_date: string
   remarks?: string
 
-  worker?: GarmentWorker
-  bundle?: Bundle
-  style?: Style
-  operation?: StyleOperation
+  worker?: ProductionEntryWorker
+  bundle?: ProductionEntryBundle
+  style?: ProductionEntryStyle
+  operation?: ProductionEntryOperation
 
   created_at?: string
   updated_at?: string
   deleted_at?: string | null
+}
+
+export interface ProductionEntryWorker {
+  id: string
+  name: string
+  phone: string
+  photo_url?: string
+}
+
+
+export interface ProductionEntryBundle {
+  id: string
+  bundle_number: string
+  quantity: number
+  status: string
+}
+
+export interface ProductionEntryStyle {
+  id: string
+  name: string
+  style_number: string
+}
+
+export interface ProductionEntryOperation {
+  id: string
+  name: string
+  rate_per_piece: number
 }
 
 export interface UpdateProductionEntryPayload {

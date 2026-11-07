@@ -13,6 +13,7 @@ interface UseFetchOptions<T> {
   withAuth?: boolean;
   onSuccess?: (data: T) => void;
   onError?: (error: any) => void;
+  showErrorToast?: boolean;
 }
 
 interface UseFetchReturn<T> {
@@ -31,6 +32,7 @@ export default function useFetch<T = any>({
   withAuth = true,
   onSuccess = () => {},
   onError = () => {},
+  showErrorToast = true,
 }: UseFetchOptions<T> = {}): UseFetchReturn<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +46,7 @@ export default function useFetch<T = any>({
     withAuth,
     onSuccess,
     onError,
+    showErrorToast,
   });
 
   useEffect(() => {
@@ -55,8 +58,9 @@ export default function useFetch<T = any>({
       withAuth,
       onSuccess,
       onError,
+      showErrorToast,
     };
-  }, [url, method, payload, headers, withAuth, onSuccess, onError]);
+  }, [url, method, payload, headers, withAuth, onSuccess, onError, showErrorToast]);
 
   const refetch = useCallback(
     async (overrideOptions: Partial<UseFetchOptions<T>> = {}) => {
@@ -120,7 +124,9 @@ export default function useFetch<T = any>({
       } catch (err: any) {
         const message = err?.message || "Unknown error";
 
-        toast.error(message);
+        if (config.showErrorToast) {
+          toast.error(message);
+        }
         setError(message);
         config.onError?.(err?.fullError || err);
       } finally {

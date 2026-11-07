@@ -1,5 +1,6 @@
 
 import { z } from "zod"
+import { ProductionEntryWorker } from "./production-entry"
 
 export const garmentWorkerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -40,7 +41,7 @@ export interface GarmentWorker {
 
 
 
-export function getWorkerName(worker?: GarmentWorker) {
+export function getWorkerName(worker?: GarmentWorker | ProductionEntryWorker) {
   return worker?.name?.trim() || "Unknown worker"
 }
 

@@ -87,6 +87,7 @@ type TableProps = React.ComponentProps<"table"> & {
   stickyHeader?: boolean
   containerClassName?: string
   containerRef?: React.Ref<HTMLDivElement>
+  frameClassName?: string
 }
 
 function Table({
@@ -98,6 +99,7 @@ function Table({
   stickyHeader = false,
   containerClassName,
   containerRef,
+  frameClassName,
   ...props
 }: TableProps) {
   const [container, setContainer] = React.useState<HTMLDivElement | null>(null)
@@ -114,7 +116,7 @@ function Table({
       data-variant={variant}
       data-size={size}
       data-wrap={wrap ? "" : undefined}
-      className={tableVariants({ variant, size })}
+      className={cn(tableVariants({ variant, size }), frameClassName)}
     >
       <div
         ref={setRef}
@@ -184,7 +186,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "group/table-row bg-(--table-bg) hover:bg-(--table-hover) data-[state=selected]:bg-muted",
+        "group/table-row  bg-(--table-bg) hover:bg-(--table-hover) data-[state=selected]:bg-muted",
         className
       )}
       {...props}

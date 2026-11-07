@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -16,6 +17,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+
 import Link from "next/link"
 import { ChevronRightIcon } from "lucide-react"
 
@@ -39,51 +41,52 @@ export function NavMain({
 
       <SidebarMenu>
         {items.map((item) => {
-          // Regular navigation links
-          if (!item.items?.length) {
+          // Expandable group (has submenu items)
+          if (item.items?.length) {
             return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton
-                  render={<Link href={item.url} />}
-                  tooltip={item.title}
+              <Collapsible
+                key={item.title}
+                defaultOpen={item.isActive}
+                className="group/collapsible"
+                render={<SidebarMenuItem />}
+              >
+                <CollapsibleTrigger
+                  render={<SidebarMenuButton tooltip={item.title} />}
                 >
                   {item.icon}
                   <span>{item.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+
+                  <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-open/collapsible:rotate-90" />
+                </CollapsibleTrigger>
+
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton
+                          render={<Link href={subItem.url} />}
+                        >
+                          <span>{subItem.title}</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </Collapsible>
             )
           }
 
-          // Collapsible navigation groups
+          // Direct navigation link (no submenu)
           return (
-            <Collapsible
-              key={item.title}
-              defaultOpen={item.isActive}
-              className="group/collapsible"
-              render={<SidebarMenuItem />}
-            >
-              <CollapsibleTrigger
-                render={<SidebarMenuButton tooltip={item.title} />}
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton
+                render={<Link href={item.url} />}
+                tooltip={item.title}
               >
                 {item.icon}
                 <span>{item.title}</span>
-                <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-open/collapsible:rotate-90" />
-              </CollapsibleTrigger>
-
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {item.items.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton
-                        render={<Link href={subItem.url} />}
-                      >
-                        <span>{subItem.title}</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </Collapsible>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           )
         })}
       </SidebarMenu>

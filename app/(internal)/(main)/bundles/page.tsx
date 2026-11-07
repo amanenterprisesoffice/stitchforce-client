@@ -320,6 +320,7 @@ export default function BundlesPage() {
     (stylesLoading && !stylesResponse) ||
     (sizesLoading && !sizesResponse)
 
+  const isEmptyPage = bundles.length === 0 && offset > 0
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <BundlesHeader
@@ -355,6 +356,17 @@ export default function BundlesPage() {
         <div className="relative flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden">
           {isLoading ? (
             <Loader text="Loading bundles" />
+          ) : isEmptyPage ? (
+            <StateComponent
+              message="No more bundles on this page"
+              ICON={<PackagePlus />}
+              description="There are no bundles available at this page. You can go back to the previous page to view available bundles."
+              PortalButton={
+                <Button variant="outline" onClick={() => setOffset(0)}>
+                  Go to first page
+                </Button>
+              }
+            />
           ) : bundles.length === 0 ? (
             <StateComponent
               message={

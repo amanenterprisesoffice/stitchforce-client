@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { formatDate } from "@/utils/utils"
 
 interface Props {
   open: boolean
@@ -26,7 +27,6 @@ interface Props {
   entry: ProductionEntry
   onSubmit: (values: UpdateProductionEntryPayload) => Promise<void>
   isSaving: boolean
-  toDateTimeLocal: (value?: string) => string
 }
 
 export default function EditProductionEntryDialog({
@@ -35,12 +35,11 @@ export default function EditProductionEntryDialog({
   entry,
   onSubmit,
   isSaving,
-  toDateTimeLocal,
 }: Props) {
   const [bundleID, setBundleID] = useState(entry.bundle_id)
   const [workerID, setWorkerID] = useState(entry.worker_id)
   const [quantity, setQuantity] = useState(String(entry.quantity))
-  const [productionDate, setProductionDate] = useState(toDateTimeLocal(entry.production_date))
+  const [productionDate, setProductionDate] = useState(formatDate(entry.production_date))
   const [remarks, setRemarks] = useState(entry.remarks || "")
 
   useEffect(() => {
@@ -48,9 +47,9 @@ export default function EditProductionEntryDialog({
     setBundleID(entry.bundle_id)
     setWorkerID(entry.worker_id)
     setQuantity(String(entry.quantity))
-    setProductionDate(toDateTimeLocal(entry.production_date))
+    setProductionDate(formatDate(entry.production_date))
     setRemarks(entry.remarks || "")
-  }, [open, entry, toDateTimeLocal])
+  }, [open, entry])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()

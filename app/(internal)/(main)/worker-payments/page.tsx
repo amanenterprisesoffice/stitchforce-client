@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Plus, Wallet } from "lucide-react"
 import { toast } from "sonner"
 
@@ -17,14 +17,10 @@ import WorkerPaymentFilters, {
   type WorkerPaymentFiltersValue,
 } from "./components/filters"
 import WorkerPaymentsTable from "./components/table"
-import VoidPaymentDialog from "./components/void-dialog"
 
-import type {
-  CreateWorkerPaymentValues,
-  WorkerPayment,
-} from "@/utils/zodSchema/payments"
-
+import type { WorkerPayment } from "@/utils/zodSchema/payments"
 import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+
 import useFetch from "@/hooks/useFetch"
 
 const DEFAULT_LIMIT = 25
@@ -93,6 +89,7 @@ function readTotal(response: unknown): number | undefined {
 export default function WorkerPaymentsPage() {
   const { user } = useUser()
   const router = useRouter()
+
   const organizationID = user?.organization_id
 
   const base = organizationID ? `/api/organizations/${organizationID}` : ""
@@ -110,16 +107,25 @@ export default function WorkerPaymentsPage() {
   // Dialogs
   const [paymentToVoid, setPaymentToVoid] = useState<WorkerPayment | null>(null)
 
-  // Request URL
+  // Build request URL
   const requestURL = useMemo(() => {
     return `${paymentsURL}?${buildQuery(filters, limit, offset)}`
-  }, [paymentsURL, filters, limit, offset])
+  }, [
+    paymentsURL,
+    filters.worker_id,
+    filters.status,
+    filters.from_date,
+    filters.to_date,
+    limit,
+    offset,
+  ])
 
   // Fetch workers
-  const { data: workersData, isLoading: workersLoading } = useFetch({
-    auto: !!organizationID,
-    url: `${base}/garment-workers?limit=100&offset=0`,
-    method: "GET",
+  const { data: workers, isLoading: workersLoading } = useFetch<
+    GarmentWorker[]
+  >({
+    auto: true,
+    url: `${base}/garment-workers`,
   })
 
   // Fetch payments
@@ -127,30 +133,24 @@ export default function WorkerPaymentsPage() {
     data: paymentsData,
     isLoading,
     refetch: fetchPayments,
-  } = useFetch({
-    auto: !!organizationID,
-    url: requestURL,
-    method: "GET",
+  } = useFetch<any>({
+    auto: false,
   })
 
-  // Mutations
+  // Mutation
   const { refetch: mutatePayment, isLoading: isMutating } = useFetch({
     auto: false,
   })
 
-  // Normalize workers
-  const workers: GarmentWorker[] = Array.isArray(workersData)
-    ? workersData
-    : (workersData?.workers ?? [])
-
   // Normalize payments
   const payments: WorkerPayment[] = Array.isArray(paymentsData)
     ? paymentsData
-    : (paymentsData?.payments ?? [])
+    : (paymentsData?.worker_payments ?? [])
 
   // Total count
   const totalItems = useMemo(() => readTotal(paymentsData), [paymentsData])
 
+  // Pagination
   const hasNextPage =
     totalItems !== undefined
       ? offset + payments.length < totalItems
@@ -162,16 +162,25 @@ export default function WorkerPaymentsPage() {
 
     fetchPayments({
       url: requestURL,
-      method: "GET",
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to fetch payments"),
     })
   }, [organizationID, requestURL, fetchPayments])
 
-  // Filter changes
+  // Fetch payments whenever filters or pagination change
+  useEffect(() => {
+    loadPayments()
+  }, [loadPayments])
+
+  // Update individual filters
   const handleFiltersChange = useCallback(
-    (nextFilters: WorkerPaymentFiltersValue) => {
-      setFilters(nextFilters)
+    <K extends keyof WorkerPaymentFiltersValue>(
+      key: K,
+      value: WorkerPaymentFiltersValue[K]
+    ) => {
+      setFilters((prev) => ({
+        ...prev,
+        [key]: value,
+      }))
+
       setOffset(0)
     },
     []
@@ -183,8 +192,6 @@ export default function WorkerPaymentsPage() {
     setOffset(0)
   }, [])
 
-
-
   // Void payment
   const handleVoid = async () => {
     if (!paymentToVoid || !organizationID) return
@@ -192,16 +199,18 @@ export default function WorkerPaymentsPage() {
     await mutatePayment({
       url: `${paymentsURL}/${paymentToVoid.id}/void`,
       method: "PATCH",
+
       onSuccess: () => {
         toast.success("Payment voided successfully")
         setPaymentToVoid(null)
+
+        // Reload payments after successful void
         loadPayments()
       },
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to void payment"),
     })
   }
 
+  // Organization validation
   if (!organizationID) {
     return (
       <StateComponent
@@ -213,18 +222,19 @@ export default function WorkerPaymentsPage() {
   }
 
   const hasActiveFilters = Object.values(filters).some(Boolean)
+
   const isEmptyPage = payments.length === 0 && offset > 0
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       {/* Header */}
-      <WorkerPaymentsHeader
-        count={totalItems ?? payments.length}
-      />
+      <WorkerPaymentsHeader count={totalItems ?? payments.length} />
 
-      {/* Side-by-side filters and table */}
+      {/* Filters and table */}
       <div className="flex h-full min-h-0 gap-4">
         <WorkerPaymentFilters
+          isWorkersLoading={workersLoading}
+          filters={filters}
           workers={workers}
           onChange={handleFiltersChange}
           onClear={clearFilters}
@@ -233,20 +243,18 @@ export default function WorkerPaymentsPage() {
         {/* Payments table */}
         <div className="relative flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden">
           <div className="min-h-0 flex-1">
-            {isLoading && !paymentsData ? (
-              <Loader text="Loading payments" />
-            ) : isEmptyPage ? (
+            {!isLoading && isEmptyPage ? (
               <StateComponent
                 message="No more payments on this page"
                 ICON={<Wallet />}
-                description="There are no payments available at this page. You can go back to the previous page to view available paymentsz."
+                description="There are no payments available at this page. You can go back to the previous page to view available payments."
                 PortalButton={
                   <Button variant="outline" onClick={() => setOffset(0)}>
                     Go to first page
                   </Button>
                 }
               />
-            ) : payments.length === 0 ? (
+            ) : !isLoading && payments.length === 0 ? (
               <StateComponent
                 message={
                   hasActiveFilters
@@ -275,10 +283,12 @@ export default function WorkerPaymentsPage() {
                 payments={payments}
                 workers={workers}
                 onVoid={setPaymentToVoid}
+                isLoading={isLoading}
               />
             )}
           </div>
 
+          {/* Pagination */}
           {(payments.length > 0 || offset > 0) && (
             <Pagination
               limit={limit}
@@ -296,18 +306,6 @@ export default function WorkerPaymentsPage() {
         </div>
       </div>
 
-      {/* Void payment */}
-      <VoidPaymentDialog
-        open={!!paymentToVoid}
-        onOpenChange={(open) => {
-          if (!open && !isMutating) {
-            setPaymentToVoid(null)
-          }
-        }}
-        payment={paymentToVoid}
-        onConfirm={handleVoid}
-        isVoiding={isMutating}
-      />
     </div>
   )
 }

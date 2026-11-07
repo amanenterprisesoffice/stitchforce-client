@@ -1,11 +1,7 @@
 
 "use client"
 
-import { Loader2 } from "lucide-react"
-
 import type { Size } from "@/utils/zodSchema/size"
-
-import { Button } from "@/components/ui/button"
 
 import {
   AlertDialog,
@@ -17,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import Loader from "@/components/ui/Loader"
 
 interface Props {
   open: boolean
@@ -61,12 +58,12 @@ export default function DeleteSizeDialog({
           </AlertDialogCancel>
 
           <AlertDialogAction
-            variant="destructive"
             onClick={onDelete}
             disabled={isDeleting}
+            variant="destructive"
           >
             {isDeleting && (
-              <Loader2 className="mr-2 size-4 animate-spin" />
+              <Loader spinnerClassName="h-4 w-4" variant="destructive"/>
             )}
 
             Delete Size

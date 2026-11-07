@@ -1,9 +1,16 @@
 "use client"
 
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import Loader from "@/components/ui/Loader"
 
 interface Props {
   open: boolean
@@ -14,7 +21,11 @@ interface Props {
 }
 
 export default function DeleteGarmentWorkerDialog({
-  open, onOpenChange, workerName, onConfirm, isDeleting,
+  open,
+  onOpenChange,
+  workerName,
+  onConfirm,
+  isDeleting,
 }: Props) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -33,9 +44,10 @@ export default function DeleteGarmentWorkerDialog({
               void onConfirm()
             }}
             disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            variant="destructive"
           >
-            {isDeleting ? "Deleting..." : "Delete worker"}
+            {isDeleting && <Loader spinnerClassName="h-4 w-4" variant="destructive" />}
+            Delete worker
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

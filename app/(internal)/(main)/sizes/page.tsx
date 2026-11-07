@@ -59,10 +59,6 @@ export default function SizesPage() {
 
     fetchSizes({
       url: `/api/organizations/${organizationID}/sizes`,
-      method: "GET",
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to fetch sizes")
-      },
     })
   }, [organizationID, fetchSizes])
 
@@ -135,12 +131,7 @@ export default function SizesPage() {
 
         fetchSizes({
           url: sizesURL,
-          method: "GET",
         })
-      },
-
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to save size")
       },
     })
   }
@@ -161,12 +152,7 @@ export default function SizesPage() {
 
         fetchSizes({
           url: sizesURL,
-          method: "GET",
         })
-      },
-
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to delete size")
       },
     })
   }
@@ -204,7 +190,7 @@ export default function SizesPage() {
         {/* Loading */}
         {isLoading && !sizesData ? (
           <Loader text="Loading sizes" />
-        ) : sizes.length === 0 ? (
+        ) : !isLoading &&sizes.length === 0 ? (
           <State
             message="No sizes yet"
             // use relavatn icon
@@ -216,7 +202,7 @@ export default function SizesPage() {
               </Button>
             }
           />
-        ) : filteredSizes.length === 0 ? (
+        ) : !isLoading && filteredSizes.length === 0 ? (
           /* No search results */
           <State
             message="No sizes found"
@@ -235,6 +221,7 @@ export default function SizesPage() {
           <SizesTable
             sizes={filteredSizes}
             onEdit={openEditDialog}
+            isLoading={isLoading}
             onDelete={(size) => {
               setDeletingSize(size)
               setDeleteDialogOpen(true)

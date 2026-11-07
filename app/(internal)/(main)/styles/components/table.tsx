@@ -22,9 +22,10 @@ interface Props {
   styles: Style[]
   onEdit: (style: Style) => void
   onDelete: (style: Style) => void
+  isLoading: boolean
 }
 
-export default function StylesTable({ styles, onEdit, onDelete }: Props) {
+export default function StylesTable({ styles, onEdit, onDelete, isLoading }: Props) {
   const router = useRouter()
 
   const columns = [
@@ -109,6 +110,7 @@ export default function StylesTable({ styles, onEdit, onDelete }: Props) {
       getRowId={(style) => style.id}
       onRowClick={(style) => router.push(`/styles/${style.id}`)}
       emptyMessage="No styles found."
+      isLoading={isLoading}
     />
   )
 }

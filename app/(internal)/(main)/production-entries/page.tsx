@@ -304,9 +304,6 @@ export default function ProductionEntriesPage() {
 
     fetchEntries({
       url: requestURL,
-      method: "GET",
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to load production entries"),
     })
   }, [organizationID, filtersInitialized, fetchEntries, requestURL])
 
@@ -320,16 +317,10 @@ export default function ProductionEntriesPage() {
 
     fetchWorkers({
       url: `${base}/garment-workers?limit=${MAX_OPTION_LIMIT}&offset=0`,
-      method: "GET",
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to load workers"),
     })
 
     fetchStyles({
       url: `${base}/styles?limit=${MAX_OPTION_LIMIT}&offset=0`,
-      method: "GET",
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to load styles"),
     })
   }, [organizationID, base, fetchWorkers, fetchStyles])
 
@@ -341,18 +332,12 @@ export default function ProductionEntriesPage() {
       url: `${base}/bundles?style_id=${encodeURIComponent(
         filters.styleID
       )}&limit=${MAX_OPTION_LIMIT}&offset=0`,
-      method: "GET",
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to load bundles for this style"),
     })
 
     fetchOperations({
       url: `${base}/styles/${encodeURIComponent(
         filters.styleID
       )}/operations?limit=${MAX_OPTION_LIMIT}&offset=0`,
-      method: "GET",
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to load style operations"),
     })
   }, [organizationID, base, filters.styleID, fetchBundles, fetchOperations])
 
@@ -386,9 +371,6 @@ export default function ProductionEntriesPage() {
           loadEntries()
         }
       },
-
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to delete entry"),
     })
   }
 
@@ -435,21 +417,18 @@ export default function ProductionEntriesPage() {
           <div className="min-h-0 flex-1">
             {entriesLoading && !entriesResponse ? (
               <Loader text="Loading production entries" />
-            ) : isEmptyPage ? (
+            ) : !entriesLoading && isEmptyPage ? (
               <StateComponent
                 message="No more production entries on this page"
                 ICON={<NotebookText />}
                 description="There are no production entries available at this page. You can go back to the previous page to view available production entries."
                 PortalButton={
-                  <Button
-                    variant="outline"
-                    onClick={() => setOffset(0)}
-                  >
+                  <Button variant="outline" onClick={() => setOffset(0)}>
                     Go to first page
                   </Button>
                 }
               />
-            ) : !entries.length ? (
+            ) : !entriesLoading && !entries.length ? (
               <StateComponent
                 message={
                   hasActiveFilters
@@ -471,7 +450,10 @@ export default function ProductionEntriesPage() {
                 }
               />
             ) : (
-              <ProductionEntriesTable entries={entries} />
+              <ProductionEntriesTable
+                entries={entries}
+                isLoading={entriesLoading}
+              />
             )}
           </div>
 

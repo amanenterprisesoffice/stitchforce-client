@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
 import { Bundle } from "@/utils/zodSchema/bundle"
 import { prettifyKey } from "@/utils/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface GarmentWorkersProps {
   workers: GarmentWorker[]
@@ -18,10 +19,6 @@ interface GarmentWorkersProps {
 interface BundlesProps {
   bundles: Bundle[]
   isLoading?: boolean
-}
-
-interface StyleQuickLinksProps {
-  styleID: string
 }
 
 function getInitials(name: string) {
@@ -97,17 +94,10 @@ export function StyleWorkers({ workers, isLoading }: GarmentWorkersProps) {
                 href={`/garment-workers/${worker.id}`}
                 className="group flex min-w-0 items-center gap-3 rounded-xl border bg-card p-3 transition-all hover:border-primary/40 hover:bg-muted/40"
               >
-                {worker.photo_url ? (
-                  <img
-                    src={worker.photo_url}
-                    alt={`${worker.name} profile`}
-                    className="size-10 shrink-0 rounded-full border object-cover"
-                  />
-                ) : (
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                    {getInitials(worker.name || "Worker")}
-                  </div>
-                )}
+                <Avatar>
+                  <AvatarImage src={worker.photo_url} alt={worker.name} />
+                  <AvatarFallback>{getInitials(worker.name)}</AvatarFallback>
+                </Avatar>
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium group-hover:text-primary">
@@ -197,67 +187,5 @@ export function StyleBundles({ bundles, isLoading }: BundlesProps) {
         )}
       </CardContent>
     </div>
-  )
-}
-
-// Quick links
-export function StyleQuickLinks({ styleID }: StyleQuickLinksProps) {
-  const links = [
-    {
-      title: "View all bundles",
-      description: "See every bundle created for this style",
-      href: `/bundles?style_id=${encodeURIComponent(styleID)}`,
-      icon: Package,
-    },
-    {
-      title: "View production entries",
-      description: "See production records for this style",
-      href: `/production-entries?style_id=${encodeURIComponent(styleID)}`,
-      icon: ClipboardList,
-    },
-  ]
-
-  return (
-    <Card className="h-full shadow-none">
-      <CardHeader>
-        <CardTitle className="text-base">Quick links</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Quickly navigate to related style records
-        </p>
-      </CardHeader>
-
-      <CardContent className="grid gap-3 sm:grid-cols-2">
-        {links.map((link) => {
-          const Icon = link.icon
-
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              target="_blank"
-              className="group flex min-w-0 items-center justify-between gap-3 rounded-xl border bg-card p-4 transition-all hover:border-primary/40 hover:bg-muted/40"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                  <Icon className="size-5 text-primary" />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-sm font-medium group-hover:text-primary">
-                    {link.title}
-                  </p>
-
-                  <p className="text-xs text-muted-foreground">
-                    {link.description}
-                  </p>
-                </div>
-              </div>
-
-              <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
-            </Link>
-          )
-        })}
-      </CardContent>
-    </Card>
   )
 }

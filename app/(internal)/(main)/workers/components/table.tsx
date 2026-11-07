@@ -24,21 +24,16 @@ export default function WorkersTable({ workers }: Props) {
       render: (worker: GarmentWorker) => (
         <div className="flex items-center gap-3">
           <Avatar className="size-9">
-            {worker.photo_url && (
-              <AvatarImage
-                src={worker.photo_url}
-                alt={worker.name}
-              />
-            )}
-
+            <AvatarImage
+              src={worker?.photo_url}
+              alt={worker?.name || "Worker"}
+            />
             <AvatarFallback>
-              {getInitials(worker.name) || (
-                <Users className="size-4" />
-              )}
+              {getInitials(worker?.name) || <Users className="size-4" />}
             </AvatarFallback>
           </Avatar>
 
-          <span className="font-medium">{worker.name}</span>
+          <span className="font-medium">{worker?.name || "Worker"}</span>
         </div>
       ),
     },

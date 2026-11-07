@@ -4,6 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "sonner";
 import { cn } from "cn";
+import Script from "next/dist/client/script";
 
 const geistHeading = Geist({subsets:['latin'],variable:'--font-heading'});
 

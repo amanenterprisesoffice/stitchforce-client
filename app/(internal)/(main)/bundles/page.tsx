@@ -172,15 +172,9 @@ export default function BundlesPage() {
     if (!organizationID) return
     fetchStyles({
       url: `${base}/styles?limit=${MAX_OPTION_LIMIT}&offset=0`,
-      method: "GET",
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to load styles"),
     })
     fetchSizes({
       url: `${base}/sizes?limit=${MAX_OPTION_LIMIT}&offset=0`,
-      method: "GET",
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to load sizes"),
     })
   }, [organizationID, base, fetchStyles, fetchSizes])
 
@@ -192,9 +186,6 @@ export default function BundlesPage() {
         limit,
         offset
       )}`,
-      method: "GET",
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to load bundles"),
     })
   }, [
     bundlesURL,
@@ -272,8 +263,6 @@ export default function BundlesPage() {
         setEditingBundle(null)
         loadBundles()
       },
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to save bundle"),
     })
   }
 
@@ -288,8 +277,6 @@ export default function BundlesPage() {
         setDeletingBundle(null)
         loadBundles()
       },
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to delete bundle"),
     })
   }
 
@@ -320,7 +307,7 @@ export default function BundlesPage() {
     (stylesLoading && !stylesResponse) ||
     (sizesLoading && !sizesResponse)
 
-  const isEmptyPage = bundles.length === 0 && offset > 0
+  const isEmptyPage = !isLoading && bundles.length === 0 && offset > 0
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <BundlesHeader
@@ -354,9 +341,7 @@ export default function BundlesPage() {
         />
 
         <div className="relative flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-          {isLoading ? (
-            <Loader text="Loading bundles" />
-          ) : isEmptyPage ? (
+          {isEmptyPage ? (
             <StateComponent
               message="No more bundles on this page"
               ICON={<PackagePlus />}
@@ -367,7 +352,7 @@ export default function BundlesPage() {
                 </Button>
               }
             />
-          ) : bundles.length === 0 ? (
+          ) : !isLoading && bundles.length === 0 ? (
             <StateComponent
               message={
                 filters.search ||
@@ -422,6 +407,7 @@ export default function BundlesPage() {
                 styles={styles}
                 sizes={sizes}
                 onEdit={openEditDialog}
+                isLoading={bundlesLoading}
                 onDelete={(bundle) => {
                   setDeletingBundle(bundle)
                   setDeleteDialogOpen(true)

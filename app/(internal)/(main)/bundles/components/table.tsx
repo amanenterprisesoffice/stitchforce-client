@@ -23,6 +23,7 @@ interface Props {
   sizes: Size[]
   onEdit: (bundle: Bundle) => void
   onDelete: (bundle: Bundle) => void
+  isLoading: boolean
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -54,6 +55,7 @@ export default function BundlesTable({
   sizes,
   onEdit,
   onDelete,
+  isLoading,
 }: Props) {
   const router = useRouter()
 
@@ -160,6 +162,7 @@ export default function BundlesTable({
       onRowClick={(bundle) => router.push(`/bundles/${bundle.id}`)}
       emptyMessage="No bundles found."
       tableContainerClassName="flex-1"
+      isLoading={isLoading}
     />
   )
 }

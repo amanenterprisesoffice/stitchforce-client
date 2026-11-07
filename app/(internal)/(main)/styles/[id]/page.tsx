@@ -18,20 +18,18 @@ import StyleOperationsTable, { type StyleOperation } from "./components/table"
 import OperationFormDialog from "./components/form-dialog"
 import DeleteOperationDialog from "./components/delete-dialog"
 
-import type { OperationPayload } from "./schema"
 import State from "@/components/StateComponent"
 import StateComponent from "@/components/StateComponent"
 import { Separator } from "@/components/ui/separator"
 import Loader from "@/components/ui/Loader"
 import PageHeader from "@/components/ui/PageHeader"
 import StyleHeader from "./components/header"
-import {
-  StyleBundles,
-  StyleQuickLinks,
-  StyleWorkers,
-} from "./components/style-related-sections"
+import { StyleBundles, StyleWorkers } from "./components/style-related-sections"
 import { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
 import { Bundle } from "@/utils/zodSchema/bundle"
+import { formatMoney } from "@/utils/utils"
+import { StyleQuickLinks } from "./components/quicklinks"
+import { OperationPayload } from "@/utils/zodSchema/styleops"
 
 interface Style {
   id: string
@@ -40,15 +38,6 @@ interface Style {
   style_number: string
   description?: string
   created_at?: string
-}
-
-function formatRate(rateInPaise: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(rateInPaise) / 100)
 }
 
 export default function StyleDetailsPage() {
@@ -219,12 +208,7 @@ export default function StyleDetailsPage() {
 
         fetchOperations({
           url: `${baseURL}/operations`,
-          method: "GET",
         })
-      },
-
-      onError: (err: any) => {
-        toast.error(err?.message || "Failed to delete operation")
       },
     })
   }
@@ -257,7 +241,7 @@ export default function StyleDetailsPage() {
   )
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <main className="mx-auto flex h-full w-full max-w-7xl flex-col justify-center gap-5 p-4 md:p-6">
       <StyleHeader style={style} openCreateDialog={openCreateDialog} />
 
       {/* Summary */}
@@ -292,7 +276,7 @@ export default function StyleDetailsPage() {
               </p>
 
               <p className="text-3xl font-semibold tracking-tight tabular-nums">
-                {formatRate(totalRate)}
+                {formatMoney(totalRate)}
               </p>
 
               <p className="text-xs text-muted-foreground">
@@ -308,9 +292,7 @@ export default function StyleDetailsPage() {
       </div>
 
       {/* Operations Table */}
-      {operationsLoading ? (
-        <Loader />
-      ) : operations.length === 0 ? (
+      { !operationsLoading && operations.length === 0 ? (
         <StateComponent
           message="No operations yet"
           ICON={<Settings2 className="size-8 text-muted-foreground" />}
@@ -327,6 +309,7 @@ export default function StyleDetailsPage() {
           operations={operations}
           onEdit={openEditDialog}
           onDelete={setDeletingOperation}
+          isLoading={operationsLoading}
         />
       )}
 
@@ -359,6 +342,6 @@ export default function StyleDetailsPage() {
         isDeleting={deleting}
         onCancel={() => setDeletingOperation(null)}
       />
-    </div>
+    </main>
   )
 }

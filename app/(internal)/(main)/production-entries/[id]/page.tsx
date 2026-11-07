@@ -10,10 +10,8 @@ import {
   ExternalLink,
   IndianRupee,
   Package,
-  Pencil,
+  PackageCheck,
   Scissors,
-  Trash2,
-  UserRound,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -21,19 +19,20 @@ import useFetch from "@/hooks/useFetch"
 import { useUser } from "@/contexts/UserContext"
 
 import Loader from "@/components/ui/Loader"
-import State from "@/components/StateComponent"
+import StateComponent from "@/components/StateComponent"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { formatDate, getInitials } from "@/utils/utils"
+
+import { formatDate, formatMoney, getInitials } from "@/utils/utils"
 
 import type {
   ProductionEntry,
@@ -43,30 +42,18 @@ import type {
 import ProductionEntryHeader from "./components/header"
 import EditProductionEntryDialog from "./components/edit-dialog"
 import DeleteProductionEntryDialog from "./components/delete-dialog"
-import StateComponent from "@/components/StateComponent"
+import ProdEntryQuickLinks from "./components/quick-links"
+import ProdEntrySummary from "./components/summary"
 
-function unwrapEntry(result: any): ProductionEntry | null {
-  const value =
-    result?.production_entry ?? result?.entry ?? result?.data ?? result
-
-  return value && typeof value === "object" && value.id ? value : null
-}
-
-function formatMoney(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(amount || 0) / 100)
-}
-
-function toDateTimeLocal(value?: string) {
-  if (!value) return ""
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ""
-  const offset = date.getTimezoneOffset()
-  return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 16)
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex min-w-0 items-start justify-between gap-4 text-sm">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 text-right font-medium break-all">
+        {value || "—"}
+      </span>
+    </div>
+  )
 }
 
 export default function ProductionEntryDetailsPage() {
@@ -77,7 +64,6 @@ export default function ProductionEntryDetailsPage() {
   const { user } = useUser()
   const organizationID = user?.organization_id
 
-  const [entry, setEntry] = useState<ProductionEntry | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
@@ -86,16 +72,13 @@ export default function ProductionEntryDetailsPage() {
       ? `/api/organizations/${organizationID}/production-entries/${entryID}`
       : ""
 
-  const { refetch: fetchEntry, isLoading } = useFetch({
-    auto: false,
-    onSuccess: (result: any) => {
-      const fetched = unwrapEntry(result)
-      if (fetched) setEntry(fetched)
-      else toast.error("Production entry was not found")
-    },
-    onError: (error: any) => {
-      toast.error(error?.message || "Failed to load production entry")
-    },
+  const {
+    data: entry,
+    refetch: fetchEntry,
+    isLoading,
+  } = useFetch<ProductionEntry>({
+    auto: true,
+    url: entryURL,
   })
 
   const { refetch: updateEntry, isLoading: isSaving } = useFetch({
@@ -106,15 +89,6 @@ export default function ProductionEntryDetailsPage() {
     auto: false,
   })
 
-  const loadEntry = useCallback(() => {
-    if (!entryURL) return
-    fetchEntry({ url: entryURL, method: "GET" })
-  }, [entryURL, fetchEntry])
-
-  useEffect(() => {
-    loadEntry()
-  }, [loadEntry])
-
   const handleUpdate = async (values: UpdateProductionEntryPayload) => {
     if (!entryURL) return
 
@@ -123,25 +97,8 @@ export default function ProductionEntryDetailsPage() {
       method: "PUT",
       payload: values,
       onSuccess: (result: any) => {
-        const updated = unwrapEntry(result)
-        setEntry((current) =>
-          current
-            ? {
-                ...current,
-                ...(updated || {}),
-                bundle_id: values.bundle_id,
-                worker_id: values.worker_id,
-                production_date: values.production_date,
-                remarks: values.remarks || "",
-              }
-            : current
-        )
-        setEditOpen(false)
         toast.success("Production entry updated")
-        loadEntry()
-      },
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to update production entry")
+        fetchEntry({ url: entryURL })
       },
     })
   }
@@ -167,7 +124,7 @@ export default function ProductionEntryDetailsPage() {
       <StateComponent
         className="rounded-none"
         message="Error"
-        description="Something went wrong "
+        description="Something went wrong"
         PortalButton={
           <Button
             variant="outline"
@@ -209,284 +166,140 @@ export default function ProductionEntryDetailsPage() {
   const operation = entry.operation
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+    <main className="mx-auto flex h-full w-full max-w-7xl flex-col justify-center gap-5 p-4 md:p-6">
       <ProductionEntryHeader
         entry={entry}
         onEdit={() => setEditOpen(true)}
         onDelete={() => setDeleteOpen(true)}
       />
+      <ProdEntrySummary entry={entry} />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.8fr)]">
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Production summary</CardTitle>
-              <CardDescription>
-                Recorded output, production rate, and calculated amount.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
-                  Quantity completed
-                </p>
-                <p className="text-2xl font-semibold tabular-nums">
-                  {Number(entry.quantity || 0).toLocaleString("en-IN")}
-                  <span className="ml-1 text-sm font-normal text-muted-foreground">
-                    pcs
-                  </span>
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Rate per piece</p>
-                <p className="text-xl font-semibold tabular-nums">
-                  {formatMoney(entry.rate_per_piece)}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Total amount</p>
-                <p className="text-xl font-semibold tabular-nums">
-                  {formatMoney(entry.total_amount)}
-                </p>
-              </div>
-              <div className="space-y-1 sm:col-span-2 lg:col-span-3">
-                <p className="text-xs text-muted-foreground">Production date</p>
-                <div className="flex items-center gap-2 font-medium">
-                  <CalendarDays className="size-4 text-muted-foreground" />
-                  {formatDate(entry.production_date)}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Details */}
+      <div className="grid min-w-0 gap-4 xl:grid-cols-2">
+        {/* Bundle, Style and Operation */}
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle className="text-base">Production details</CardTitle>
+            <CardDescription>
+              Bundle, garment style and operation associated with this entry.
+            </CardDescription>
+          </CardHeader>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Worker</CardTitle>
-              <CardDescription>
-                The person who completed this operation.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap items-center gap-3">
-                <Avatar className="size-12">
-                  <AvatarImage
-                    src={worker?.photo_url || undefined}
-                    alt={worker?.name || "Worker"}
-                  />
-                  <AvatarFallback>
-                    {getInitials(worker?.name || "Unknown worker")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold">
-                    {worker?.name || "Unknown worker"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {worker?.phone || "No phone number"}
-                  </p>
-                </div>
-                {worker?.id && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    render={<Link href={`/workers/${worker.id}`} />}
-                  >
-                    View worker <ExternalLink className="ml-2 size-3.5" />
-                  </Button>
-                )}
+          <CardContent className="space-y-4">
+            {/* Bundle */}
+            <Link
+              href={`/bundles/${bundle?.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-w-0 items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/60"
+            >
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <Package className="size-5 text-muted-foreground" />
               </div>
-              <Separator className="my-4" />
-              <Button
-                variant="link"
-                className="h-auto p-0"
-                render={
-                  <Link
-                    href={`/production-entries?worker_id=${encodeURIComponent(entry.worker_id)}`}
-                  />
-                }
-              >
-                View all entries for this worker{" "}
-                <ExternalLink className="ml-1 size-3" />
-              </Button>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Bundle and style</CardTitle>
-              <CardDescription>
-                Garment batch associated with this production record.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-5 sm:grid-cols-2">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Bundle number</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground">Bundle</p>
                 <p className="font-semibold">{bundle?.bundle_number || "—"}</p>
-                <p className="text-xs text-muted-foreground">
-                  Bundle quantity:{" "}
+                <p className="text-sm text-muted-foreground">
                   {Number(bundle?.quantity || 0).toLocaleString("en-IN")} pcs
                 </p>
-                {bundle?.status && (
-                  <Badge variant="outline" className="mt-2">
-                    {bundle.status.replaceAll("_", " ")}
-                  </Badge>
-                )}
-                {bundle?.id && (
-                  <div className="pt-2">
-                    <Button
-                      variant="link"
-                      className="h-auto p-0"
-                      render={<Link href={`/bundles/${bundle.id}`} />}
-                    >
-                      View bundle <ExternalLink className="ml-1 size-3" />
-                    </Button>
-                  </div>
-                )}
               </div>
-              <div className="space-y-1">
+
+              {bundle?.status && (
+                <Badge variant="outline">
+                  {bundle.status.replaceAll("_", " ")}
+                </Badge>
+              )}
+              <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
+            </Link>
+
+            {/* Style */}
+            <Link
+              href={`/styles/${style?.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-w-0 items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/60"
+            >
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <PackageCheck className="size-5 text-muted-foreground" />
+              </div>
+
+              <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Style</p>
                 <p className="font-semibold">{style?.name || "—"}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {style?.style_number || "No style number"}
                 </p>
-                {style?.id && (
-                  <div className="pt-2">
-                    <Button
-                      variant="link"
-                      className="h-auto p-0"
-                      render={<Link href={`/styles/${style.id}`} />}
-                    >
-                      View style <ExternalLink className="ml-1 size-3" />
-                    </Button>
-                  </div>
-                )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Operation details</CardTitle>
-              <CardDescription>
-                Work step and applicable piece rate.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-                  <Scissors className="size-5 text-muted-foreground" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold">
-                    {operation?.name || "Unknown operation"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Style operation
-                  </p>
-                </div>
+              <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
+            </Link>
+
+            {/* Operation - plain row */}
+            <div className="flex min-w-0 items-center gap-3 px-3 py-1">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <Scissors className="size-5 text-muted-foreground" />
               </div>
-              <Separator />
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-muted-foreground">Rate per piece</span>
-                <span className="font-medium tabular-nums">
+
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground">Operation</p>
+                <p className="font-semibold">
+                  {operation?.name || "Unknown operation"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Rate:{" "}
                   {formatMoney(
                     operation?.rate_per_piece ?? entry.rate_per_piece
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-muted-foreground">Recorded quantity</span>
-                <span className="font-medium tabular-nums">
-                  {entry.quantity}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">
-                Remarks and record info
-              </CardTitle>
-              <CardDescription>
-                Notes and audit timestamps for this entry.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="mb-1 text-xs text-muted-foreground">Remarks</p>
-                <p className="text-sm whitespace-pre-wrap">
-                  {entry.remarks?.trim() || "No remarks added."}
+                  )}{" "}
+                  per piece
                 </p>
               </div>
-              <Separator />
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <Clock3 className="size-4" /> Created
-                </span>
-                <span className="text-right">
-                  {formatDate(entry.created_at)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <Clock3 className="size-4" /> Last updated
-                </span>
-                <span className="text-right">
-                  {formatDate(entry.updated_at)}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Quick links</CardTitle>
-              <CardDescription>
-                Jump to related records and lists.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                render={<Link href="/production-entries" />}
-              >
-                <span className="flex items-center gap-2">
-                  <Package className="size-4" /> All production entries
-                </span>
-                <ExternalLink className="size-4" />
-              </Button>
-              {worker?.id && (
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  render={<Link href={`/workers/${worker.id}`} />}
-                >
-                  <span className="flex items-center gap-2">
-                    <UserRound className="size-4" /> Worker profile
-                  </span>
-                  <ExternalLink className="size-4" />
-                </Button>
-              )}
-              {bundle?.id && (
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  render={<Link href={`/bundles/${bundle.id}`} />}
-                >
-                  <span className="flex items-center gap-2">
-                    <Package className="size-4" /> Bundle details
-                  </span>
-                  <ExternalLink className="size-4" />
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        {/* Remarks and record info */}
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle className="text-base">Remarks and record info</CardTitle>
+            <CardDescription>
+              Production date, notes and audit timestamps.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="h-full space-y-4">
+            <DetailRow label="Production entry ID" value={entry.id} />
+
+            <DetailRow
+              label="Production date"
+              value={formatDate(entry.production_date)}
+            />
+
+            <DetailRow label="Created" value={formatDate(entry.created_at)} />
+
+            <DetailRow
+              label="Last updated"
+              value={formatDate(entry.updated_at)}
+            />
+          </CardContent>
+          <CardFooter>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Remarks</p>
+              <p className="text-sm whitespace-pre-wrap">
+                {entry.remarks?.trim() || "--"}
+              </p>
+            </div>
+          </CardFooter>
+        </Card>
       </div>
+      {/* Quick links */}
+      <ProdEntryQuickLinks
+        bundle={bundle}
+        style={style}
+        worker={worker}
+        entry={entry}
+        router={router}
+      />
 
       <EditProductionEntryDialog
         open={editOpen}
@@ -494,7 +307,6 @@ export default function ProductionEntryDetailsPage() {
         entry={entry}
         onSubmit={handleUpdate}
         isSaving={isSaving}
-        toDateTimeLocal={toDateTimeLocal}
       />
 
       <DeleteProductionEntryDialog
@@ -505,6 +317,6 @@ export default function ProductionEntryDetailsPage() {
         isDeleting={isDeleting}
         onCancel={() => setDeleteOpen(false)}
       />
-    </div>
+    </main>
   )
 }

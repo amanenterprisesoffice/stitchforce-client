@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { CopyButton } from "@/components/ui/CopyButton"
 import DataTable from "@/components/ui/DataTable"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { formatMoney } from "@/utils/utils"
 
 export interface StyleOperation {
   id: string
@@ -22,21 +23,15 @@ interface Props {
   operations: StyleOperation[]
   onEdit: (operation: StyleOperation) => void
   onDelete: (operation: StyleOperation) => void
+  isLoading: boolean
 }
 
-function formatRate(rateInPaise: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(rateInPaise) / 100)
-}
 
 export default function StyleOperationsTable({
   operations,
   onEdit,
   onDelete,
+  isLoading,
 }: Props) {
   const columns = [
     {
@@ -70,7 +65,7 @@ export default function StyleOperationsTable({
       className: "font-medium tabular-nums",
       render: (operation: StyleOperation) =>
         operation?.rate_per_piece != null
-          ? formatRate(operation.rate_per_piece)
+          ? formatMoney(operation.rate_per_piece)
           : "",
     },
     {
@@ -125,6 +120,7 @@ export default function StyleOperationsTable({
       getRowId={(operation) => operation.id}
       emptyMessage="No operations found."
       className="h-full min-h-[70vh]"
+      isLoading={isLoading}
     />
   )
 }

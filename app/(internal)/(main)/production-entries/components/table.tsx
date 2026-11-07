@@ -13,9 +13,10 @@ import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
 
 interface Props {
   entries: ProductionEntry[]
+  isLoading: boolean
 }
 
-export default function ProductionEntriesTable({ entries }: Props) {
+export default function ProductionEntriesTable({ entries, isLoading }: Props) {
   const router = useRouter()
 
   const columns = [
@@ -90,6 +91,7 @@ export default function ProductionEntriesTable({ entries }: Props) {
       getRowId={(entry) => entry.id}
       onRowClick={(entry) => router.push(`/production-entries/${entry.id}`)}
       emptyMessage="No production entries found."
+      isLoading={isLoading}
     />
   )
 }

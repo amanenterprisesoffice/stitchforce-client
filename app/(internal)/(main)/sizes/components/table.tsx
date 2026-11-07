@@ -19,12 +19,14 @@ interface Props {
   sizes: Size[]
   onEdit: (size: Size) => void
   onDelete: (size: Size) => void
+  isLoading: boolean
 }
 
 export default function SizesTable({
   sizes,
   onEdit,
   onDelete,
+  isLoading,
 }: Props) {
   const columns = [
     {
@@ -90,6 +92,7 @@ export default function SizesTable({
       columns={columns}
       getRowId={(size) => size.id}
       emptyMessage="No sizes found."
+      isLoading={isLoading}
     />
   )
 }

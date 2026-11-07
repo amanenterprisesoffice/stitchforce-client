@@ -37,7 +37,11 @@ export interface GarmentWorker {
   created_at: string
   updated_at: string
 }
-
+export interface UpdateGarmentWorkerPayload {
+  name: string
+  phone: string
+  gender: "male" | "female" | "other"
+}
 
 
 

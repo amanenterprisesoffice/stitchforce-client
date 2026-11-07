@@ -4,12 +4,13 @@ import { useEffect } from "react"
 import { useForm, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-import type { GarmentWorker, UpdateGarmentWorkerPayload } from "../page"
 
 import {
+  GarmentWorker,
   garmentWorkerSchema,
   getValidGender,
   initialGarmentWorkerValues,
+  UpdateGarmentWorkerPayload,
   type GarmentWorkerFormValues,
 } from "@/utils/zodSchema/garmentWorker"
 

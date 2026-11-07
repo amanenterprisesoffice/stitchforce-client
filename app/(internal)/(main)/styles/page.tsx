@@ -196,10 +196,6 @@ export default function StylesPage() {
 
         fetchStyles()
       },
-
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to save style")
-      },
     })
   }
 
@@ -223,10 +219,6 @@ export default function StylesPage() {
         } else {
           fetchStyles()
         }
-      },
-
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to delete style")
       },
     })
   }
@@ -264,21 +256,18 @@ export default function StylesPage() {
       <div className="relative flex flex-1 flex-col gap-4">
         {isLoading && !stylesData ? (
           <Loader text="Loading styles" />
-        ) : isEmptyPage ? (
+        ) : !isLoading && isEmptyPage ? (
           <StateComponent
             message="No more styles on this page"
             ICON={<Shirt />}
             description="There are no styles available at this page. You can go back to the previous page to view available styles."
             PortalButton={
-              <Button
-                variant="outline"
-                onClick={() => setOffset(0)}
-              >
+              <Button variant="outline" onClick={() => setOffset(0)}>
                 Go to first page
               </Button>
             }
           />
-        ) : styles.length === 0 && !search ? (
+        ) : !isLoading && styles.length === 0 && !search ? (
           <StateComponent
             message="No styles yet"
             ICON={<Shirt />}
@@ -290,7 +279,7 @@ export default function StylesPage() {
               </Button>
             }
           />
-        ) : styles.length === 0 ? (
+        ) : !isLoading && styles.length === 0 ? (
           <StateComponent
             message="No styles found"
             description="Try searching with a different name or style number."
@@ -305,6 +294,7 @@ export default function StylesPage() {
             <StylesTable
               styles={styles}
               onEdit={openEditDialog}
+              isLoading={isLoading}
               onDelete={(style) => {
                 setDeletingStyle(style)
                 setDeleteDialogOpen(true)

@@ -12,6 +12,7 @@ interface PageHeaderProps {
   icon?: ReactNode
   action?: ReactNode
   backlink?: string
+  preTitleChild?: ReactNode
 }
 
 export default function PageHeader({
@@ -21,6 +22,7 @@ export default function PageHeader({
   icon,
   action,
   backlink,
+  preTitleChild,
 }: PageHeaderProps) {
   return (
     <>
@@ -44,6 +46,8 @@ export default function PageHeader({
               {icon}
             </Button>
           )}
+
+          {preTitleChild}
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">

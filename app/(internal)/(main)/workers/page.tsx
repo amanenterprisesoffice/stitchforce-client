@@ -64,10 +64,6 @@ export default function GarmentWorkersPage() {
 
     fetchWorkers({
       url: `/api/organizations/${organizationID}/garment-workers`,
-      method: "GET",
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to fetch workers")
-      },
     })
   }, [organizationID, fetchWorkers])
 
@@ -137,12 +133,7 @@ export default function GarmentWorkersPage() {
 
         fetchWorkers({
           url: `/api/organizations/${organizationID}/garment-workers`,
-          method: "GET",
         })
-      },
-
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to save worker")
       },
     })
   }
@@ -163,12 +154,7 @@ export default function GarmentWorkersPage() {
 
         fetchWorkers({
           url: `/api/organizations/${organizationID}/garment-workers`,
-          method: "GET",
         })
-      },
-
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to delete worker")
       },
     })
   }

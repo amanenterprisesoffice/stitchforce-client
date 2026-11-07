@@ -9,6 +9,7 @@ interface LoaderProps {
   fullScreen?: boolean; // Optional full-screen display, defaulting to false
   className?: string; // Optional additional classes for the container
   spinnerClassName?: string; // Optional additional classes for the spinner
+  variant?: 'primary' | 'destructive' // Optional variant for the loader, defaulting to 'primary'
 }
 
 const Loader = ({
@@ -17,7 +18,10 @@ const Loader = ({
   fullScreen = false,
   className = '',
   spinnerClassName = '',
+  variant = 'primary',
 }: LoaderProps) => {
+
+  const borderColor = variant === 'primary' ? 'dark:border-primary border-secondary-foreground' : 'dark:border-destructive border-secondary-foreground'
   return (
     <div
       className={cn(
@@ -29,7 +33,7 @@ const Loader = ({
       <div
         className={cn(
           'animate-spin rounded-full size-5 border-b-3',
-          `dark:border-primary border-secondary-foreground`,
+          borderColor,
           spinnerClassName
         )}
       ></div>

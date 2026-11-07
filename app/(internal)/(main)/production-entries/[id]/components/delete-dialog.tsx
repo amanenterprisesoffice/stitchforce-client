@@ -1,6 +1,5 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
 import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
 
 import {
@@ -13,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import Loader from "@/components/ui/Loader"
 
 interface Props {
   open: boolean
@@ -50,7 +50,7 @@ export default function DeleteProductionEntryDialog({
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction variant="destructive" onClick={onDelete} disabled={isDeleting}>
-            {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
+            {isDeleting && <Loader spinnerClassName="h-4 w-4" variant="destructive"/>}
             Delete entry
           </AlertDialogAction>
         </AlertDialogFooter>

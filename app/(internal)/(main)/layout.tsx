@@ -2,6 +2,7 @@
 
 import { AppSidebar } from "@/components/app-sidebar"
 import AutoBreadcrumbs from "@/components/ui/AutoBreadCrumps"
+import { LanguageTranslator } from "@/components/ui/LanguageTranslator"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
@@ -31,7 +32,10 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
             />
             <AutoBreadcrumbs />
           </div>
-          <TopNav />
+          <div className="flex gap-4">
+            <TopNav />
+            <LanguageTranslator />
+          </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 pt-0">{children}</div>
       </SidebarInset>

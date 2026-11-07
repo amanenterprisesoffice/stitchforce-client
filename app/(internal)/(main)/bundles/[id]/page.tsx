@@ -30,6 +30,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -164,18 +165,12 @@ export default function BundleDetailsPage() {
     onSuccess: (result: any) => {
       setBundle(result?.bundle ?? result?.data ?? result)
     },
-    onError: (error: any) => {
-      toast.error(error?.message || "Failed to load bundle")
-    },
   })
 
   const { refetch: fetchStyle, isLoading: styleLoading } = useFetch({
     auto: false,
     onSuccess: (result: any) => {
       setStyle(result?.style ?? result?.data ?? result)
-    },
-    onError: (error: any) => {
-      toast.error(error?.message || "Failed to load style details")
     },
   })
 
@@ -186,9 +181,6 @@ export default function BundleDetailsPage() {
         ? result
         : (result?.sizes ?? result?.data ?? [])
       setSizes(Array.isArray(list) ? list : [])
-    },
-    onError: (error: any) => {
-      toast.error(error?.message || "Failed to load sizes")
     },
   })
 
@@ -255,9 +247,6 @@ export default function BundleDetailsPage() {
             : current
         )
         toast.success(`Bundle status updated to ${STATUS_LABELS[targetStatus]}`)
-      },
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to update bundle status")
       },
     })
   }
@@ -397,13 +386,13 @@ export default function BundleDetailsPage() {
             </Card>
           </div>
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="border-b">
               <CardTitle className="text-base">Bundle information</CardTitle>
               <CardDescription>
                 Style, size and manufacturing details.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-x-8 gap-y-5 border-t pt-5 sm:grid-cols-2">
+            <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
               <DetailItem
                 label="Style"
                 value={
@@ -453,12 +442,6 @@ export default function BundleDetailsPage() {
 
           {/* Status progression */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Production progress</CardTitle>
-              <CardDescription>
-                Status moves forward one stage at a time.
-              </CardDescription>
-            </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-4">
                 {STATUS_STEPS.map((step, index) => {
@@ -499,11 +482,10 @@ export default function BundleDetailsPage() {
                   )
                 })}
               </div>
-
-              <Separator />
-
+            </CardContent>
+            <CardFooter className="flex justify-between w-full">
               {nextStatusStep ? (
-                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div className="flex flex-col justify-between w-full gap-3 sm:flex-row sm:items-center">
                   <div className="flex items-start gap-2">
                     <Clock3 className="mt-0.5 size-4 text-muted-foreground" />
                     <div>
@@ -535,7 +517,7 @@ export default function BundleDetailsPage() {
                   Unrecognized bundle status: {prettifyKey(currentStatus)}
                 </p>
               )}
-            </CardContent>
+            </CardFooter>
           </Card>
 
           <Card>

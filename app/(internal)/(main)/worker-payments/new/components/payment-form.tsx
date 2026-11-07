@@ -39,10 +39,10 @@ import {
   type WorkerPayment,
   type PaymentMethod,
   PayableProductionEntry,
+  CreateWorkerPaymentPayload,
+  WorkerPaymentSummary,
+  PeriodPreset,
 } from "@/utils/zodSchema/payments"
-
-import type { Bundle } from "@/utils/zodSchema/bundle"
-import type { StyleOperation } from "@/utils/zodSchema/styleops"
 
 import { formatMoney, getLocalDateValue } from "@/utils/utils"
 import { WorkerFormInfo } from "../../../production-entries/new/components/form-info"
@@ -52,28 +52,6 @@ import Loader from "@/components/ui/Loader"
 // --------------------------------------------------
 // TYPES
 // --------------------------------------------------
-
-interface WorkerPaymentSummary {
-  total_earned: number
-  total_paid: number
-  total_pending: number
-}
-
-interface CreateWorkerPaymentPayload {
-  worker_id: string
-  from_date: string
-  to_date: string
-  payment_date: string
-  payment_method: PaymentMethod
-  reference?: string
-  remarks?: string
-}
-
-interface PeriodPreset {
-  label: string
-  from_date: string
-  to_date: string
-}
 
 // --------------------------------------------------
 // HELPERS
@@ -99,7 +77,7 @@ function getPeriodPresets(): PeriodPreset[] {
       to_date: toDateString(new Date(year, month, 15)),
     },
     {
-      label: "16th – Month end",
+      label: "16th – Month End",
       from_date: toDateString(new Date(year, month, 16)),
       to_date: toDateString(new Date(year, month + 1, 0)),
     },
@@ -121,23 +99,8 @@ function getPeriodPresets(): PeriodPreset[] {
   ]
 }
 
-function formatDate(date: string) {
-  const [year, month, day] = date.split("-").map(Number)
 
-  return new Date(year, month - 1, day).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  })
-}
-
-function getShortID(id: string) {
-  return id.length > 12 ? `${id.slice(0, 8)}...` : id
-}
-
-// --------------------------------------------------
 // COMPONENT
-// --------------------------------------------------
 
 export default function WorkerPaymentForm() {
   const router = useRouter()
@@ -146,15 +109,11 @@ export default function WorkerPaymentForm() {
   const orgID = user?.organization_id
   const base = orgID ? `/api/organizations/${orgID}` : ""
 
-  // --------------------------------------------------
   // DATE PRESETS
-  // --------------------------------------------------
 
   const presets = useMemo(() => getPeriodPresets(), [])
 
-  // --------------------------------------------------
   // FORM
-  // --------------------------------------------------
 
   const form = useForm<CreateWorkerPaymentValues>({
     resolver: zodResolver(createWorkerPaymentSchema),
@@ -199,9 +158,7 @@ export default function WorkerPaymentForm() {
     name: "payment_date",
   })
 
-  // --------------------------------------------------
   // SELECTED PRESET
-  // --------------------------------------------------
 
   const selectedPreset = useMemo(() => {
     return (
@@ -227,9 +184,7 @@ export default function WorkerPaymentForm() {
     })
   }
 
-  // --------------------------------------------------
   // WORKERS
-  // --------------------------------------------------
 
   const { data: workers, isLoading: workersLoading } = useFetch<
     GarmentWorker[]
@@ -242,10 +197,6 @@ export default function WorkerPaymentForm() {
     () => workers?.find((worker) => worker.id === workerID),
     [workers, workerID]
   )
-
-  // --------------------------------------------------
-  // WORKER PAYMENT SUMMARY
-  // --------------------------------------------------
 
   const {
     data: summary,
@@ -263,9 +214,7 @@ export default function WorkerPaymentForm() {
     })
   }, [base, workerID, fetchSummary])
 
-  // --------------------------------------------------
   // PAYABLE PRODUCTION ENTRIES
-  // --------------------------------------------------
 
   const {
     data: payableResponse,
@@ -295,9 +244,7 @@ export default function WorkerPaymentForm() {
     0
   )
 
-  // --------------------------------------------------
   // CREATE PAYMENT
-  // --------------------------------------------------
 
   const { refetch: createPayment, isLoading: saving } = useFetch<WorkerPayment>(
     {
@@ -327,16 +274,10 @@ export default function WorkerPaymentForm() {
         toast.success("Worker payment created successfully")
         router.push(`/worker-payments/${payment.id}`)
       },
-
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to create worker payment")
-      },
     })
   }
 
-  // --------------------------------------------------
   // SUBMISSION STATE
-  // --------------------------------------------------
 
   const canSubmit =
     !!workerID &&
@@ -350,9 +291,7 @@ export default function WorkerPaymentForm() {
     !summaryLoading &&
     !saving
 
-  // --------------------------------------------------
   // ORGANIZATION STATE
-  // --------------------------------------------------
 
   if (!orgID) {
     return (
@@ -364,17 +303,14 @@ export default function WorkerPaymentForm() {
     )
   }
 
-  // --------------------------------------------------
   // RENDER
-  // --------------------------------------------------
-
   return (
     <div className="mx-auto h-full w-full min-w-0">
       <form onSubmit={handleSubmit(submit)} className="h-full w-full min-w-0">
-        <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
+        <div className="relative grid w-full min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
           {/* PAYMENT FORM */}
 
-          <Card className="min-w-0 overflow-hidden shadow-sm">
+          <Card className="sticky top-[20px] flex h-fit min-w-0 flex-col gap-5">
             <CardHeader className="space-y-5 border-b">
               <FormSelect
                 id="worker_id"
@@ -518,10 +454,41 @@ export default function WorkerPaymentForm() {
             {/* TOTAL AND SUBMIT */}
 
             <CardFooter className="flex flex-col items-stretch gap-4 border-t">
+              {workerID && (
+                <div className="w-full space-y-3 border-b pb-4">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">Total earned</span>
+                    <span className="font-semibold tabular-nums">
+                      {summaryLoading
+                        ? "Loading..."
+                        : formatMoney(summary?.total_earned ?? 0)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">Already paid</span>
+                    <span className="font-semibold tabular-nums">
+                      {summaryLoading
+                        ? "Loading..."
+                        : formatMoney(summary?.total_paid ?? 0)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">
+                      Pending payment
+                    </span>
+                    <span className="font-semibold tabular-nums">
+                      {summaryLoading
+                        ? "Loading..."
+                        : formatMoney(summary?.total_pending ?? 0)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="w-full space-y-3">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-muted-foreground">Payable entries</span>
-
                   <span className="font-semibold tabular-nums">
                     {entriesLoading ? "Loading..." : payableEntries.length}
                   </span>
@@ -530,7 +497,6 @@ export default function WorkerPaymentForm() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium">Total payment</p>
-
                     <p className="text-xs text-muted-foreground">
                       All outstanding earnings in this period
                     </p>
@@ -544,7 +510,6 @@ export default function WorkerPaymentForm() {
 
               <Button type="submit" className="w-full" disabled={!canSubmit}>
                 <CheckCircle2 className="mr-2 size-4" />
-
                 {saving ? "Creating payment..." : "Create worker payment"}
               </Button>
 
@@ -557,12 +522,10 @@ export default function WorkerPaymentForm() {
 
           {/* WORKER INFORMATION AND PAYABLE ENTRIES */}
 
-          <div className="flex min-w-0 flex-col gap-5">
+          <div className="sticky top-[20px] flex h-fit min-w-0 flex-col gap-5">
             <WorkerFormInfo worker={selectedWorker} />
 
-            {/* PAYABLE PRODUCTION ENTRIES */}
-
-            <Card className="gap-0">
+            <Card className="gap-0 pb-0">
               <CardHeader className="border-b">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
@@ -581,7 +544,7 @@ export default function WorkerPaymentForm() {
                 </p>
               </CardHeader>
 
-              <CardContent className="p-0">
+              <CardContent className="flex min-h-[400px] flex-col gap-0 p-0 pb-0">
                 {!workerID ? (
                   <StateComponent
                     className="rounded-none ring-0!"
@@ -603,59 +566,12 @@ export default function WorkerPaymentForm() {
                     ICON={<Receipt />}
                     className="rounded-none ring-0"
                     message="No payable entries"
-                    description="No outstanding production earnings were found for this worker and period."
+                    description="No outstanding production earnings were found for this worker within this period."
                   />
                 ) : (
                   <PayableProductionEntriesTable entries={payableEntries} />
                 )}
               </CardContent>
-
-              {/* ENTRIES TOTAL */}
-              {payableEntries.length > 0 &&
-                !entriesLoading &&
-                workerID &&
-                validDateRange && (
-                  <CardFooter className="flex flex-col gap-3">
-                    {workerID && (
-                      <>
-                        <div className="flex w-full items-center justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            Total earned
-                          </span>
-                          <span className="text-sm font-medium tabular-nums">
-                            {summaryLoading
-                              ? "..."
-                              : formatMoney(summary?.total_earned ?? 0)}
-                          </span>
-                        </div>
-
-                        <div className="flex w-full items-center justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            Already paid
-                          </span>
-                          <span className="text-sm font-medium tabular-nums">
-                            {summaryLoading
-                              ? "..."
-                              : formatMoney(summary?.total_paid ?? 0)}
-                          </span>
-                        </div>
-
-                        <div className="flex w-full items-center justify-between">
-                          <div>
-                            <p className="text-sm font-semibold">
-                              Total Pending
-                            </p>
-                          </div>
-                          <span className="text-lg font-bold tabular-nums">
-                            {summaryLoading
-                              ? "..."
-                              : formatMoney(summary?.total_pending ?? 0)}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </CardFooter>
-                )}
             </Card>
           </div>
         </div>

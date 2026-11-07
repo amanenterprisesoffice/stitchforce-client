@@ -3,6 +3,8 @@
 import type { ReactNode } from "react"
 
 import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+
 import {
   Table,
   TableBody,
@@ -27,6 +29,8 @@ interface DataTableProps<T> {
   className?: string
   tableContainerClassName?: string
   frameClassName?: string
+  isLoading?: boolean
+  skeletonRows?: number
 }
 
 export default function DataTable<T>({
@@ -37,15 +41,17 @@ export default function DataTable<T>({
   emptyMessage = "No records found.",
   className = "",
   tableContainerClassName = "",
-  frameClassName = "",
+  frameClassName = "rounded-none",
+  isLoading = false,
+  skeletonRows = 12,
 }: DataTableProps<T>) {
   return (
-    <Card className={`h-full w-full pt-0! pb-0!  shadow-none ${className}`}>
-      <CardContent className="p-0 ">
+    <Card className={`h-full w-full pt-0! pb-0! shadow-none ${className}`}>
+      <CardContent className="p-0">
         <Table
           variant="surface"
           stickyHeader
-          containerClassName={`max-h-full  ${tableContainerClassName}`}
+          containerClassName={`max-h-full ${tableContainerClassName}`}
           frameClassName={frameClassName}
         >
           <TableHeader className="bg-red-500!">
@@ -59,7 +65,17 @@ export default function DataTable<T>({
           </TableHeader>
 
           <TableBody>
-            {data.length > 0 ? (
+            {isLoading ? (
+              Array.from({ length: skeletonRows }).map((_, rowIndex) => (
+                <TableRow key={`skeleton-${rowIndex}`}>
+                  {columns.map((column, colIndex) => (
+                    <TableCell key={colIndex} className={column.className}>
+                      <Skeleton className="h-4 w-full max-w-[140px]" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : data.length > 0 ? (
               data.map((item) => (
                 <TableRow
                   key={getRowId(item)}

@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
-import { ArrowLeft, Ban, CreditCard, UserRound, Wallet } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { ArrowLeft, Ban, CreditCard, Wallet } from "lucide-react"
 import { toast } from "sonner"
 
 import useFetch from "@/hooks/useFetch"
@@ -11,17 +11,65 @@ import { useUser } from "@/contexts/UserContext"
 import Loader from "@/components/ui/Loader"
 import StateComponent from "@/components/StateComponent"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import VoidPaymentDialog from "../components/void-dialog"
-import type { WorkerPayment } from "@/utils/zodSchema/payments"
-import { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
-import { formatDate, formatMoney } from "@/utils/utils"
+import PaymentDetailsHeader from "./components/header"
+import PaymentSummary from "./components/payment-summary"
+import TransactionCard from "./components/transaction-card"
+import ProductionEntriesTable from "./components/production-entries-table"
+
+export interface PaymentWorker {
+  id: string
+  name: string
+  phone?: string
+  gender?: string
+  photo_url?: string
+}
+
+export interface PaymentProductionEntry {
+  id: string
+  organization_id?: string
+  bundle_id: string
+  worker_id: string
+  style_operation_id: string
+  quantity: number
+  rate_per_piece: number
+  total_amount: number
+  allocated_amount?: number
+  production_date: string
+  remarks?: string
+  worker?: { id?: string; name?: string; phone?: string }
+  bundle?: {
+    id: string
+    bundle_number: string
+    quantity: number
+    status: string
+  }
+  style?: { id: string; name: string; style_number?: string }
+  operation?: { id: string; name: string; rate_per_piece: number }
+  created_at?: string
+  updated_at?: string
+}
+
+export interface WorkerPayment {
+  id: string
+  organization_id: string
+  worker_id: string
+  amount: number
+  payment_date: string
+  payment_method: string
+  reference?: string
+  remarks?: string
+  status: "completed" | "voided" | string
+  created_at: string
+  updated_at?: string
+  production_entry: PaymentProductionEntry[]
+  worker?: PaymentWorker
+}
 
 export default function WorkerPaymentDetailsPage() {
-  const params = useParams()
-  const paymentID = params.id as string
+  const params = useParams<{ id: string }>()
+  const router = useRouter()
+  const paymentID = params.id
   const { user } = useUser()
   const organizationID = user?.organization_id
   const [voidDialogOpen, setVoidDialogOpen] = useState(false)
@@ -32,34 +80,24 @@ export default function WorkerPaymentDetailsPage() {
       : ""
 
   const {
-    data: paymentData,
+    data,
     isLoading,
     refetch: fetchPayment,
-  } = useFetch({
+  } = useFetch<WorkerPayment>({
     auto: !!paymentURL,
     url: paymentURL,
     method: "GET",
   })
 
-  const payment: WorkerPayment | null = paymentData ?? null
-  const workerURL =
-    organizationID && payment?.worker_id
-      ? `/api/organizations/${organizationID}/garment-workers/${payment.worker_id}`
-      : ""
-
-  const { data: workerData } = useFetch({
-    auto: !!workerURL,
-    url: workerURL,
-    method: "GET",
-  })
-  const worker: GarmentWorker | null = workerData ?? payment?.worker ?? null
-
   const { refetch: voidPayment, isLoading: isVoiding } = useFetch({
     auto: false,
   })
 
+  const payment = data ?? null
+
   const handleVoid = async () => {
-    if (!payment) return
+    if (!paymentURL || !payment) return
+
     await voidPayment({
       url: `${paymentURL}/void`,
       method: "PATCH",
@@ -73,167 +111,38 @@ export default function WorkerPaymentDetailsPage() {
     })
   }
 
-  if (isLoading && !payment) return <Loader />
+  if (isLoading && !payment) return <Loader text="Loading payment" />
 
   if (!organizationID || !payment) {
     return (
       <StateComponent
         message="Payment not found"
-        description="The requested worker payment could not be found."
+        description="The requested worker payment could not be found or is not accessible."
         PortalButton={
           <Button
             variant="outline"
-            render={
-              <Link href="/worker-payments">
-                <ArrowLeft className="mr-2 size-4" />
-                Back to payments
-              </Link>
-            }
-          ></Button>
+            onClick={() => router.push("/worker-payments")}
+          >
+            <ArrowLeft className="mr-2 size-4" />
+            Back to payments
+          </Button>
         }
       />
     )
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            render={
-              <Link href="/worker-payments">
-                <ArrowLeft className="mr-2 size-4" />
-                Back to payments
-              </Link>
-            }
-            className="-ml-3"
-          ></Button>
-          {/* Removed because render prop now handles the link */}
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Payment details
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Payment record and transaction information.
-          </p>
-        </div>
-        {payment.status === "completed" && (
-          <Button variant="destructive" onClick={() => setVoidDialogOpen(true)}>
-            <Ban className="mr-2 size-4" />
-            Void payment
-          </Button>
-        )}
-      </div>
-
-      <Card className="shadow-none">
-        <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Payment amount</p>
-            <p className="text-3xl font-semibold tabular-nums">
-              {formatMoney(payment.amount)}
-            </p>
-          </div>
-          <Badge
-            variant={payment.status === "completed" ? "default" : "secondary"}
-          >
-            {payment.status}
-          </Badge>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <UserRound className="size-4 text-muted-foreground" />
-              Worker
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Link
-              href={`/garment-workers/${payment.worker_id}`}
-              className="flex items-center gap-3 hover:text-primary"
-            >
-              {worker?.photo_url ? (
-                <img
-                  src={worker.photo_url}
-                  alt=""
-                  className="size-11 rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex size-11 items-center justify-center rounded-full bg-muted">
-                  <UserRound className="size-5 text-muted-foreground" />
-                </div>
-              )}
-              <div>
-                <p className="font-medium">{worker?.name || "View worker"}</p>
-                <p className="text-sm text-muted-foreground">
-                  {worker?.phone || payment.worker_id}
-                </p>
-              </div>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CreditCard className="size-4 text-muted-foreground" />
-              Transaction
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Payment method</span>
-              <span className="font-medium capitalize">
-                {payment.payment_method}
-              </span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Reference</span>
-              <span className="font-medium">{payment.reference || "—"}</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Payment date</span>
-              <span className="font-medium">
-                {formatDate(payment.payment_date)}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-none md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Wallet className="size-4 text-muted-foreground" />
-              Additional information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Payment ID</span>
-              <span className="font-mono text-xs break-all">{payment.id}</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Created</span>
-              <span>{formatDate(payment.created_at)}</span>
-            </div>
-            <div className="space-y-1">
-              <p className="text-muted-foreground">Remarks</p>
-              <p>{payment.remarks || "No remarks"}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <VoidPaymentDialog
-        open={voidDialogOpen}
-        onOpenChange={setVoidDialogOpen}
+    <main className="mx-auto flex h-full w-full max-w-7xl flex-col gap-5 p-4 md:p-6">
+      <PaymentDetailsHeader
         payment={payment}
-        onConfirm={handleVoid}
-        isVoiding={isVoiding}
+        onVoid={() => setVoidDialogOpen(true)}
       />
-    </div>
+
+      <PaymentSummary payment={payment} />
+      <TransactionCard payment={payment} />
+
+      <ProductionEntriesTable entries={payment.production_entry ?? []} />
+
+    </main>
   )
 }

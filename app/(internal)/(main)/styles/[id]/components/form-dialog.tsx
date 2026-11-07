@@ -5,12 +5,6 @@ import { useEffect } from "react"
 import { useForm, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-import {
-  operationSchema,
-  initialOperationValues,
-  type OperationFormValues,
-  type OperationPayload,
-} from "../schema"
 
 import type { StyleOperation } from "./table"
 
@@ -26,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { initialOperationValues, OperationFormValues, OperationPayload, operationSchema } from "@/utils/zodSchema/styleops"
 
 interface Props {
   open: boolean

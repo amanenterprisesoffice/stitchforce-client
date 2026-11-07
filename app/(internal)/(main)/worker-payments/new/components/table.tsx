@@ -90,10 +90,6 @@ export default function PayableProductionEntriesTable({ entries }: Props) {
         return (
           <div className="text-right">
             <p className="font-semibold tabular-nums">{formatMoney(pending)}</p>
-            <Badge variant="outline" className="mt-1 text-muted-foreground">
-              <Clock className="mr-1 size-3" />
-              Unpaid
-            </Badge>
           </div>
         )
       },

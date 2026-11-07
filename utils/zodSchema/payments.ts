@@ -67,3 +67,27 @@ export interface PayableProductionEntry {
   paid_amount: number
   pending_amount: number
 }
+
+
+
+export interface WorkerPaymentSummary {
+  total_earned: number
+  total_paid: number
+  total_pending: number
+}
+
+export interface CreateWorkerPaymentPayload {
+  worker_id: string
+  from_date: string
+  to_date: string
+  payment_date: string
+  payment_method: PaymentMethod
+  reference?: string
+  remarks?: string
+}
+
+export interface PeriodPreset {
+  label: string
+  from_date: string
+  to_date: string
+}

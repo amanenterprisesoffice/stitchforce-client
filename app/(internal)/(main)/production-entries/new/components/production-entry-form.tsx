@@ -239,7 +239,7 @@ export default function NewProductionEntriesPage() {
     !bundlesLoading
 
   return (
-    <div className="mx-auto h-full w-full min-w-0">
+    <div className="mx-auto h-fit w-full min-w-0">
       <form onSubmit={handleSubmit(submit)} className="h-full w-full min-w-0">
         <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.8fr)] 2xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
           {/* WORKER PRODUCTION */}

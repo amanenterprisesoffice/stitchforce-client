@@ -1,11 +1,12 @@
+
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Plus, Wallet } from "lucide-react"
-import { toast } from "sonner"
+import { useRouter, useSearchParams } from "next/navigation"
 
-import { useRouter } from "next/navigation"
 import { useUser } from "@/contexts/UserContext"
+import useFetch from "@/hooks/useFetch"
 
 import Loader from "@/components/ui/Loader"
 import Pagination from "@/components/ui/pagination"
@@ -19,9 +20,6 @@ import WorkerPaymentFilters, {
 import WorkerPaymentsTable from "./components/table"
 
 import type { WorkerPayment } from "@/utils/zodSchema/payments"
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
-
-import useFetch from "@/hooks/useFetch"
 
 const DEFAULT_LIMIT = 25
 
@@ -30,6 +28,17 @@ const EMPTY_FILTERS: WorkerPaymentFiltersValue = {
   status: "",
   from_date: "",
   to_date: "",
+}
+
+function readInitialFilters(
+  params: URLSearchParams
+): WorkerPaymentFiltersValue {
+  return {
+    worker_id: params.get("worker_id") || "",
+    status: params.get("status") || "",
+    from_date: params.get("from_date") || "",
+    to_date: params.get("to_date") || "",
+  }
 }
 
 function buildQuery(
@@ -89,10 +98,13 @@ function readTotal(response: unknown): number | undefined {
 export default function WorkerPaymentsPage() {
   const { user } = useUser()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const organizationID = user?.organization_id
 
-  const base = organizationID ? `/api/organizations/${organizationID}` : ""
+  const base = organizationID
+    ? `/api/organizations/${organizationID}`
+    : ""
 
   const paymentsURL = `${base}/worker-payments`
 
@@ -100,14 +112,47 @@ export default function WorkerPaymentsPage() {
   const [filters, setFilters] =
     useState<WorkerPaymentFiltersValue>(EMPTY_FILTERS)
 
+  const [filtersInitialized, setFiltersInitialized] = useState(false)
+
   // Pagination
   const [limit, setLimit] = useState(DEFAULT_LIMIT)
   const [offset, setOffset] = useState(0)
 
-  // Dialogs
-  const [paymentToVoid, setPaymentToVoid] = useState<WorkerPayment | null>(null)
+  const initialized = useRef(false)
 
-  // Build request URL
+  // Initialize filters and pagination from URL.
+  useEffect(() => {
+    if (initialized.current) return
+
+    const params = new URLSearchParams(searchParams.toString())
+
+    setFilters(readInitialFilters(params))
+
+    const initialLimit = Number(params.get("limit"))
+    const initialOffset = Number(params.get("offset"))
+
+    if (Number.isInteger(initialLimit) && initialLimit > 0) {
+      setLimit(initialLimit)
+    }
+
+    if (Number.isInteger(initialOffset) && initialOffset >= 0) {
+      setOffset(initialOffset)
+    }
+
+    initialized.current = true
+    setFiltersInitialized(true)
+  }, [searchParams])
+
+  // Fetch payments.
+  const {
+    data: paymentsData,
+    isLoading,
+    refetch: fetchPayments,
+  } = useFetch<any>({
+    auto: false,
+  })
+
+  // Build request URL.
   const requestURL = useMemo(() => {
     return `${paymentsURL}?${buildQuery(filters, limit, offset)}`
   }, [
@@ -120,57 +165,42 @@ export default function WorkerPaymentsPage() {
     offset,
   ])
 
-  // Fetch workers
-  const { data: workers, isLoading: workersLoading } = useFetch<
-    GarmentWorker[]
-  >({
-    auto: true,
-    url: `${base}/garment-workers`,
-  })
-
-  // Fetch payments
-  const {
-    data: paymentsData,
-    isLoading,
-    refetch: fetchPayments,
-  } = useFetch<any>({
-    auto: false,
-  })
-
-  // Mutation
-  const { refetch: mutatePayment, isLoading: isMutating } = useFetch({
-    auto: false,
-  })
-
-  // Normalize payments
+  // Normalize payments.
   const payments: WorkerPayment[] = Array.isArray(paymentsData)
     ? paymentsData
-    : (paymentsData?.worker_payments ?? [])
+    : paymentsData?.worker_payments ?? []
 
-  // Total count
-  const totalItems = useMemo(() => readTotal(paymentsData), [paymentsData])
+  // Total count.
+  const totalItems = useMemo(
+    () => readTotal(paymentsData),
+    [paymentsData]
+  )
 
-  // Pagination
+  // Pagination.
   const hasNextPage =
     totalItems !== undefined
       ? offset + payments.length < totalItems
       : payments.length === limit
 
-  // Load payments
+  // Load payments.
   const loadPayments = useCallback(() => {
-    if (!organizationID) return
+    if (!organizationID || !filtersInitialized) return
 
     fetchPayments({
       url: requestURL,
     })
-  }, [organizationID, requestURL, fetchPayments])
+  }, [
+    organizationID,
+    filtersInitialized,
+    requestURL,
+    fetchPayments,
+  ])
 
-  // Fetch payments whenever filters or pagination change
   useEffect(() => {
     loadPayments()
   }, [loadPayments])
 
-  // Update individual filters
+  // Update individual filters.
   const handleFiltersChange = useCallback(
     <K extends keyof WorkerPaymentFiltersValue>(
       key: K,
@@ -186,31 +216,13 @@ export default function WorkerPaymentsPage() {
     []
   )
 
-  // Clear filters
+  // Clear filters.
   const clearFilters = useCallback(() => {
     setFilters(EMPTY_FILTERS)
     setOffset(0)
   }, [])
 
-  // Void payment
-  const handleVoid = async () => {
-    if (!paymentToVoid || !organizationID) return
-
-    await mutatePayment({
-      url: `${paymentsURL}/${paymentToVoid.id}/void`,
-      method: "PATCH",
-
-      onSuccess: () => {
-        toast.success("Payment voided successfully")
-        setPaymentToVoid(null)
-
-        // Reload payments after successful void
-        loadPayments()
-      },
-    })
-  }
-
-  // Organization validation
+  // Organization validation.
   if (!organizationID) {
     return (
       <StateComponent
@@ -227,29 +239,29 @@ export default function WorkerPaymentsPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      {/* Header */}
       <WorkerPaymentsHeader count={totalItems ?? payments.length} />
 
-      {/* Filters and table */}
       <div className="flex h-full min-h-0 gap-4">
         <WorkerPaymentFilters
-          isWorkersLoading={workersLoading}
           filters={filters}
-          workers={workers}
           onChange={handleFiltersChange}
           onClear={clearFilters}
         />
 
-        {/* Payments table */}
         <div className="relative flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden">
           <div className="min-h-0 flex-1">
-            {!isLoading && isEmptyPage ? (
+            {isLoading && !paymentsData ? (
+              <Loader text="Loading worker payments" />
+            ) : !isLoading && isEmptyPage ? (
               <StateComponent
                 message="No more payments on this page"
                 ICON={<Wallet />}
                 description="There are no payments available at this page. You can go back to the previous page to view available payments."
                 PortalButton={
-                  <Button variant="outline" onClick={() => setOffset(0)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setOffset(0)}
+                  >
                     Go to first page
                   </Button>
                 }
@@ -270,7 +282,9 @@ export default function WorkerPaymentsPage() {
                   !hasActiveFilters ? (
                     <Button
                       variant="outline"
-                      onClick={() => router.push("/worker-payments/new")}
+                      onClick={() =>
+                        router.push("/worker-payments/new")
+                      }
                     >
                       <Plus className="mr-2 size-4" />
                       Record payment
@@ -281,14 +295,11 @@ export default function WorkerPaymentsPage() {
             ) : (
               <WorkerPaymentsTable
                 payments={payments}
-                workers={workers}
-                onVoid={setPaymentToVoid}
                 isLoading={isLoading}
               />
             )}
           </div>
 
-          {/* Pagination */}
           {(payments.length > 0 || offset > 0) && (
             <Pagination
               limit={limit}
@@ -305,7 +316,6 @@ export default function WorkerPaymentsPage() {
           )}
         </div>
       </div>
-
     </div>
   )
 }

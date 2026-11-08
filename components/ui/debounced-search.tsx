@@ -19,7 +19,7 @@ export default function DebouncedSearch({
   placeholder = "Search...",
   className = "max-w-sm",
   delay = 350,
-  label = "Find Entries",
+  label = "",
 }: DebouncedSearchProps) {
   const [search, setSearch] = useState(value)
 

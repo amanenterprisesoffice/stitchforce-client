@@ -1,54 +1,48 @@
 "use client"
 
 import Link from "next/link"
-import { Eye, Ban, UserRound } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import type { WorkerPayment } from "@/utils/zodSchema/payments"
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
-
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 
 import DataTable from "@/components/ui/DataTable"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import { formatMoney, formatDate, getInitials } from "@/utils/utils"
-import { useRouter } from "next/navigation"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
 
 interface Props {
   payments: WorkerPayment[]
-  workers: GarmentWorker[] | null
-  onVoid: (payment: WorkerPayment) => void
   isLoading: boolean
 }
 
-export default function WorkerPaymentsTable({
-  payments,
-  workers,
-  onVoid,
-  isLoading,
-}: Props) {
-  const workerMap = new Map((workers ?? []).map((worker) => [worker.id, worker]))
+export default function WorkerPaymentsTable({ payments, isLoading }: Props) {
+  const router = useRouter()
 
   const columns = [
     {
       header: "Worker",
       render: (payment: WorkerPayment) => {
-        const worker = payment.worker ?? workerMap.get(payment.worker_id)
+        const worker = payment.worker
+        const workerName = getWorkerName(worker)
 
         return (
-          <Link
-            href={`/workers/${payment.worker_id}`}
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-2 font-medium hover:text-primary"
-          >
-            <Avatar>
-              <AvatarImage src={worker?.photo_url} alt={worker?.name || "Worker"} />
-              <AvatarFallback>{getInitials(worker?.name || "Worker")}</AvatarFallback>
+          <div className="flex min-w-[180px] items-center gap-3">
+            <Avatar className="size-9">
+              <AvatarImage
+                src={worker?.photo_url || undefined}
+                alt={workerName}
+              />
+              <AvatarFallback>{getInitials(workerName)}</AvatarFallback>
             </Avatar>
 
-            <span>{worker?.name || "Worker"}</span>
-          </Link>
+            <div className="min-w-0">
+              <p className="truncate font-medium">{workerName}</p>
+              <p className="text-xs text-muted-foreground">
+                {worker?.phone || "—"}
+              </p>
+            </div>
+          </div>
         )
       },
     },
@@ -63,12 +57,6 @@ export default function WorkerPaymentsTable({
         <span className="capitalize">{payment.payment_method}</span>
       ),
     },
-    // {
-    //   header: "Reference",
-    //   className: "hidden md:table-cell text-muted-foreground",
-    //   render: (payment: WorkerPayment) =>
-    //     payment.reference || "—",
-    // },
     {
       header: "Amount",
       render: (payment: WorkerPayment) => (
@@ -77,56 +65,7 @@ export default function WorkerPaymentsTable({
         </span>
       ),
     },
-    // {
-    //   header: "Status",
-    //   render: (payment: WorkerPayment) => (
-    //     <Badge
-    //       variant={
-    //         payment.status === "completed" ? "default" : "secondary"
-    //       }
-    //       className="capitalize"
-    //     >
-    //       {payment.status}
-    //     </Badge>
-    //   ),
-    // },
-    // {
-    //   header: "",
-    //   className: "w-[100px]",
-    //   render: (payment: WorkerPayment) => (
-    //     <div
-    //       className="flex justify-end gap-1"
-    //       onClick={(e) => e.stopPropagation()}
-    //     >
-    //       <Button
-    //         render={
-    //           <Link
-    //             href={`/worker-payments/${payment.id}`}
-    //             aria-label="View payment"
-    //           />
-    //         }
-    //         variant="ghost"
-    //         size="icon"
-    //       >
-    //         <Eye className="size-4" />
-    //       </Button>
-
-    //       {payment.status === "completed" && (
-    //         <Button
-    //           variant="ghost"
-    //           size="icon"
-    //           onClick={() => onVoid(payment)}
-    //           aria-label="Void payment"
-    //         >
-    //           <Ban className="size-4 text-destructive" />
-    //         </Button>
-    //       )}
-    //     </div>
-    //   ),
-    // },
   ]
-
-  const router = useRouter()
 
   return (
     <DataTable

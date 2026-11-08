@@ -1,82 +1,45 @@
+
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+
 import {
   ClipboardList,
   CreditCard,
   Download,
-  FileSpreadsheet,
-  FileText,
-  FileType,
 } from "lucide-react"
 
-import { QuickLinks, QuickLinkItem } from "@/components/ui/quick-links"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+  QuickLinks,
+  QuickLinkItem,
+} from "@/components/ui/quick-links"
 
-import FormToggleGroup from "@/components/ui/FormToggleGroup"
-import { useUser } from "@/contexts/UserContext"
 import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import WorkerExportDialog from "./export-dialog"
 
-type ExportFormat = "csv" | "xlsx" | "pdf"
 
-const EXPORT_OPTIONS = [
-  {
-    value: "csv",
-    label: "CSV",
-    icon: FileText,
-  },
-  {
-    value: "xlsx",
-    label: "Excel",
-    icon: FileSpreadsheet,
-  },
-  {
-    value: "pdf",
-    label: "PDF",
-    icon: FileType,
-  },
-]
-
-const WorkerQuickLinks = ({ worker }: { worker: GarmentWorker }) => {
+const WorkerQuickLinks = ({
+  worker,
+}: {
+  worker: GarmentWorker
+}) => {
   const router = useRouter()
-  const { user } = useUser()
 
-  const [exportDialogOpen, setExportDialogOpen] = useState(false)
-  const [exportFormat, setExportFormat] = useState<ExportFormat>("csv")
+  const [activeExport, setActiveExport] = useState<
+    "production" | "payments" | null
+  >(null)
 
   const handleViewEntries = () => {
-    router.push(`/production-entries?worker_id=${worker.id}`)
+    router.push(
+      `/production-entries?worker_id=${worker.id}`
+    )
   }
 
   const handleViewPayments = () => {
-    router.push(`/worker-payments?worker_id=${worker.id}`)
-  }
-
-  const handleDownloadEntries = () => {
-    if (!user?.organization_id) return
-
-    const params = new URLSearchParams({
-      format: exportFormat,
-      worker_id: worker.id,
-    })
-
-    const url = `/api/organizations/${user.organization_id}/production-entries/export?${params.toString()}`
-
-    window.open(url, "_blank")
-    setExportDialogOpen(false)
-  }
-
-  const handleDownloadPayments = () => {
-    router.push(`/workers/${worker.id}/payments/download`)
+    router.push(
+      `/worker-payments?worker_id=${worker.id}`
+    )
   }
 
   return (
@@ -100,59 +63,42 @@ const WorkerQuickLinks = ({ worker }: { worker: GarmentWorker }) => {
           icon={<Download className="size-5" />}
           title="Download production entries"
           description="Export this worker's production records."
-          onClick={() => setExportDialogOpen(true)}
+          onClick={() => setActiveExport("production")}
         />
 
         <QuickLinkItem
           icon={<Download className="size-5" />}
           title="Download payment history"
           description="Export the worker's payment history."
-          onClick={handleDownloadPayments}
+          onClick={() => setActiveExport("payments")}
         />
       </QuickLinks>
 
-      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Download production entries</DialogTitle>
-            <DialogDescription>
-              Choose a format to export production entries for{" "}
-              <span className="font-medium text-foreground">
-                {worker.name}
-              </span>
-              .
-            </DialogDescription>
-          </DialogHeader>
+      {/* Production entries export */}
+      <WorkerExportDialog
+        open={activeExport === "production"}
+        onOpenChange={(open) =>
+          setActiveExport(open ? "production" : null)
+        }
+        title="Download production entries"
+        description="Choose a format to export production entries for"
+        endpoint="/production-entries/export"
+        workerName={worker.name}
+        workerID={worker.id}
+      />
 
-          <FormToggleGroup
-            name="exportFormat"
-            value={exportFormat}
-            onChange={(value) =>
-              setExportFormat(value as ExportFormat)
-            }
-            options={EXPORT_OPTIONS}
-            type="single"
-            ToggleGroupClassName="w-full"
-          />
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setExportDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-
-            <Button
-              onClick={handleDownloadEntries}
-              disabled={!user?.organization_id}
-            >
-              <Download className="mr-2 size-4" />
-              Download
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Worker payments export */}
+      <WorkerExportDialog
+        open={activeExport === "payments"}
+        onOpenChange={(open) =>
+          setActiveExport(open ? "payments" : null)
+        }
+        title="Download payment history"
+        description="Choose a format to export payment history for"
+        endpoint="/worker-payments/export"
+        workerName={worker.name}
+        workerID={worker.id}
+      />
     </>
   )
 }

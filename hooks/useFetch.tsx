@@ -1,6 +1,7 @@
 
 "use client";
 
+import { prettifyKey } from "@/utils/utils";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 
@@ -125,7 +126,8 @@ export default function useFetch<T = any>({
         const message = err?.message || "Unknown error";
 
         if (config.showErrorToast) {
-          toast.error(message);
+          const errMessage = message.charAt(0).toUpperCase() + message.slice(1);
+          toast.error(errMessage);
         }
         setError(message);
         config.onError?.(err?.fullError || err);

@@ -1,6 +1,10 @@
+
 "use client"
 
 import { RotateCcw } from "lucide-react"
+
+import useFetch from "@/hooks/useFetch"
+import { useUser } from "@/contexts/UserContext"
 
 import FormSelect from "@/components/ui/FormSelect"
 import FormDatePicker from "@/components/ui/FormDatePicker"
@@ -20,22 +24,41 @@ type FilterKey = keyof WorkerPaymentFiltersValue
 
 interface Props {
   filters: WorkerPaymentFiltersValue
-  workers: GarmentWorker[] | null
   onChange: <K extends FilterKey>(
     key: K,
     value: WorkerPaymentFiltersValue[K]
   ) => void
   onClear: () => void
-  isWorkersLoading: boolean
 }
 
 export default function WorkerPaymentFilters({
   filters,
-  workers,
   onChange,
   onClear,
-  isWorkersLoading,
-}: Props & { isWorkersLoading: boolean }) {
+}: Props) {
+  const { user } = useUser()
+
+  const organizationID = user?.organization_id
+
+  const base = organizationID
+    ? `/api/organizations/${organizationID}`
+    : ""
+
+  // Fetch workers for the worker filter.
+  const {
+    data: workersResponse,
+    isLoading: isWorkersLoading,
+  } = useFetch<any>({
+    auto: !!organizationID,
+    url: `${base}/garment-workers`,
+  })
+
+  const workers: GarmentWorker[] = Array.isArray(workersResponse)
+    ? workersResponse
+    : workersResponse?.workers ??
+      workersResponse?.garment_workers ??
+      []
+
   const hasFilters = Object.values(filters).some(Boolean)
 
   return (
@@ -50,36 +73,16 @@ export default function WorkerPaymentFilters({
           onChange={(value: string) =>
             onChange("worker_id", value === "all" ? "" : value)
           }
-          options={
-            workers
-              ? [
-                  { value: "all", label: "All workers" },
-                  ...workers.map((worker) => ({
-                    value: worker.id,
-                    label: worker.name,
-                  })),
-                ]
-              : []
-          }
+          options={[
+            { value: "all", label: "All workers" },
+            ...workers.map((worker) => ({
+              value: worker.id,
+              label: worker.name,
+            })),
+          ]}
           searchBar
           showLoader={isWorkersLoading}
         />
-
-        {/* Status */}
-        {/* <FormSelect
-          id="status"
-          label="Status"
-          placeholder="All statuses"
-          value={filters.status || "all"}
-          onChange={(value: string) =>
-            onChange("status", value === "all" ? "" : value)
-          }
-          options={[
-            { value: "all", label: "All statuses" },
-            { value: "completed", label: "Completed" },
-            { value: "voided", label: "Voided" },
-          ]}
-        /> */}
 
         {/* Payment from */}
         <FormDatePicker

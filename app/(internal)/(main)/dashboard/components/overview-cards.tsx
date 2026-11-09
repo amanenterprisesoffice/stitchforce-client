@@ -9,25 +9,20 @@ import {
   TrendingUp,
 } from "lucide-react"
 
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 
 import { formatMoney } from "@/utils/utils"
 
-import type { OrganizationDashboard } from "../schema"
+import type { DashboardOverview } from "../schema"
 
 interface Props {
-  stats: OrganizationDashboard | null
+  stats: DashboardOverview | null
   isLoading: boolean
 }
 
-export default function OverviewCards({
-  stats,
-  isLoading,
-}: Props) {
-  const overview = stats?.overview
+export default function OverviewCards({ stats, isLoading }: Props) {
+  const overview = stats
+  const today = overview?.today
 
   const cards = [
     {
@@ -39,15 +34,15 @@ export default function OverviewCards({
       bg: "bg-blue-500/10",
     },
     {
-      title: "Production entries",
+      title: "Total entries",
       value: overview?.total_production_entries ?? 0,
-      description: `${stats?.today.production_quantity ?? 0} pieces today`,
+      description: `${overview?.total_styles ?? 0} styles`,
       icon: Scissors,
       color: "text-violet-600",
       bg: "bg-violet-500/10",
     },
     {
-      title: "Total earned",
+      title: "Total Work Completed",
       value: formatMoney(overview?.total_earned ?? 0),
       description: "Lifetime production earnings",
       icon: TrendingUp,
@@ -70,6 +65,30 @@ export default function OverviewCards({
       color: "text-amber-600",
       bg: "bg-amber-500/10",
     },
+    {
+      title: "Today's production",
+      value: `${today?.production_quantity ?? 0 } pcs`,
+      description: `${today?.production_entries ?? 0} entries`,
+      icon: Scissors,
+      color: "text-violet-600",
+      bg: "bg-violet-500/10",
+    },
+    {
+      title: "Today's production",
+      value: formatMoney(today?.production_amount ?? 0),
+      description: "Production completed today",
+      icon: TrendingUp,
+      color: "text-emerald-600",
+      bg: "bg-emerald-500/10",
+    },
+    {
+      title: "Today's payments",
+      value: formatMoney(today?.payment_amount ?? 0),
+      description: `${today?.payment_count ?? 0} payments made today`,
+      icon: Wallet,
+      color: "text-sky-600",
+      bg: "bg-sky-500/10",
+    },
   ]
 
   return (
@@ -82,9 +101,7 @@ export default function OverviewCards({
             <CardContent className="">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">
-                    {item.title}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{item.title}</p>
 
                   <div className="mt-1 min-h-8">
                     {isLoading ? (

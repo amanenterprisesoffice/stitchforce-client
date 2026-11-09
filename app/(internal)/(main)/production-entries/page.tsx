@@ -29,11 +29,12 @@ import DeleteProductionEntryDialog from "./components/delete-dialog"
 import DebouncedSearch from "@/components/ui/debounced-search"
 
 const DEFAULT_LIMIT = 25
-const MAX_OPTION_LIMIT = 100
+const MAX_OPTION_LIMIT = 1000
 
 type FilterState = {
   search: string
   workerID: string
+  status: string
   styleID: string
   bundleID: string
   operationID: string
@@ -44,6 +45,7 @@ type FilterState = {
 const EMPTY_FILTERS: FilterState = {
   search: "",
   workerID: "",
+  status: "all",
   styleID: "",
   bundleID: "",
   operationID: "",
@@ -55,6 +57,7 @@ function readInitialFilters(params: URLSearchParams): FilterState {
   return {
     search: params.get("search") || "",
     workerID: params.get("worker_id") || "",
+    status: params.get("status") || "all",
     styleID: params.get("style_id") || "",
     bundleID: params.get("bundle_id") || "",
     operationID: params.get("style_operation_id") || "",
@@ -71,6 +74,8 @@ function buildQuery(filters: FilterState, limit: number, offset: number) {
   }
 
   if (filters.workerID) params.set("worker_id", filters.workerID)
+  if (filters.status && filters.status !== "all")
+    params.set("status", filters.status)
   if (filters.styleID) params.set("style_id", filters.styleID)
   if (filters.bundleID) params.set("bundle_id", filters.bundleID)
 
@@ -200,13 +205,19 @@ export default function ProductionEntriesPage() {
     data: workersResponse,
     refetch: fetchWorkers,
     isLoading: workersLoading,
-  } = useFetch<unknown>({ auto: false })
+  } = useFetch<unknown>({
+    auto: true,
+    url: `${base}/garment-workers?limit=${MAX_OPTION_LIMIT}&offset=0`,
+  })
 
   const {
     data: stylesResponse,
     refetch: fetchStyles,
     isLoading: stylesLoading,
-  } = useFetch<unknown>({ auto: false })
+  } = useFetch<unknown>({
+    auto: true,
+    url: `${base}/styles?limit=${MAX_OPTION_LIMIT}&offset=0`,
+  })
 
   const {
     data: bundlesResponse,
@@ -288,6 +299,7 @@ export default function ProductionEntriesPage() {
   }, [
     entriesURL,
     filters.workerID,
+    filters.status,
     filters.styleID,
     filters.bundleID,
     filters.operationID,
@@ -310,19 +322,6 @@ export default function ProductionEntriesPage() {
   useEffect(() => {
     loadEntries()
   }, [loadEntries])
-
-  // Load base filter options once.
-  useEffect(() => {
-    if (!organizationID) return
-
-    fetchWorkers({
-      url: `${base}/garment-workers?limit=${MAX_OPTION_LIMIT}&offset=0`,
-    })
-
-    fetchStyles({
-      url: `${base}/styles?limit=${MAX_OPTION_LIMIT}&offset=0`,
-    })
-  }, [organizationID, base, fetchWorkers, fetchStyles])
 
   // Load dependent options when a style is selected.
   useEffect(() => {

@@ -17,6 +17,7 @@ import DebouncedSearch from "@/components/ui/debounced-search"
 
 export type ProductionEntryFiltersValue = {
   search: string
+  status: string
   workerID: string
   styleID: string
   bundleID: string
@@ -44,6 +45,15 @@ interface Props {
   onClear: () => void
 }
 
+
+const PaymentStatus = [
+  { value: "all", label: "All" },
+  { value: "payable", label: "Payable" },
+  // { value: "pending", label: "Pending" },
+  // { value: "partially_paid", label: "Partially Paid" },
+  { value: "paid", label: "Paid" },
+]
+
 export default function ProductionEntryFilters({
   filters,
   workers,
@@ -68,6 +78,18 @@ export default function ProductionEntryFilters({
         />
      
 
+        <FormSelect
+          label="Payment Status"
+          tooltipText="See payment status wise production entries"
+          id="status-filter"
+          value={filters.status || "all"}
+          onChange={(value: string) =>
+            onChange("status", value === "all" ? "" : value)
+          }
+          placeholder="Select status"
+          parentClass="w-full min-w-0"
+          options={PaymentStatus}
+        />
         <FormSelect
           label="Worker"
           id="worker-filter"

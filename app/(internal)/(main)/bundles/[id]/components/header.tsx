@@ -43,9 +43,7 @@ export default function BundleDetailsHeader({ bundle, style, styleLoading }: Pro
             size="sm"
             render={<Link href={`/styles/${bundle?.style_id || ""}`} />}
           >
-            <Shirt className="mr-2 size-4" />
             View style
-            <ExternalLink className="ml-2 size-3.5" />
           </Button>
         </div>
       }

@@ -9,7 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import DataTable from "@/components/ui/DataTable"
 
-import { getInitials } from "@/utils/utils"
+import { formatDate, getInitials, prettifyKey } from "@/utils/utils"
+import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 interface Props {
   workers: GarmentWorker[]
@@ -22,19 +23,7 @@ export default function WorkersTable({ workers }: Props) {
     {
       header: "Worker",
       render: (worker: GarmentWorker) => (
-        <div className="flex items-center gap-3">
-          <Avatar className="size-9">
-            <AvatarImage
-              src={worker?.photo_url}
-              alt={worker?.name || "Worker"}
-            />
-            <AvatarFallback>
-              {getInitials(worker?.name) || <Users className="size-4" />}
-            </AvatarFallback>
-          </Avatar>
-
-          <span className="font-medium">{worker?.name || "Worker"}</span>
-        </div>
+        <WorkerInfo worker={worker} ignoreFields={["phone"]} />
       ),
     },
     {
@@ -45,11 +34,24 @@ export default function WorkersTable({ workers }: Props) {
     {
       header: "Gender",
       className: "hidden sm:table-cell",
+      render: (worker: GarmentWorker) => prettifyKey(worker.gender),
+    },
+    {
+      header: "Status",
+      className: "hidden sm:table-cell",
       render: (worker: GarmentWorker) => (
-        <Badge variant="outline" className="capitalize">
-          {worker.gender}
+        <Badge
+          variant={worker?.status === "active" ? "default" : "outline"}
+          className="capitalize"
+        >
+          {worker.status}
         </Badge>
       ),
+    },
+    {
+      header: "Joined",
+      className: "whitespace-nowrap text-right",
+      render: (worker: GarmentWorker) => formatDate(worker.created_at),
     },
   ]
 

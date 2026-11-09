@@ -8,65 +8,32 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/DataTable"
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import {
-  formatDate,
-  formatMoney,
-  getInitials,
-} from "@/utils/utils"
+import { formatDate, formatMoney, getInitials } from "@/utils/utils"
 
 import type { DashboardPayment } from "../schema"
+import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 interface Props {
-  payments: DashboardPayment[]
+  payments: DashboardPayment[] | null
   isLoading: boolean
 }
 
-export default function RecentPayments({
-  payments,
-  isLoading,
-}: Props) {
+export default function RecentPayments({ payments, isLoading }: Props) {
   const router = useRouter()
 
   const columns = [
     {
       header: "Worker",
       render: (payment: DashboardPayment) => {
-        const name = payment.worker?.name || "Unknown worker"
-
-        return (
-          <div className="flex min-w-[150px] items-center gap-2.5">
-            <Avatar className="size-8">
-              <AvatarImage
-                src={payment.worker?.photo_url || undefined}
-                alt={name}
-              />
-              <AvatarFallback>
-                {getInitials(name)}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="min-w-0">
-              <p className="truncate font-medium">{name}</p>
-              <p className="text-xs text-muted-foreground">
-                {payment.worker?.phone || "—"}
-              </p>
-            </div>
-          </div>
-        )
+        return <WorkerInfo worker={payment?.worker} ignoreFields={["phone"]} />
       },
     },
     {
       header: "Date",
       className: "whitespace-nowrap",
-      render: (payment: DashboardPayment) =>
-        formatDate(payment.payment_date),
+      render: (payment: DashboardPayment) => formatDate(payment.payment_date),
     },
     {
       header: "Method",
@@ -85,11 +52,7 @@ export default function RecentPayments({
       header: "Status",
       render: (payment: DashboardPayment) => (
         <Badge
-          variant={
-            payment.status === "completed"
-              ? "default"
-              : "destructive"
-          }
+          variant={payment.status === "completed" ? "default" : "destructive"}
           className="capitalize"
         >
           {payment.status}
@@ -99,17 +62,14 @@ export default function RecentPayments({
     {
       header: "Amount",
       className: "text-right whitespace-nowrap tabular-nums font-medium",
-      render: (payment: DashboardPayment) =>
-        formatMoney(payment.amount),
+      render: (payment: DashboardPayment) => formatMoney(payment.amount),
     },
   ]
 
   return (
-    <Card className="shadow-sm pb-0">
+    <Card className="pb-0 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between gap-3">
-        <CardTitle className="text-lg">
-          Recent payments
-        </CardTitle>
+        <CardTitle className="text-lg">Recent payments</CardTitle>
 
         <Button
           variant="ghost"
@@ -124,13 +84,13 @@ export default function RecentPayments({
 
       <CardContent className="px-0 pb-0">
         <DataTable
-          data={payments}
+          data={payments ?? []}
           columns={columns}
-          getRowId={(payment) => payment.id}
+          getRowId={(payment) => payment?.id ?? ""}
           onRowClick={(payment) =>
-            router.push(`/worker-payments/${payment.id}`)
+            router.push(`/worker-payments/${payment?.id}`)
           }
-          emptyMessage="No payments made yet."
+          emptyMessage="No payments found."
           isLoading={isLoading}
           className="rounded-none"
         />

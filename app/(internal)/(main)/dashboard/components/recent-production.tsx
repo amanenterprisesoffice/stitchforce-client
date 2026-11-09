@@ -8,67 +8,33 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/DataTable"
 
-import {
-  getInitials,
-  formatDate,
-  formatMoney,
-} from "@/utils/utils"
+import { getInitials, formatDate, formatMoney } from "@/utils/utils"
 
 import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
 import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 interface Props {
-  entries: ProductionEntry[]
+  entries: ProductionEntry[] | null
   isLoading: boolean
 }
 
-export default function RecentProduction({
-  entries,
-  isLoading,
-}: Props) {
+export default function RecentProduction({ entries, isLoading }: Props) {
   const router = useRouter()
+  if (!entries) entries = []
 
   const columns = [
     {
       header: "Date",
       className: "whitespace-nowrap",
-      render: (entry: ProductionEntry) =>
-        formatDate(entry.production_date),
+      render: (entry: ProductionEntry) => formatDate(entry.production_date),
     },
     {
       header: "Worker",
       render: (entry: ProductionEntry) => {
-        const workerName = getWorkerName(entry.worker)
-
-        return (
-          <div className="flex min-w-[150px] items-center gap-2.5">
-            <Avatar className="size-8">
-              <AvatarImage
-                src={entry.worker?.photo_url || undefined}
-                alt={workerName}
-              />
-              <AvatarFallback>
-                {getInitials(workerName)}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="min-w-0">
-              <p className="truncate font-medium">
-                {workerName}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {entry.worker?.phone || "—"}
-              </p>
-            </div>
-          </div>
-        )
+        return <WorkerInfo worker={entry.worker} ignoreFields={["phone"]} />
       },
     },
     {
@@ -97,17 +63,14 @@ export default function RecentProduction({
     {
       header: "Amount",
       className: "text-right whitespace-nowrap tabular-nums",
-      render: (entry: ProductionEntry) =>
-        formatMoney(entry.total_amount),
+      render: (entry: ProductionEntry) => formatMoney(entry.total_amount),
     },
   ]
 
   return (
-    <Card className="shadow-sm pb-0">
+    <Card className="pb-0 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between gap-3">
-        <CardTitle className="text-lg">
-          Recent production
-        </CardTitle>
+        <CardTitle className="text-lg">Recent production</CardTitle>
 
         <Button
           variant="ghost"
@@ -122,13 +85,11 @@ export default function RecentProduction({
 
       <CardContent className="px-0 pb-0">
         <DataTable
-          data={entries}
+          data={entries ?? []}
           columns={columns}
-          getRowId={(entry) => entry.id}
-          onRowClick={(entry) =>
-            router.push(`/production-entries/${entry.id}`)
-          }
-          emptyMessage="No production entries yet."
+          getRowId={(entry) => entry?.id ?? ""}
+          onRowClick={(entry) => router.push(`/production-entries/${entry?.id}`)}
+          emptyMessage="No production entries found."
           isLoading={isLoading}
           className="rounded-none"
         />

@@ -65,9 +65,15 @@ export default function AutoBreadcrumbs() {
           <BreadcrumbLink
             href="/dashboard"
             className="text-muted-text flex items-center gap-1 transition-colors hover:text-primary"
-          >
-            <Scissors size={16.5} />
-          </BreadcrumbLink>
+            render={
+              <Link
+                href="/dashboard"
+                className="transition-colors hover:text-primary"
+              >
+                <Scissors size={16.5} />
+              </Link>
+            }
+          />
         </BreadcrumbItem>
         {pathSegments.length > 0 && (
           <BreadcrumbSeparator className="text-muted-text" />

@@ -51,25 +51,6 @@ export type CreateWorkerPaymentValues = z.infer<
   typeof createWorkerPaymentSchema
 >
 
-export interface PayableProductionEntry {
-  production_entry_id: string
-  worker_id: string
-
-  bundle: ProductionEntryBundle
-  style: ProductionEntryStyle
-  operation: ProductionEntryOperation
-
-  production_date: string
-
-  quantity: number
-  rate_per_piece: number
-  total_amount: number
-  paid_amount: number
-  pending_amount: number
-}
-
-
-
 export interface WorkerPaymentSummary {
   total_earned: number
   total_paid: number

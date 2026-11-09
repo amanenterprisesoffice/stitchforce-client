@@ -1,5 +1,20 @@
-
 import { z } from "zod"
+
+export interface BundleOperationWorker {
+  id: string
+  name: string
+  phone: string
+  photo_url?: string
+}
+
+export interface BundleOperation {
+  id: string
+  name: string
+  rate_per_piece: number
+  completed_quantity: number
+  pending_quantity: number
+  worker: BundleOperationWorker | null
+}
 
 export interface Bundle {
   id: string
@@ -14,8 +29,9 @@ export interface Bundle {
   created_at: string
   updated_at: string
   deleted_at?: string | null
-}
 
+  operations: BundleOperation[]
+}
 
 export type BundleStatus = "created" | "ready" | "in_progress" | "completed"
 
@@ -31,13 +47,9 @@ export const bundleSchema = z.object({
     .min(1, "Bundle number is required")
     .max(100, "Bundle number cannot exceed 100 characters"),
 
-  style_id: z
-    .string()
-    .min(1, "Please select a style"),
+  style_id: z.string().min(1, "Please select a style"),
 
-  size_id: z
-    .string()
-    .min(1, "Please select a size"),
+  size_id: z.string().min(1, "Please select a size"),
 
   quantity: z
     .number({
@@ -48,9 +60,7 @@ export const bundleSchema = z.object({
 
   attributes: z.record(z.string(), z.string()),
 
-  remarks: z
-    .string()
-    .max(1000, "Remarks cannot exceed 1000 characters"),
+  remarks: z.string().max(1000, "Remarks cannot exceed 1000 characters"),
 })
 
 export type BundleFormValues = z.infer<typeof bundleSchema>
@@ -63,7 +73,6 @@ export const initialBundleValues: BundleFormValues = {
   attributes: {},
   remarks: "",
 }
-
 
 export const STATUS_LABELS: Record<BundleStatus, string> = {
   created: "Created",

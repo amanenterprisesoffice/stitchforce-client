@@ -30,9 +30,13 @@ const WorkerQuickLinks = ({
     "production" | "payments" | null
   >(null)
 
-  const handleViewEntries = () => {
+  const handleViewEntries = ({ queryParams }: { queryParams?: Record<string, string> }) => {
+    const queryString = new URLSearchParams({
+      worker_id: worker.id,
+      ...queryParams,
+    }).toString()
     router.push(
-      `/production-entries?worker_id=${worker.id}`
+      `/production-entries?${queryString}`
     )
   }
 
@@ -49,7 +53,14 @@ const WorkerQuickLinks = ({
           icon={<ClipboardList className="size-5" />}
           title="View production entries"
           description="See all production records for this worker."
-          onClick={handleViewEntries}
+          onClick={() => handleViewEntries({ queryParams: { status: "all" } })}
+        />
+
+        <QuickLinkItem
+          icon={<ClipboardList className="size-5" />}
+          title="View pending payment entries"
+          description="See all production records for this worker."
+          onClick={() => handleViewEntries({ queryParams: { status: "pending" } })}
         />
 
         <QuickLinkItem
@@ -72,6 +83,8 @@ const WorkerQuickLinks = ({
           description="Export the worker's payment history."
           onClick={() => setActiveExport("payments")}
         />
+
+      
       </QuickLinks>
 
       {/* Production entries export */}

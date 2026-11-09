@@ -275,6 +275,8 @@ function FormDatePicker<T extends FieldValues = FieldValues>({
           {tooltipText && (
             <Tooltip>
               <TooltipTrigger
+              delay={0}
+              className="cursor-pointer"
                 render={
                   <HelpCircle
                     size={12}

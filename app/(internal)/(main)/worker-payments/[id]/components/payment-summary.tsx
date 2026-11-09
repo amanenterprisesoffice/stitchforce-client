@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatDate, formatMoney, getInitials } from "@/utils/utils"
 import type { WorkerPayment } from "../page"
+import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 export default function PaymentSummary({
   payment,
@@ -38,7 +39,7 @@ export default function PaymentSummary({
     <section className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {items.map(({ label, value, icon: Icon, prominent }) => (
         <Card key={label} className="min-w-0 shadow-none">
-          <CardContent className="flex min-w-0 items-center justify-between gap-3 p-4">
+          <CardContent className="flex min-w-0 items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground">{label}</p>
               <p
@@ -63,22 +64,8 @@ export default function PaymentSummary({
           className="min-w-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <Card className="h-full min-w-0 shadow-none transition-colors hover:bg-muted/50">
-            <CardContent className="flex h-full min-w-0 items-center gap-3 p-4">
-              <Avatar className="size-11 shrink-0">
-                <AvatarImage
-                  src={worker.photo_url || undefined}
-                  alt={worker.name}
-                />
-                <AvatarFallback>{getInitials(worker.name)}</AvatarFallback>
-              </Avatar>
-
-              <div className="min-w-0">
-                <p className="text-sm text-muted-foreground">Paid to</p>
-                <p className="truncate font-semibold">{worker.name}</p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {worker.phone}
-                </p>
-              </div>
+            <CardContent className="min-w-0 h-full flex items-center">
+              <WorkerInfo worker={worker} />
             </CardContent>
           </Card>
         </Link>

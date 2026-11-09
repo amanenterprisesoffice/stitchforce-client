@@ -10,10 +10,10 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 
-import type { OrganizationDashboard } from "../schema"
+import type { DashboardOverview } from "../schema"
 
 interface Props {
-  stats: OrganizationDashboard | null
+  stats: DashboardOverview | null
   isLoading: boolean
 }
 
@@ -38,17 +38,9 @@ const statuses = [
     label: "Completed",
     color: "bg-emerald-500",
   },
-  {
-    key: "cancelled",
-    label: "Cancelled",
-    color: "bg-rose-500",
-  },
 ] as const
 
-export default function BundleStatus({
-  stats,
-  isLoading,
-}: Props) {
+export default function BundleStatus({ stats, isLoading }: Props) {
   const bundleStatus = stats?.bundle_status
 
   const total = statuses.reduce(
@@ -59,12 +51,8 @@ export default function BundleStatus({
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg">
-          Bundle overview
-        </CardTitle>
-        <CardDescription>
-          Current distribution of your bundles
-        </CardDescription>
+        <CardTitle className="text-lg">Bundle overview</CardTitle>
+        <CardDescription>Current distribution of your bundles</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-5">
@@ -72,9 +60,7 @@ export default function BundleStatus({
           <p className="text-3xl font-semibold tabular-nums">
             {isLoading ? "—" : total.toLocaleString("en-IN")}
           </p>
-          <p className="text-xs text-muted-foreground">
-            Total bundles
-          </p>
+          <p className="text-xs text-muted-foreground">Total bundles</p>
         </div>
 
         <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">

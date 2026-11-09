@@ -16,14 +16,9 @@ import PaymentDetailsHeader from "./components/header"
 import PaymentSummary from "./components/payment-summary"
 import TransactionCard from "./components/transaction-card"
 import ProductionEntriesTable from "./components/production-entries-table"
+import { SlimWorker } from "@/utils/zodSchema/garmentWorker"
 
-export interface PaymentWorker {
-  id: string
-  name: string
-  phone?: string
-  gender?: string
-  photo_url?: string
-}
+
 
 export interface PaymentProductionEntry {
   id: string
@@ -63,7 +58,7 @@ export interface WorkerPayment {
   created_at: string
   updated_at?: string
   production_entry: PaymentProductionEntry[]
-  worker?: PaymentWorker
+  worker?: SlimWorker
 }
 
 export default function WorkerPaymentDetailsPage() {

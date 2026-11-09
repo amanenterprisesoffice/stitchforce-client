@@ -1,7 +1,4 @@
-import type { GarmentWorker } from "./garmentWorker"
-
-
-
+import type { GarmentWorker, SlimWorker } from "./garmentWorker"
 
 import { z } from "zod"
 
@@ -14,9 +11,7 @@ export const productionEntrySchema = z.object({
   remarks: z.string().max(1000, "Remarks cannot exceed 1000 characters"),
 })
 
-export type ProductionEntryFormValues = z.infer<
-  typeof productionEntrySchema
->
+export type ProductionEntryFormValues = z.infer<typeof productionEntrySchema>
 
 // Exactly matches the Go CreateProductionEntry request.
 export interface ProductionEntryPayload {
@@ -26,7 +21,6 @@ export interface ProductionEntryPayload {
   production_date: string
   remarks: string
 }
-
 
 export interface ProductionEntry {
   id: string
@@ -40,10 +34,15 @@ export interface ProductionEntry {
   rate_per_piece: number
   total_amount: number
 
+  // Payment information (amounts in paise)
+  paid_amount: number
+  pending_amount: number
+  payment_status: "pending" | "partially_paid" | "paid"
+
   production_date: string
   remarks?: string
 
-  worker?: ProductionEntryWorker
+  worker?: SlimWorker | GarmentWorker
   bundle?: ProductionEntryBundle
   style?: ProductionEntryStyle
   operation?: ProductionEntryOperation
@@ -53,12 +52,6 @@ export interface ProductionEntry {
   deleted_at?: string | null
 }
 
-export interface ProductionEntryWorker {
-  id: string
-  name: string
-  phone: string
-  photo_url?: string
-}
 
 
 export interface ProductionEntryBundle {

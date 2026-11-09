@@ -300,6 +300,8 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
           {tooltipText && (
             <Tooltip>
               <TooltipTrigger
+                className="cursor-pointer"
+                delay={0}
                 render={
                   <HelpCircle size={12} className="text-muted-foreground" />
                 }

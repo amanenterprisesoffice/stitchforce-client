@@ -8,7 +8,6 @@ import { toast } from "sonner"
 import useFetch from "@/hooks/useFetch"
 import { useUser } from "@/contexts/UserContext"
 
-import Loader from "@/components/ui/Loader"
 import { Button } from "@/components/ui/button"
 import StateComponent from "@/components/StateComponent"
 
@@ -25,7 +24,7 @@ import BundleFilters from "./components/filters"
 import Pagination from "../../../../components/ui/pagination"
 
 const DEFAULT_LIMIT = 25
-const MAX_OPTION_LIMIT = 500
+const MAX_OPTION_LIMIT = 1000
 
 type FilterState = {
   search: string
@@ -290,6 +289,10 @@ export default function BundlesPage() {
       createdTo: "",
     })
     setOffset(0)
+    // clear all query params
+    const url = new URL(window.location.href)
+    url.search = ""
+    window.history.replaceState({}, "", url)
   }
 
   if (!organizationID) {

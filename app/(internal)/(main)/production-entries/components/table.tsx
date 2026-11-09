@@ -3,13 +3,12 @@
 import { useRouter } from "next/navigation"
 import { Scissors } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import DataTable from "@/components/ui/DataTable"
 
-import { getInitials, formatDate, formatMoney } from "@/utils/utils"
-import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
+import {  formatDate, formatMoney } from "@/utils/utils"
 import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
+import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 interface Props {
   entries: ProductionEntry[]
@@ -28,25 +27,8 @@ export default function ProductionEntriesTable({ entries, isLoading }: Props) {
     {
       header: "Worker",
       render: (entry: ProductionEntry) => {
-        const workerName = getWorkerName(entry.worker)
-
         return (
-          <div className="flex min-w-[180px] items-center gap-3">
-            <Avatar className="size-9">
-              <AvatarImage
-                src={entry.worker?.photo_url || undefined}
-                alt={workerName}
-              />
-              <AvatarFallback>{getInitials(workerName)}</AvatarFallback>
-            </Avatar>
-
-            <div className="min-w-0">
-              <p className="truncate font-medium">{workerName}</p>
-              <p className="text-xs text-muted-foreground">
-                {entry.worker?.phone || "—"}
-              </p>
-            </div>
-          </div>
+          <WorkerInfo worker={entry.worker} />
         )
       },
     },

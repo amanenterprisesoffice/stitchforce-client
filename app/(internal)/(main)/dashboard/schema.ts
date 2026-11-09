@@ -1,5 +1,5 @@
 import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import type { GarmentWorker, SlimWorker } from "@/utils/zodSchema/garmentWorker"
 
 export interface DashboardOverview {
   total_workers: number
@@ -11,25 +11,32 @@ export interface DashboardOverview {
   total_earned: number
   total_paid: number
   total_pending: number
+  bundle_status: DashboardBundleStatus
+  today: DashboardPeriodStats
 }
 
 export interface DashboardPeriodStats {
-  production_entries: number
   production_quantity: number
+  production_entries: number
+  production_amount: number
   payment_count: number
   payment_amount: number
 }
 
-export interface DashboardDailyStats {
-  date: string
-  production_entries: number
-  production_quantity: number
-  payment_count: number
-  payment_amount: number
+export type DashboardGroupBy =
+  "daily" | "weekly" | "half_monthly" | "monthly" | "quarterly"
+
+export interface DashboardTrendBucket extends DashboardPeriodStats {
+  label: string
+  from_date: string
+  to_date: string
 }
 
-export interface DashboardWeeklyStats extends DashboardPeriodStats {
-  daily: DashboardDailyStats[]
+export interface DashboardTrend {
+  from_date: string
+  to_date: string
+  group_by: DashboardGroupBy
+  buckets: DashboardTrendBucket[]
 }
 
 export interface DashboardBundleStatus {
@@ -41,11 +48,8 @@ export interface DashboardBundleStatus {
 }
 
 export interface OrganizationDashboard {
-  overview: DashboardOverview
-  today: DashboardPeriodStats
-  this_week: DashboardWeeklyStats
-  this_month: DashboardPeriodStats
-  bundle_status: DashboardBundleStatus
+  period: DashboardPeriodStats
+  trend: DashboardTrend
 }
 
 export interface DashboardWorker {
@@ -67,12 +71,7 @@ export interface DashboardPayment {
   reference: string
   remarks: string
   status: "completed" | "voided"
-  worker: {
-    id?: string
-    name: string
-    phone?: string
-    photo_url?: string
-  }
+  worker: SlimWorker
 }
 
 export interface DashboardData {

@@ -1,6 +1,4 @@
-
 import { z } from "zod"
-import { ProductionEntryWorker } from "./production-entry"
 
 export const garmentWorkerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -10,14 +8,10 @@ export const garmentWorkerSchema = z.object({
 })
 
 // Input type (before Zod parsing)
-export type GarmentWorkerFormValues = z.input<
-  typeof garmentWorkerSchema
->
+export type GarmentWorkerFormValues = z.input<typeof garmentWorkerSchema>
 
 // Output type (after Zod parsing)
-export type ParsedGarmentWorkerFormValues = z.output<
-  typeof garmentWorkerSchema
->
+export type ParsedGarmentWorkerFormValues = z.output<typeof garmentWorkerSchema>
 
 export const initialGarmentWorkerValues: GarmentWorkerFormValues = {
   name: "",
@@ -33,7 +27,7 @@ export interface GarmentWorker {
   phone: string
   gender: "male" | "female" | "other"
   photo_url?: string
-  status: "active" | "inactive" 
+  status: "active" | "inactive"
   created_at: string
   updated_at: string
 }
@@ -43,9 +37,14 @@ export interface UpdateGarmentWorkerPayload {
   gender: "male" | "female" | "other"
 }
 
+export interface SlimWorker {
+  id: string
+  name: string
+  phone: string
+  photo_url?: string
+}
 
-
-export function getWorkerName(worker?: GarmentWorker | ProductionEntryWorker) {
+export function getWorkerName(worker?: GarmentWorker | SlimWorker | null) {
   return worker?.name?.trim() || "Unknown worker"
 }
 

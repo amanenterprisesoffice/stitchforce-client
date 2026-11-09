@@ -8,6 +8,7 @@ import { IndianRupee, PackageCheck } from "lucide-react"
 import { formatMoney, getInitials } from "@/utils/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProductionEntry } from "@/utils/zodSchema/production-entry"
+import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 const ProdEntrySummary = ({ entry }: { entry: ProductionEntry }) => {
   const router = useRouter()
@@ -61,25 +62,7 @@ const ProdEntrySummary = ({ entry }: { entry: ProductionEntry }) => {
         className="h-full min-w-0 cursor-pointer p-0 shadow-none transition-colors hover:bg-muted/50"
       >
         <CardContent className="flex h-full min-w-0 items-center gap-3 p-4">
-          <Avatar className="size-11 shrink-0">
-            <AvatarImage
-              src={worker?.photo_url || undefined}
-              alt={worker?.name || "Worker"}
-            />
-            <AvatarFallback>
-              {getInitials(worker?.name || "Unknown worker")}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">Worker</p>
-            <p className="truncate font-semibold">
-              {worker?.name || "Unknown worker"}
-            </p>
-            <p className="truncate text-sm text-muted-foreground">
-              {worker?.phone || "No phone number"}
-            </p>
-          </div>
+          <WorkerInfo worker={worker} />
         </CardContent>
       </Card>
     </section>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
@@ -27,6 +27,7 @@ import FormField from "@/components/ui/FormField"
 import FormDatePicker from "@/components/ui/FormDatePicker"
 import StateComponent from "@/components/StateComponent"
 import FormToggleGroup from "@/components/ui/FormToggleGroup"
+import Loader from "@/components/ui/Loader"
 
 import {
   getWorkerName,
@@ -37,21 +38,17 @@ import {
   createWorkerPaymentSchema,
   type CreateWorkerPaymentValues,
   type WorkerPayment,
-  type PaymentMethod,
-  PayableProductionEntry,
-  CreateWorkerPaymentPayload,
-  WorkerPaymentSummary,
-  PeriodPreset,
+  type CreateWorkerPaymentPayload,
+  type WorkerPaymentSummary,
+  type PeriodPreset,
 } from "@/utils/zodSchema/payments"
 
 import { formatMoney, getLocalDateValue } from "@/utils/utils"
 import { WorkerFormInfo } from "../../../production-entries/new/components/form-info"
 import PayableProductionEntriesTable from "./table"
-import Loader from "@/components/ui/Loader"
+import { ProductionEntry } from "@/utils/zodSchema/production-entry"
 
-// --------------------------------------------------
-// TYPES
-// --------------------------------------------------
+const DEFAULT_LIMIT = 10
 
 // --------------------------------------------------
 // HELPERS
@@ -99,8 +96,63 @@ function getPeriodPresets(): PeriodPreset[] {
   ]
 }
 
+function readEntries(response: any): ProductionEntry[] {
+  if (Array.isArray(response)) return response
 
+  return (
+    response?.production_entries ?? response?.entries ?? response?.data ?? []
+  )
+}
+
+function readTotal(response: any): number | undefined {
+  if (!response || typeof response !== "object") return undefined
+
+  const candidates = [
+    response.total,
+    response.total_count,
+    response.count,
+    response.pagination?.total,
+    response.meta?.total,
+    response.meta?.total_count,
+  ]
+
+  const total = candidates.find(
+    (value) =>
+      value !== null &&
+      value !== undefined &&
+      value !== "" &&
+      Number.isFinite(Number(value))
+  )
+
+  return total === undefined ? undefined : Number(total)
+}
+
+// Optional aggregate returned by the API.
+// This should represent all payable entries in the selected date range,
+// not just the current page.
+function readTotalPending(response: any): number | undefined {
+  if (!response || typeof response !== "object") return undefined
+
+  const candidates = [
+    response.total_pending,
+    response.summary?.total_pending,
+    response.meta?.total_pending,
+  ]
+
+  const total = candidates.find(
+    (value) =>
+      value !== null &&
+      value !== undefined &&
+      value !== "" &&
+      Number.isFinite(Number(value))
+  )
+
+  return total === undefined ? undefined : Number(total)
+}
+
+// --------------------------------------------------
 // COMPONENT
+// --------------------------------------------------
 
 export default function WorkerPaymentForm() {
   const router = useRouter()
@@ -112,6 +164,11 @@ export default function WorkerPaymentForm() {
   // DATE PRESETS
 
   const presets = useMemo(() => getPeriodPresets(), [])
+
+  // PAGINATION
+
+  const [limit, setLimit] = useState(DEFAULT_LIMIT)
+  const [offset, setOffset] = useState(0)
 
   // FORM
 
@@ -133,11 +190,11 @@ export default function WorkerPaymentForm() {
     control,
     handleSubmit,
     setValue,
-    getValues,
     formState: { errors },
   } = form
 
-  // Subscribe to form values.
+  // WATCH FORM VALUES
+
   const workerID = useWatch({
     control,
     name: "worker_id",
@@ -198,6 +255,8 @@ export default function WorkerPaymentForm() {
     [workers, workerID]
   )
 
+  // PAYMENT SUMMARY
+
   const {
     data: summary,
     refetch: fetchSummary,
@@ -220,29 +279,71 @@ export default function WorkerPaymentForm() {
     data: payableResponse,
     refetch: fetchPayableEntries,
     isLoading: entriesLoading,
-  } = useFetch<PayableProductionEntry[]>({
+  } = useFetch<any>({
     auto: false,
   })
 
   const validDateRange = !!fromDate && !!toDate && toDate >= fromDate
 
+  // Reset pagination whenever the worker or date range changes.
+  useEffect(() => {
+    setOffset(0)
+  }, [workerID, fromDate, toDate])
+
+  // Fetch current page.
   useEffect(() => {
     if (!base || !workerID || !validDateRange) return
 
-    fetchPayableEntries({
-      url:
-        `${base}/garment-workers/${workerID}/payable-entries` +
-        `?from_date=${encodeURIComponent(fromDate)}` +
-        `&to_date=${encodeURIComponent(toDate)}`,
+    const params = new URLSearchParams({
+      worker_id: workerID,
+      from_date: fromDate,
+      to_date: toDate,
+      limit: String(limit),
+      offset: String(offset),
     })
-  }, [base, workerID, fromDate, toDate, validDateRange, fetchPayableEntries])
 
-  const payableEntries = payableResponse ?? []
+    fetchPayableEntries({
+      url: `${base}/production-entries?status=payable&${params.toString()}`,
+    })
+  }, [
+    base,
+    workerID,
+    fromDate,
+    toDate,
+    validDateRange,
+    limit,
+    offset,
+    fetchPayableEntries,
+  ])
 
-  const totalPayable = payableEntries.reduce(
-    (total, entry) => total + entry.pending_amount,
+  const payableEntries = useMemo(
+    () => readEntries(payableResponse),
+    [payableResponse]
+  )
+
+  const totalItems = useMemo(
+    () => readTotal(payableResponse),
+    [payableResponse]
+  )
+
+  const totalPendingFromAPI = useMemo(
+    () => readTotalPending(payableResponse),
+    [payableResponse]
+  )
+
+  const hasNextPage =
+    totalItems !== undefined
+      ? offset + payableEntries.length < totalItems
+      : payableEntries.length === limit
+
+  // If the API provides total_pending, use that.
+  // Otherwise this is only the current page's total.
+  const pageTotal = payableEntries.reduce(
+    (total, entry) => total + Number(entry.pending_amount || 0),
     0
   )
+
+  const totalPayable = totalPendingFromAPI ?? pageTotal
 
   // CREATE PAYMENT
 
@@ -304,6 +405,7 @@ export default function WorkerPaymentForm() {
   }
 
   // RENDER
+
   return (
     <div className="mx-auto h-full w-full min-w-0">
       <form onSubmit={handleSubmit(submit)} className="h-full w-full min-w-0">
@@ -473,6 +575,7 @@ export default function WorkerPaymentForm() {
                         : formatMoney(summary?.total_paid ?? 0)}
                     </span>
                   </div>
+
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <span className="text-muted-foreground">
                       Pending payment
@@ -490,15 +593,23 @@ export default function WorkerPaymentForm() {
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-muted-foreground">Payable entries</span>
                   <span className="font-semibold tabular-nums">
-                    {entriesLoading ? "Loading..." : payableEntries.length}
+                    {entriesLoading
+                      ? "Loading..."
+                      : (totalItems ?? payableEntries.length)}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium">Total payment</p>
+                    <p className="text-sm font-medium">
+                      {totalPendingFromAPI !== undefined
+                        ? "Total payment"
+                        : "Current page total"}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      All outstanding earnings in this period
+                      {totalPendingFromAPI !== undefined
+                        ? "Outstanding earnings in this period"
+                        : "Pending earnings on the current page"}
                     </p>
                   </div>
 
@@ -536,7 +647,9 @@ export default function WorkerPaymentForm() {
                     </h3>
                   </div>
 
-                  <Badge variant="secondary">{payableEntries.length}</Badge>
+                  <Badge variant="secondary">
+                    {totalItems ?? payableEntries.length}
+                  </Badge>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
@@ -559,7 +672,7 @@ export default function WorkerPaymentForm() {
                     message="Select a valid date range"
                     description="Select a valid date range to view payable production entries."
                   />
-                ) : entriesLoading ? (
+                ) : entriesLoading && !payableResponse ? (
                   <Loader />
                 ) : payableEntries.length === 0 ? (
                   <StateComponent
@@ -569,7 +682,18 @@ export default function WorkerPaymentForm() {
                     description="No outstanding production earnings were found for this worker within this period."
                   />
                 ) : (
-                  <PayableProductionEntriesTable entries={payableEntries} />
+                  <PayableProductionEntriesTable
+                    entries={payableEntries}
+                    limit={limit}
+                    offset={offset}
+                    totalItems={totalItems}
+                    hasNextPage={hasNextPage}
+                    onPageChange={setOffset}
+                    onLimitChange={(nextLimit) => {
+                      setLimit(nextLimit)
+                      setOffset(0)
+                    }}
+                  />
                 )}
               </CardContent>
             </Card>

@@ -64,6 +64,8 @@ export default function BundleFormDialog({
     defaultValues: initialBundleValues,
   })
 
+  console.log({ errors })
+
   useEffect(() => {
     if (!open) return
 
@@ -131,6 +133,7 @@ export default function BundleFormDialog({
 
         {/* Scrollable Form */}
         <form
+          id="bundle-form"
           onSubmit={handleSubmit(handleFormSubmit)}
           className="flex min-h-0 flex-1 flex-col overflow-hidden py-5"
         >
@@ -231,6 +234,7 @@ export default function BundleFormDialog({
 
           <Button
             type="submit"
+            form="bundle-form"
             disabled={isSaving || styles.length === 0 || sizes.length === 0}
           >
             {isSaving && <Loader />}

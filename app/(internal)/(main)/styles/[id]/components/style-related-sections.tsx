@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/badge"
 
 import { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
 import { Bundle } from "@/utils/zodSchema/bundle"
-import { prettifyKey } from "@/utils/utils"
+import { getInitials, prettifyKey } from "@/utils/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 interface GarmentWorkersProps {
   workers: GarmentWorker[]
@@ -19,16 +20,6 @@ interface GarmentWorkersProps {
 interface BundlesProps {
   bundles: Bundle[]
   isLoading?: boolean
-}
-
-function getInitials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase()
 }
 
 function EmptyState({
@@ -50,14 +41,12 @@ function EmptyState({
 
 // Workers
 export function StyleWorkers({ workers, isLoading }: GarmentWorkersProps) {
+  const workerLimit = 4
   return (
     <div className="h-full w-full space-y-3 shadow-none">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          Workers
-          <Badge variant="secondary">
-            {isLoading ? "..." : workers.length}
-          </Badge>
+          Recent Workers
         </CardTitle>
         <p className="text-sm text-muted-foreground">
           Workers who have worked on this style
@@ -80,7 +69,7 @@ export function StyleWorkers({ workers, isLoading }: GarmentWorkersProps) {
               </div>
             ))}
           </div>
-        ) : workers.length === 0 ? (
+        ) : workers.slice(0, workerLimit).length === 0 ? (
           <EmptyState
             icon={Users}
             message="No workers have worked on this style yet."
@@ -88,31 +77,14 @@ export function StyleWorkers({ workers, isLoading }: GarmentWorkersProps) {
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {workers.map((worker) => (
-              <Link
+              <WorkerInfo
+                worker={worker}
                 key={worker.id}
-                target="_blank"
-                href={`/garment-workers/${worker.id}`}
-                className="group flex min-w-0 items-center gap-3 rounded-xl border bg-card p-3 transition-all hover:border-primary/40 hover:bg-muted/40"
-              >
-                <Avatar>
-                  <AvatarImage src={worker.photo_url} alt={worker.name} />
-                  <AvatarFallback>{getInitials(worker.name)}</AvatarFallback>
-                </Avatar>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium group-hover:text-primary">
-                    {worker.name}
-                  </p>
-
-                  {worker.phone && (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {worker.phone}
-                    </p>
-                  )}
-                </div>
-
-                <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
-              </Link>
+                className="flex group items-center gap-3 rounded-xl border p-3 hover:bg-primary/10"
+                linkClassName="w-full"
+                linkMode="full"
+                nameClassName="group-hover:text-primary"
+              />
             ))}
           </div>
         )}
@@ -123,14 +95,13 @@ export function StyleWorkers({ workers, isLoading }: GarmentWorkersProps) {
 
 // Bundles
 export function StyleBundles({ bundles, isLoading }: BundlesProps) {
+  const bundleLimit = 4
+
   return (
     <div className="h-full w-full space-y-3 shadow-none">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          Bundles
-          <Badge variant="secondary">
-            {isLoading ? "..." : bundles.length}
-          </Badge>
+          Recent Bundles
         </CardTitle>
         <p className="text-sm text-muted-foreground">
           Bundles created for this style
@@ -160,12 +131,12 @@ export function StyleBundles({ bundles, isLoading }: BundlesProps) {
           />
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {bundles.map((bundle) => (
+            {bundles.slice(0, bundleLimit).map((bundle) => (
               <Link
                 key={bundle.id}
                 target="_blank"
                 href={`/bundles/${bundle.id}`}
-                className="group flex min-w-0 items-center gap-3 rounded-xl border bg-card p-3 transition-all hover:border-primary/40 hover:bg-muted/40"
+                className="group flex min-w-0 items-center gap-3 rounded-xl border p-3 transition-all hover:bg-primary/10"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold group-hover:text-primary">
@@ -179,8 +150,6 @@ export function StyleBundles({ bundles, isLoading }: BundlesProps) {
                 <Badge variant="outline" className="mt-1 text-xs">
                   {prettifyKey(bundle.status)}
                 </Badge>
-
-                <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
               </Link>
             ))}
           </div>

@@ -1,16 +1,9 @@
-
 "use client"
 
 import type { ReactNode, ElementType } from "react"
 import Link from "next/link"
 
-import {
-  Shirt,
-  Package,
-  Scissors,
-  UserRound,
-  ArrowUpRight,
-} from "lucide-react"
+import { Shirt, Package, Scissors, UserRound, ArrowUpRight } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +14,7 @@ import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
 import type { Bundle } from "@/utils/zodSchema/bundle"
 import type { Style } from "@/utils/zodSchema/style"
 import type { StyleOperation } from "@/utils/zodSchema/styleops"
+import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 // -------------------------------------
 // REUSABLE COMPONENTS
@@ -37,16 +31,14 @@ function EmptyInfo({
 }) {
   return (
     <div className="min-w-0">
-      <p className="mb-2 text-xs font-medium text-muted-foreground">
-        {title}
-      </p>
+      <p className="mb-2 text-xs font-medium text-muted-foreground">{title}</p>
 
       <div className="flex min-w-0 items-center gap-3 rounded-xl border border-dashed bg-muted/20 px-4 py-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/50">
           <Icon className="size-4 text-muted-foreground" />
         </div>
 
-        <p className="min-w-0 break-words text-xs text-muted-foreground">
+        <p className="min-w-0 text-xs break-words text-muted-foreground">
           {text}
         </p>
       </div>
@@ -71,15 +63,15 @@ function CompactInfo({
     >
       {children}
 
-   {href && <ArrowUpRight className="absolute right-3 top-3 size-4 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />}
+      {href && (
+        <ArrowUpRight className="absolute top-3 right-3 size-4 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
+      )}
     </div>
   )
 
   return (
     <div className="min-w-0">
-      <p className="mb-2 text-xs font-medium text-muted-foreground">
-        {title}
-      </p>
+      <p className="mb-2 text-xs font-medium text-muted-foreground">{title}</p>
 
       {href ? (
         <Link
@@ -119,12 +111,12 @@ function InfoHeader({
       )}
 
       <div className="min-w-0 flex-1">
-        <p className="break-words text-sm font-semibold leading-snug">
+        <p className="text-sm leading-snug font-semibold break-words">
           {title}
         </p>
 
         {subtitle && (
-          <p className="mt-1 break-words text-xs text-muted-foreground">
+          <p className="mt-1 text-xs break-words text-muted-foreground">
             {subtitle}
           </p>
         )}
@@ -160,11 +152,13 @@ export function StyleFormInfo({ style }: { style: Style | undefined }) {
       <InfoHeader
         icon={Shirt}
         title={style.name}
-        subtitle={style.style_number ? `Style ${style.style_number}` : "Selected style"}
+        subtitle={
+          style.style_number ? `Style ${style.style_number}` : "Selected style"
+        }
       />
 
       {style.description && (
-        <p className="mt-3 line-clamp-3 border-t pt-3 text-xs leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
+        <p className="mt-3 line-clamp-3 border-t pt-3 text-xs leading-relaxed [overflow-wrap:anywhere] text-muted-foreground">
           {style.description}
         </p>
       )}
@@ -191,7 +185,7 @@ export function BundleFormInfo({ bundle }: { bundle: Bundle | undefined }) {
       />
 
       {bundle.remarks && (
-        <p className="mt-3 line-clamp-3 border-t pt-3 text-xs leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
+        <p className="mt-3 line-clamp-3 border-t pt-3 text-xs leading-relaxed [overflow-wrap:anywhere] text-muted-foreground">
           {bundle.remarks}
         </p>
       )}
@@ -209,7 +203,13 @@ export function OperationFormInfo({
   operation: StyleOperation | undefined
 }) {
   if (!operation) {
-    return <EmptyInfo title="Operation" text="No operation selected" icon={Scissors} />
+    return (
+      <EmptyInfo
+        title="Operation"
+        text="No operation selected"
+        icon={Scissors}
+      />
+    )
   }
 
   return (
@@ -238,22 +238,12 @@ export function WorkerFormInfo({
   }
 
   return (
-    <CompactInfo
-      title="Worker Information"
-      href={`/workers/${worker.id}`}
-    >
-      <InfoHeader
-        title={worker.name}
-        subtitle={worker.phone || "No phone number"}
-        avatar={
-          <Avatar className="size-10 shrink-0">
-            <AvatarImage src={worker.photo_url || undefined} alt={worker.name} />
-            <AvatarFallback className="text-xs">
-              {getInitials(worker.name)}
-            </AvatarFallback>
-          </Avatar>
-        }
-        badge={<InfoBadge>{worker.gender}</InfoBadge>}
+    <CompactInfo title="Worker Information" href={`/workers/${worker.id}`}>
+      <WorkerInfo
+        worker={worker}
+        linkMode="none"
+        avatarClassName="size-10 shrink-0"
+        nameClassName="text-sm"
       />
     </CompactInfo>
   )

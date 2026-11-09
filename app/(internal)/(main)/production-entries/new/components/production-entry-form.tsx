@@ -91,7 +91,7 @@ export default function NewProductionEntriesPage() {
     GarmentWorker[]
   >({
     auto: true,
-    url: `${base}/garment-workers`,
+    url: `${base}/garment-workers?status=active`,
   })
 
   // Bundles

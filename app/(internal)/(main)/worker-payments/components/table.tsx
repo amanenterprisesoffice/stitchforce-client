@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import { formatMoney, formatDate, getInitials } from "@/utils/utils"
 import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
+import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 interface Props {
   payments: WorkerPayment[]
@@ -23,27 +24,7 @@ export default function WorkerPaymentsTable({ payments, isLoading }: Props) {
     {
       header: "Worker",
       render: (payment: WorkerPayment) => {
-        const worker = payment.worker
-        const workerName = getWorkerName(worker)
-
-        return (
-          <div className="flex min-w-[180px] items-center gap-3">
-            <Avatar className="size-9">
-              <AvatarImage
-                src={worker?.photo_url || undefined}
-                alt={workerName}
-              />
-              <AvatarFallback>{getInitials(workerName)}</AvatarFallback>
-            </Avatar>
-
-            <div className="min-w-0">
-              <p className="truncate font-medium">{workerName}</p>
-              <p className="text-xs text-muted-foreground">
-                {worker?.phone || "—"}
-              </p>
-            </div>
-          </div>
-        )
+        return <WorkerInfo worker={payment.worker} />
       },
     },
     {

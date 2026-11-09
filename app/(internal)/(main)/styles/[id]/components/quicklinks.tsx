@@ -1,6 +1,6 @@
 // Quick links
 
-import { Package, ClipboardList, Download } from "lucide-react"
+import { Package, ClipboardList, Download, ListClockIcon } from "lucide-react"
 import Link from "next/link"
 import { QuickLinks, QuickLinkItem } from "@/components/ui/quick-links"
 import { useRouter } from "next/navigation"
@@ -28,14 +28,23 @@ export function StyleQuickLinks({ styleID }: StyleQuickLinksProps) {
         ),
       icon: ClipboardList,
     },
-    // download style
     {
-      title: "Download style",
-      description: "Export all records related to this style",
+      title: "View pending production entries",
+      description: "See all pending production records for this bundle",
+      icon: ListClockIcon,
       onClick: () =>
-        router.push(`/styles/${encodeURIComponent(styleID)}/download`),
-      icon: Download,
+        router.push(
+          `/production-entries?style_id=${encodeURIComponent(styleID)}&status=payable`
+        ),
     },
+    // download style
+    // {
+    //   title: "Download style",
+    //   description: "Export all records related to this style",
+    //   onClick: () =>
+    //     router.push(`/styles/${encodeURIComponent(styleID)}/download`),
+    //   icon: Download,
+    // },
   ]
 
   return (

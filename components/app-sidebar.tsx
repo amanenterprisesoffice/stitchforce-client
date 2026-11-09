@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -60,16 +59,12 @@ const data = {
       icon: <PieChartIcon />,
       items: [
         {
-          title: "All Payments",
+          title: "Payment History",
           url: "/worker-payments",
         },
         {
           title: "Pending Payments",
           url: "/worker-payments/pending",
-        },
-        {
-          title: "Payment History",
-          url: "/worker-payments/history",
         },
       ],
     },
@@ -88,31 +83,10 @@ const data = {
         },
       ],
     },
-    {
-      title: "Reports",
-      url: "#",
-      icon: <PieChartIcon />,
-      items: [
-        {
-          title: "Worker Earnings",
-          url: "/reports/worker-earnings",
-        },
-        {
-          title: "Production Reports",
-          url: "/reports/production",
-        },
-        {
-          title: "Payment History",
-          url: "/reports/payments",
-        },
-      ],
-    },
   ],
 }
 
-export function AppSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser()
 
   return (
@@ -127,9 +101,7 @@ export function AppSidebar({
         <NavMain items={data.navMain} />
       </SidebarContent>
 
-      <SidebarFooter>
-        {user && <NavUser user={user} />}
-      </SidebarFooter>
+      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
 
       <SidebarRail />
     </Sidebar>

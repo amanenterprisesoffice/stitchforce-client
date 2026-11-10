@@ -1,27 +1,27 @@
+"use client"
 
-"use client";
-
-import { prettifyKey } from "@/utils/utils";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { toast } from "sonner";
+import { prettifyKey } from "@/utils/utils"
+import { useRouter } from "next/navigation"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { toast } from "sonner"
 
 interface UseFetchOptions<T> {
-  auto?: boolean;
-  url?: string;
-  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-  payload?: any;
-  headers?: Record<string, string>;
-  withAuth?: boolean;
-  onSuccess?: (data: T) => void;
-  onError?: (error: any) => void;
-  showErrorToast?: boolean;
+  auto?: boolean
+  url?: string
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
+  payload?: any
+  headers?: Record<string, string>
+  withAuth?: boolean
+  onSuccess?: (data: T) => void
+  onError?: (error: any) => void
+  showErrorToast?: boolean
 }
 
 interface UseFetchReturn<T> {
-  data: T | null;
-  error: string | null;
-  isLoading: boolean;
-  refetch: (overrideOptions?: Partial<UseFetchOptions<T>>) => Promise<void>;
+  data: T | null
+  error: string | null
+  isLoading: boolean
+  refetch: (overrideOptions?: Partial<UseFetchOptions<T>>) => Promise<void>
 }
 
 export default function useFetch<T = any>({
@@ -35,10 +35,10 @@ export default function useFetch<T = any>({
   onError = () => {},
   showErrorToast = true,
 }: UseFetchOptions<T> = {}): UseFetchReturn<T> {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
+  const [data, setData] = useState<T | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
   const latestConfigRef = useRef<UseFetchOptions<T>>({
     url,
     method,
@@ -48,7 +48,7 @@ export default function useFetch<T = any>({
     onSuccess,
     onError,
     showErrorToast,
-  });
+  })
 
   useEffect(() => {
     latestConfigRef.current = {
@@ -60,28 +60,37 @@ export default function useFetch<T = any>({
       onSuccess,
       onError,
       showErrorToast,
-    };
-  }, [url, method, payload, headers, withAuth, onSuccess, onError, showErrorToast]);
+    }
+  }, [
+    url,
+    method,
+    payload,
+    headers,
+    withAuth,
+    onSuccess,
+    onError,
+    showErrorToast,
+  ])
 
   const refetch = useCallback(
     async (overrideOptions: Partial<UseFetchOptions<T>> = {}) => {
       const config = {
         ...latestConfigRef.current,
         ...overrideOptions,
-      };
+      }
 
-      if (!config.url) return;
+      if (!config.url) return
 
-      setIsLoading(true);
-      setError(null);
+      setIsLoading(true)
+      setError(null)
 
       try {
-        const finalHeaders = { ...config.headers };
+        const finalHeaders = { ...config.headers }
 
-        const isFormData = config.payload instanceof FormData;
+        const isFormData = config.payload instanceof FormData
 
         if (!isFormData && config.method !== "GET") {
-          finalHeaders["Content-Type"] = "application/json";
+          finalHeaders["Content-Type"] = "application/json"
         }
 
         const fetchOptions: RequestInit = {
@@ -93,63 +102,67 @@ export default function useFetch<T = any>({
                 ? config.payload
                 : JSON.stringify(config.payload)
               : undefined,
-        };
-
-        if (config.withAuth) {
-          fetchOptions.credentials = "include";
         }
 
-        const response = await fetch(config.url, fetchOptions);
+        if (config.withAuth) {
+          fetchOptions.credentials = "include"
+        }
+
+        const response = await fetch(config.url, fetchOptions)
 
         const isJson = response.headers
           .get("content-type")
-          ?.includes("application/json");
+          ?.includes("application/json")
 
-        const result = isJson
-          ? await response.json()
-          : await response.text();
+        const result = isJson ? await response.json() : await response.text()
 
         if (!response.ok) {
           throw {
             message:
               result?.error?.message ||
               result?.message ||
+              result?.error ||
               "Something went wrong",
             fullError: result?.error,
+            invalidLicense: result?.invalid_license,
             status: response.status,
-          };
+          }
         }
 
-        setData(result as T);
-        config.onSuccess?.(result as T);
+        setData(result as T)
+        config.onSuccess?.(result as T)
       } catch (err: any) {
-        const message = err?.message || "Unknown error";
+        const message = err?.message || "Unknown error"
 
         if (config.showErrorToast) {
-          const errMessage = message.charAt(0).toUpperCase() + message.slice(1);
-          toast.error(errMessage);
+          const errMessage = message.charAt(0).toUpperCase() + message.slice(1)
+          toast.error(errMessage)
         }
-        setError(message);
-        config.onError?.(err?.fullError || err);
+
+        if (err.invalidLicense) {
+          router.replace("/organization/license")
+        }
+        setError(message)
+        config.onError?.(err?.fullError || err)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     },
     []
-  );
+  )
 
   useEffect(() => {
     if (auto && url) {
-      refetch();
+      refetch()
     }
     // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
   return {
     data,
     error,
     isLoading,
     refetch,
-  };
+  }
 }

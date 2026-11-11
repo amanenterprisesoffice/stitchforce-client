@@ -12,7 +12,7 @@ import Loader from "@/components/ui/Loader"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-import type { Size, SizeFormValues } from "@/utils/zodSchema/size"
+import type { Size, SizeFormValues } from "@/utils/types/size"
 
 import SizesHeader from "./components/header"
 import SizesTable from "./components/table"

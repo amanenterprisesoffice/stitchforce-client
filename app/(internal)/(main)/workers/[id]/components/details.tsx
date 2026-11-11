@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card"
 
 import { formatDate, getInitials } from "@/utils/utils"
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface Props {

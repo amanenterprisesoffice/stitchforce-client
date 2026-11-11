@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { IndianRupee, PackageCheck } from "lucide-react"
 import { formatMoney, getInitials } from "@/utils/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ProductionEntry } from "@/utils/zodSchema/production-entry"
+import { ProductionEntry } from "@/utils/types/production-entry"
 import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 const ProdEntrySummary = ({ entry }: { entry: ProductionEntry }) => {

@@ -16,7 +16,7 @@ import PaymentDetailsHeader from "./components/header"
 import PaymentSummary from "./components/payment-summary"
 import TransactionCard from "./components/transaction-card"
 import ProductionEntriesTable from "./components/production-entries-table"
-import { SlimWorker } from "@/utils/zodSchema/garmentWorker"
+import { SlimWorker } from "@/utils/types/garmentWorker"
 
 
 

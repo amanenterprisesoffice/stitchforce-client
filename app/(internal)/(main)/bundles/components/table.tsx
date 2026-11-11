@@ -3,9 +3,9 @@
 import { MoreHorizontal, Pencil, Trash2, Package } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-import type { Bundle } from "@/utils/zodSchema/bundle"
-import type { Style } from "@/utils/zodSchema/style"
-import type { Size } from "@/utils/zodSchema/size"
+import type { Bundle } from "@/utils/types/bundle"
+import type { Style } from "@/utils/types/style"
+import type { Size } from "@/utils/types/size"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"

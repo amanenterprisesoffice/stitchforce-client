@@ -21,7 +21,7 @@ import WorkerFilters from "./components/filters"
 import type {
   GarmentWorker,
   GarmentWorkerFormValues,
-} from "../../../../utils/zodSchema/garmentWorker"
+} from "@/utils/types/garmentWorker"
 
 const DEFAULT_LIMIT = 25
 

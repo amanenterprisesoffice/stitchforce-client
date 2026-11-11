@@ -37,7 +37,7 @@ import { formatDate, formatMoney, getInitials } from "@/utils/utils"
 import type {
   ProductionEntry,
   UpdateProductionEntryPayload,
-} from "@/utils/zodSchema/production-entry"
+} from "@/utils/types/production-entry"
 
 import ProductionEntryHeader from "./components/header"
 import EditProductionEntryDialog from "./components/edit-dialog"

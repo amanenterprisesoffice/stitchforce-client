@@ -3,11 +3,11 @@
 import FormSelect from "@/components/ui/FormSelect"
 import FormDatePicker from "@/components/ui/FormDatePicker"
 
-import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
-import type { Bundle } from "@/utils/zodSchema/bundle"
-import type { Style } from "@/utils/zodSchema/style"
-import type { StyleOperation } from "@/utils/zodSchema/styleops"
+import { getWorkerName } from "@/utils/types/garmentWorker"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
+import type { Bundle } from "@/utils/types/bundle"
+import type { Style } from "@/utils/types/style"
+import type { StyleOperation } from "@/utils/types/styleops"
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

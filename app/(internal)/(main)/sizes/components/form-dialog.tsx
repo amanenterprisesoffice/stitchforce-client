@@ -8,12 +8,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import type {
   Size,
   SizeFormValues,
-} from "@/utils/zodSchema/size"
+} from "@/utils/types/size"
 
 import {
   sizeSchema,
   initialSizeValues,
-} from "@/utils/zodSchema/size"
+} from "@/utils/types/size"
 
 import FormField from "@/components/ui/FormField"
 import { Button } from "@/components/ui/button"

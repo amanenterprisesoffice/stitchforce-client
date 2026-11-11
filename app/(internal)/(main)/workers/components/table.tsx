@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Users } from "lucide-react"
 
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"

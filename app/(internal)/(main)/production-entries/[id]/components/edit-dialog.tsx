@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import type {
   ProductionEntry,
   UpdateProductionEntryPayload,
-} from "@/utils/zodSchema/production-entry"
+} from "@/utils/types/production-entry"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

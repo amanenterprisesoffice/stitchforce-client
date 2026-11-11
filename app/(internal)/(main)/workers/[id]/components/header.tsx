@@ -13,7 +13,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import PageHeader from "@/components/ui/PageHeader"
-import { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import { GarmentWorker } from "@/utils/types/garmentWorker"
 
 interface Props {
   worker: GarmentWorker

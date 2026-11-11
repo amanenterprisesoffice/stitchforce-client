@@ -3,13 +3,13 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
-import type { WorkerPayment } from "@/utils/zodSchema/payments"
+import type { WorkerPayment } from "@/utils/types/payments"
 
 import DataTable from "@/components/ui/DataTable"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import { formatMoney, formatDate, getInitials } from "@/utils/utils"
-import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
+import { getWorkerName } from "@/utils/types/garmentWorker"
 import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 interface Props {

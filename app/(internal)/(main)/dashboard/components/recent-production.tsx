@@ -10,8 +10,8 @@ import DataTable from "@/components/ui/DataTable"
 
 import { getInitials, formatDate, formatMoney } from "@/utils/utils"
 
-import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
-import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
+import { getWorkerName } from "@/utils/types/garmentWorker"
+import type { ProductionEntry } from "@/utils/types/production-entry"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { WorkerInfo } from "@/components/ui/worker-avatar"

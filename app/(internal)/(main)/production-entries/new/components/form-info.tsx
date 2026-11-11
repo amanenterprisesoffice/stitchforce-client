@@ -10,10 +10,10 @@ import { Badge } from "@/components/ui/badge"
 
 import { formatMoney, getInitials } from "@/utils/utils"
 
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
-import type { Bundle } from "@/utils/zodSchema/bundle"
-import type { Style } from "@/utils/zodSchema/style"
-import type { StyleOperation } from "@/utils/zodSchema/styleops"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
+import type { Bundle } from "@/utils/types/bundle"
+import type { Style } from "@/utils/types/style"
+import type { StyleOperation } from "@/utils/types/styleops"
 import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 // -------------------------------------

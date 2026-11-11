@@ -25,11 +25,11 @@ import Loader from "@/components/ui/Loader"
 import PageHeader from "@/components/ui/PageHeader"
 import StyleHeader from "./components/header"
 import { StyleBundles, StyleWorkers } from "./components/style-related-sections"
-import { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
-import { Bundle } from "@/utils/zodSchema/bundle"
+import { GarmentWorker } from "@/utils/types/garmentWorker"
+import { Bundle } from "@/utils/types/bundle"
 import { formatMoney } from "@/utils/utils"
 import { StyleQuickLinks } from "./components/quicklinks"
-import { OperationPayload } from "@/utils/zodSchema/styleops"
+import { OperationPayload } from "@/utils/types/styleops"
 
 interface Style {
   id: string

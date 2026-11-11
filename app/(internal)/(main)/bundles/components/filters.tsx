@@ -2,8 +2,8 @@
 
 import { RotateCcw, Search, X } from "lucide-react"
 
-import type { Style } from "@/utils/zodSchema/style"
-import type { Size } from "@/utils/zodSchema/size"
+import type { Style } from "@/utils/types/style"
+import type { Size } from "@/utils/types/size"
 
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

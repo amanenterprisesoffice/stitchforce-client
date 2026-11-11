@@ -8,7 +8,7 @@ import {
   QuickLinkItem,
 } from "@/components/ui/quick-links"
 
-import type { Bundle } from "@/utils/zodSchema/bundle"
+import type { Bundle } from "@/utils/types/bundle"
 
 interface BundleQuickLinksProps {
   bundle: Bundle

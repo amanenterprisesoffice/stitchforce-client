@@ -19,7 +19,7 @@ import WorkerPaymentFilters, {
 } from "./components/filters"
 import WorkerPaymentsTable from "./components/table"
 
-import type { WorkerPayment } from "@/utils/zodSchema/payments"
+import type { WorkerPayment } from "@/utils/types/payments"
 
 const DEFAULT_LIMIT = 25
 

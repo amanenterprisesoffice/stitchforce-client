@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -8,22 +8,23 @@ import { useUser } from "@/contexts/UserContext"
 import useFetch from "@/hooks/useFetch"
 import Loader from "@/components/ui/Loader"
 import StateComponent from "@/components/StateComponent"
+
 import { Button } from "@/components/ui/button"
 import { UserRoundXIcon } from "lucide-react"
-
-import GarmentWorkerDetailsHeader from "./components/header"
-import GarmentWorkerDetails from "./components/details"
 
 import {
   GarmentWorker,
   UpdateGarmentWorkerPayload,
-} from "@/utils/zodSchema/garmentWorker"
+} from "@/utils/types/garmentWorker"
+
+import GarmentWorkerDetailsHeader from "./components/header"
+import GarmentWorkerDetails from "./components/details"
 import EditGarmentWorkerDialog from "./components/edit-dialog"
 import DeleteGarmentWorkerDialog from "./components/delete-dialog"
 import WorkerStats from "./components/stats"
 import WorkerQuickLinks from "./components/quicklinks"
 
-export default function NewProductionEntriesPage() {
+export default function GarmentWorkerDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { user } = useUser()
@@ -47,16 +48,13 @@ export default function NewProductionEntriesPage() {
     auto: false,
   })
 
-  const { refetch: setWorkerStatus, isLoading: isChangingStatus } = useFetch({
-    auto: false,
-  })
-
   const { refetch: deleteWorker, isLoading: isDeleting } = useFetch({
     auto: false,
   })
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [isChangingStatus, setIsChangingStatus] = useState(false)
 
   useEffect(() => {
     if (url) {
@@ -64,13 +62,13 @@ export default function NewProductionEntriesPage() {
     }
   }, [url])
 
-  const handleUpdate = async (values: UpdateGarmentWorkerPayload) => {
+  const handleUpdate = async (formData: FormData) => {
     if (!url) return
 
     await updateWorker({
       url,
       method: "PUT",
-      payload: values,
+      payload: formData,
       onSuccess: () => {
         setEditOpen(false)
         toast.success("Worker updated")
@@ -80,13 +78,15 @@ export default function NewProductionEntriesPage() {
   }
 
   const handleStatusChange = async () => {
-    if (!url || !worker) return
+    if (!url || !worker || isChangingStatus) return
 
     const nextStatus = worker.status === "active" ? "inactive" : "active"
 
-    await setWorkerStatus({
-      url: `${url}/status`,
-      method: "PATCH",
+    setIsChangingStatus(true)
+
+    await updateWorker({
+      url,
+      method: "PUT",
       payload: {
         status: nextStatus,
       },
@@ -95,6 +95,8 @@ export default function NewProductionEntriesPage() {
         fetchWorker({ url })
       },
     })
+
+    setIsChangingStatus(false)
   }
 
   const handleDelete = async () => {
@@ -130,7 +132,7 @@ export default function NewProductionEntriesPage() {
         className="rounded-none"
         ICON={<UserRoundXIcon className="size-6" />}
         message="Worker not found"
-        description="This worker may have been deleted or not accessible."
+        description="This worker may have been deleted or is not accessible."
         PortalButton={
           <Button variant="outline" onClick={() => router.push("/workers")}>
             Back to workers
@@ -153,11 +155,11 @@ export default function NewProductionEntriesPage() {
       <div className="mx-auto h-fit w-full">
         <GarmentWorkerDetails worker={worker} />
       </div>
+
       <WorkerStats workerId={worker.id} />
 
       <WorkerQuickLinks worker={worker} />
 
-      {/* Dialogs */}
       <EditGarmentWorkerDialog
         open={editOpen}
         onOpenChange={setEditOpen}

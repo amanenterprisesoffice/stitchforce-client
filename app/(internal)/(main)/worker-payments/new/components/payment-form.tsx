@@ -32,7 +32,7 @@ import Loader from "@/components/ui/Loader"
 import {
   getWorkerName,
   type GarmentWorker,
-} from "@/utils/zodSchema/garmentWorker"
+} from "@/utils/types/garmentWorker"
 
 import {
   createWorkerPaymentSchema,
@@ -41,12 +41,12 @@ import {
   type CreateWorkerPaymentPayload,
   type WorkerPaymentSummary,
   type PeriodPreset,
-} from "@/utils/zodSchema/payments"
+} from "@/utils/types/payments"
 
 import { formatMoney, getLocalDateValue } from "@/utils/utils"
 import { WorkerFormInfo } from "../../../production-entries/new/components/form-info"
 import PayableProductionEntriesTable from "./table"
-import { ProductionEntry } from "@/utils/zodSchema/production-entry"
+import { ProductionEntry } from "@/utils/types/production-entry"
 
 const DEFAULT_LIMIT = 10
 

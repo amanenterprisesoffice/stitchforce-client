@@ -14,7 +14,7 @@ import StateComponent from "@/components/StateComponent"
 import Pagination from "@/components/ui/pagination"
 import DebouncedSearch from "@/components/ui/debounced-search"
 
-import type { Style } from "@/utils/zodSchema/style"
+import type { Style } from "@/utils/types/style"
 
 import StylesHeader from "./components/header"
 import StylesTable from "./components/table"

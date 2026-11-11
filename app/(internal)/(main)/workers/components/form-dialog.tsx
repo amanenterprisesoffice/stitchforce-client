@@ -7,12 +7,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import type {
   GarmentWorker,
   GarmentWorkerFormValues,
-} from "../../../../../utils/zodSchema/garmentWorker"
+} from "../../../../../utils/types/garmentWorker"
 
 import {
   garmentWorkerSchema,
   initialGarmentWorkerValues,
-} from "../../../../../utils/zodSchema/garmentWorker"
+} from "../../../../../utils/types/garmentWorker"
 
 import FormField from "@/components/ui/FormField"
 import { Button } from "@/components/ui/button"

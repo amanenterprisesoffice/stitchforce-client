@@ -3,7 +3,7 @@
 
 import { Loader2 } from "lucide-react"
 
-import type { Style } from "../../../../../utils/zodSchema/style"
+import type { Style } from "../../../../../utils/types/style"
 
 import { Button } from "@/components/ui/button"
 

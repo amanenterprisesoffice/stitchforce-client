@@ -1,10 +1,10 @@
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
 import z from "zod"
 import type {
   ProductionEntryBundle,
   ProductionEntryStyle,
   ProductionEntryOperation,
-} from "@/utils/zodSchema/production-entry"
+} from "@/utils/types/production-entry"
 
 export type PaymentMethod = "cash" | "bank" | "upi" | "cheque"
 export type PaymentStatus = "completed" | "voided"

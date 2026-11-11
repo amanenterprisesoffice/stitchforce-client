@@ -20,9 +20,9 @@ import {
 } from "@/components/ui/card"
 import StateComponent from "@/components/StateComponent"
 
-import { Bundle, BundleStatus, STATUS_LABELS } from "@/utils/zodSchema/bundle"
-import { Style } from "@/utils/zodSchema/style"
-import { Size } from "@/utils/zodSchema/size"
+import { Bundle, BundleStatus, STATUS_LABELS } from "@/utils/types/bundle"
+import { Style } from "@/utils/types/style"
+import { Size } from "@/utils/types/size"
 
 import BundleDetailsHeader from "./components/header"
 import BundleTimeline from "./components/timeline"

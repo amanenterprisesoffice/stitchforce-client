@@ -11,7 +11,7 @@ import DataTable from "@/components/ui/DataTable"
 import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 import { formatMoney } from "@/utils/utils"
-import { BundleOperation } from "@/utils/zodSchema/bundle"
+import { BundleOperation } from "@/utils/types/bundle"
 
 interface Props {
   operations: BundleOperation[]

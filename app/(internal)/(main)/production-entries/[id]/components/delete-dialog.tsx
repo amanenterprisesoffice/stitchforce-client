@@ -1,6 +1,6 @@
 "use client"
 
-import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
+import type { ProductionEntry } from "@/utils/types/production-entry"
 
 import {
   AlertDialog,

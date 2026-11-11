@@ -4,6 +4,7 @@ import Loader from "@/components/ui/Loader"
 import { isPublicRoute, isPublicOnlyRoute } from "@/constants/routes"
 import useFetch from "@/hooks/useFetch"
 import { logout } from "@/utils/utils"
+import { User } from "@/utils/types/user"
 import { usePathname, useRouter } from "next/navigation"
 import {
   createContext,
@@ -14,15 +15,6 @@ import {
 } from "react"
 import { toast } from "sonner"
 
-// Define a type for the user object
-export interface User {
-  id: string
-  name: string
-  email: string
-  profile?: string
-  organization_id: string
-  // Add other fields if needed
-}
 
 // Define the context value type
 interface UserContextType {

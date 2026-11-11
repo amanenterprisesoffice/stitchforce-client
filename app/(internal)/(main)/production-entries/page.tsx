@@ -14,11 +14,11 @@ import Loader from "@/components/ui/Loader"
 import StateComponent from "@/components/StateComponent"
 import Pagination from "@/components/ui/pagination"
 
-import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
-import type { Bundle } from "@/utils/zodSchema/bundle"
-import type { Style } from "@/utils/zodSchema/style"
-import type { StyleOperation } from "@/utils/zodSchema/styleops"
+import type { ProductionEntry } from "@/utils/types/production-entry"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
+import type { Bundle } from "@/utils/types/bundle"
+import type { Style } from "@/utils/types/style"
+import type { StyleOperation } from "@/utils/types/styleops"
 
 import { unwrapList } from "@/utils/utils"
 

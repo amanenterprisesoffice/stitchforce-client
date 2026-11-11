@@ -11,9 +11,9 @@ import { useUser } from "@/contexts/UserContext"
 import { Button } from "@/components/ui/button"
 import StateComponent from "@/components/StateComponent"
 
-import type { Bundle, BundleFormValues } from "@/utils/zodSchema/bundle"
-import type { Style } from "@/utils/zodSchema/style"
-import type { Size } from "@/utils/zodSchema/size"
+import type { Bundle, BundleFormValues } from "@/utils/types/bundle"
+import type { Style } from "@/utils/types/style"
+import type { Size } from "@/utils/types/size"
 import { unwrapList } from "@/utils/utils"
 
 import BundlesHeader from "./components/header"

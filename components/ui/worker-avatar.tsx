@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { getInitials } from "@/utils/utils"
-import { GarmentWorker, SlimWorker } from "@/utils/zodSchema/garmentWorker"
+import { GarmentWorker, SlimWorker } from "@/utils/types/garmentWorker"
 
 interface WorkerInfoProps {
   worker: GarmentWorker | SlimWorker | undefined

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import DataTable from "@/components/ui/DataTable"
 
 import {  formatDate, formatMoney } from "@/utils/utils"
-import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
+import type { ProductionEntry } from "@/utils/types/production-entry"
 import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 interface Props {

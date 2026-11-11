@@ -12,8 +12,8 @@ import {
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 
-import type { Bundle } from "@/utils/zodSchema/bundle"
-import type { Style } from "@/utils/zodSchema/style"
+import type { Bundle } from "@/utils/types/bundle"
+import type { Style } from "@/utils/types/style"
 import { formatDate } from "@/utils/utils"
 
 // Import your existing formatDate utility

@@ -31,8 +31,8 @@ import {
 
 import { cn } from "@/lib/utils"
 
-import type { BundleStatus } from "@/utils/zodSchema/bundle"
-import { STATUS_LABELS } from "@/utils/zodSchema/bundle"
+import type { BundleStatus } from "@/utils/types/bundle"
+import { STATUS_LABELS } from "@/utils/types/bundle"
 
 const STATUS_STEPS: {
   key: BundleStatus

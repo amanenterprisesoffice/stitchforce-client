@@ -35,6 +35,7 @@ export interface UpdateGarmentWorkerPayload {
   name: string
   phone: string
   gender: "male" | "female" | "other"
+  photo?: File[]
 }
 
 export interface SlimWorker {

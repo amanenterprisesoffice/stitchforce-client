@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { formatDate, getInitials, prettifyKey } from "@/utils/utils"
 
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
 import { WorkerInfo } from "@/components/ui/worker-avatar"
 
 interface Props {

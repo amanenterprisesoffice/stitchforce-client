@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { initialOperationValues, OperationFormValues, OperationPayload, operationSchema } from "@/utils/zodSchema/styleops"
+import { initialOperationValues, OperationFormValues, OperationPayload, operationSchema } from "@/utils/types/styleops"
 
 interface Props {
   open: boolean

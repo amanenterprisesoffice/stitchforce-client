@@ -1,7 +1,7 @@
 
 "use client"
 
-import type { Bundle } from "@/utils/zodSchema/bundle"
+import type { Bundle } from "@/utils/types/bundle"
 
 import {
   AlertDialog,

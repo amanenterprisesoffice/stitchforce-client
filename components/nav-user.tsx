@@ -1,6 +1,7 @@
 "use client"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useRouter } from "next/navigation"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,8 +17,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { User } from "@/contexts/UserContext"
 import { getInitials, logout } from "@/utils/utils"
+import { User } from "@/utils/types/user"
 import {
   ChevronsUpDownIcon,
   SparklesIcon,
@@ -29,6 +30,7 @@ import {
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar()
+  const router = useRouter()
 
   return (
     <SidebarMenu>
@@ -40,7 +42,7 @@ export function NavUser({ user }: { user: User }) {
             }
           >
             <Avatar>
-              <AvatarImage src={user.profile} alt={user.name} />
+              <AvatarImage src={user.photo_url} alt={user.name} />
               <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
@@ -59,7 +61,7 @@ export function NavUser({ user }: { user: User }) {
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar>
-                    <AvatarImage src={user.profile} alt={user.name} />
+                    <AvatarImage src={user.photo_url} alt={user.name} />
                     <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
@@ -78,9 +80,21 @@ export function NavUser({ user }: { user: User }) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  router.push("/users/me")
+                }}
+              >
                 <BadgeCheckIcon />
                 Account
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  router.push("/organization")
+                }}
+              >
+                <BadgeCheckIcon />
+                Organization
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCardIcon />

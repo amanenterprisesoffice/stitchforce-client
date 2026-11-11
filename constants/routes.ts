@@ -1,5 +1,5 @@
 const PUBLIC_ONLY_ROUTES = ["/login", "/register"]
-const PUBLIC_ROUTES = ["/"]
+const PUBLIC_ROUTES = ["/", "/verify-email"]
 
 const isPublicRoute = (pathname: string) => PUBLIC_ROUTES.includes(pathname)
 const isPublicOnlyRoute = (pathname: string) => PUBLIC_ONLY_ROUTES.includes(pathname)

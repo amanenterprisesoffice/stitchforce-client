@@ -1,5 +1,5 @@
-import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
-import type { GarmentWorker, SlimWorker } from "@/utils/zodSchema/garmentWorker"
+import type { ProductionEntry } from "@/utils/types/production-entry"
+import type { GarmentWorker, SlimWorker } from "@/utils/types/garmentWorker"
 
 export interface DashboardOverview {
   total_workers: number

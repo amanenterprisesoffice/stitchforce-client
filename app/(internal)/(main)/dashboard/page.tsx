@@ -20,8 +20,8 @@ import type {
   DashboardOverview,
 } from "./schema"
 
-import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import type { ProductionEntry } from "@/utils/types/production-entry"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
 
 import DashboardHeader from "./components/header"
 

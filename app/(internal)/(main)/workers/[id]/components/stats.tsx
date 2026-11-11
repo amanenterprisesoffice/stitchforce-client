@@ -9,7 +9,7 @@ import StateComponent from "@/components/StateComponent"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
-import type { WorkerPaymentSummary } from "@/utils/zodSchema/payments"
+import type { WorkerPaymentSummary } from "@/utils/types/payments"
 import { formatMoney } from "@/utils/utils"
 
 interface Props {

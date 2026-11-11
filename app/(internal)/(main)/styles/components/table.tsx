@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 
 import { MoreHorizontal, Pencil, Trash2, Shirt } from "lucide-react"
 
-import type { Style } from "@/utils/zodSchema/style"
+import type { Style } from "@/utils/types/style"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"

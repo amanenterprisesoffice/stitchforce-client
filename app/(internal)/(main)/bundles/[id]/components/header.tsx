@@ -1,13 +1,13 @@
 "use client"
 
 import { Package, Plus, Shirt, ExternalLink } from "lucide-react"
-import type { BundleStatus } from "@/utils/zodSchema/bundle"
+import type { BundleStatus } from "@/utils/types/bundle"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import PageHeader from "@/components/ui/PageHeader"
-import { Bundle, STATUS_LABELS } from "@/utils/zodSchema/bundle"
-import { Style } from "@/utils/zodSchema/style"
+import { Bundle, STATUS_LABELS } from "@/utils/types/bundle"
+import { Style } from "@/utils/types/style"
 import { Badge } from "@/components/ui/badge"
 import { prettifyKey } from "@/utils/utils"
 

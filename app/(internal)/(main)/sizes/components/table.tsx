@@ -2,7 +2,7 @@
 
 import { MoreHorizontal, Pencil, Trash2, Ruler } from "lucide-react"
 
-import type { Size } from "@/utils/zodSchema/size"
+import type { Size } from "@/utils/types/size"
 
 import { Button } from "@/components/ui/button"
 

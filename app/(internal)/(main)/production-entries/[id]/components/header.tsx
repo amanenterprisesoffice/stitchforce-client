@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { ArrowLeft, Book, Pencil, Trash2 } from "lucide-react"
 
-import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
+import type { ProductionEntry } from "@/utils/types/production-entry"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import PageHeader from "@/components/ui/PageHeader"

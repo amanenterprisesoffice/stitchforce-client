@@ -3,7 +3,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import { Shirt, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Style } from "@/utils/zodSchema/style"
+import { Style } from "@/utils/types/style"
 
 const StyleHeader = ({
   style,

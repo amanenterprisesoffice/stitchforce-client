@@ -5,12 +5,12 @@ import { useEffect, useState } from "react"
 import { useForm, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-import type { Bundle, BundleFormValues } from "@/utils/zodSchema/bundle"
+import type { Bundle, BundleFormValues } from "@/utils/types/bundle"
 
-import { bundleSchema, initialBundleValues } from "@/utils/zodSchema/bundle"
+import { bundleSchema, initialBundleValues } from "@/utils/types/bundle"
 
-import type { Style } from "@/utils/zodSchema/style"
-import type { Size } from "@/utils/zodSchema/size"
+import type { Style } from "@/utils/types/style"
+import type { Size } from "@/utils/types/size"
 
 import FormField from "@/components/ui/FormField"
 import { Button } from "@/components/ui/button"

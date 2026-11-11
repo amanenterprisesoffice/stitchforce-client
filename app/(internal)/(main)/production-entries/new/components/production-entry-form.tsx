@@ -23,18 +23,18 @@ import FormField from "@/components/ui/FormField"
 import FormDatePicker from "@/components/ui/FormDatePicker"
 import StateComponent from "@/components/StateComponent"
 
-import { getWorkerName } from "@/utils/zodSchema/garmentWorker"
+import { getWorkerName } from "@/utils/types/garmentWorker"
 
 import {
   productionEntrySchema,
   type ProductionEntryFormValues,
   type ProductionEntryPayload,
-} from "@/utils/zodSchema/production-entry"
+} from "@/utils/types/production-entry"
 
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
-import type { Bundle } from "@/utils/zodSchema/bundle"
-import type { Style } from "@/utils/zodSchema/style"
-import type { StyleOperation } from "@/utils/zodSchema/styleops"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
+import type { Bundle } from "@/utils/types/bundle"
+import type { Style } from "@/utils/types/style"
+import type { StyleOperation } from "@/utils/types/styleops"
 
 import { formatMoney, getLocalDateValue } from "@/utils/utils"
 

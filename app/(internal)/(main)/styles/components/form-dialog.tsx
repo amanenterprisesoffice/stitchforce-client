@@ -4,8 +4,8 @@ import { useEffect } from "react"
 import { useForm, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-import type { Style, StyleFormValues } from "../../../../../utils/zodSchema/style"
-import { styleSchema, initialStyleValues } from "../../../../../utils/zodSchema/style"
+import type { Style, StyleFormValues } from "../../../../../utils/types/style"
+import { styleSchema, initialStyleValues } from "../../../../../utils/types/style"
 
 import FormField from "@/components/ui/FormField"
 import { Button } from "@/components/ui/button"

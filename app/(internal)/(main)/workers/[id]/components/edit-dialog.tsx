@@ -4,18 +4,19 @@ import { useEffect } from "react"
 import { useForm, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-
 import {
   GarmentWorker,
   garmentWorkerSchema,
   getValidGender,
   initialGarmentWorkerValues,
-  UpdateGarmentWorkerPayload,
   type GarmentWorkerFormValues,
-} from "@/utils/zodSchema/garmentWorker"
+} from "@/utils/types/garmentWorker"
 
 import FormField from "@/components/ui/FormField"
 import FormSelect from "@/components/ui/FormSelect"
+import FileInput from "@/components/ui/Fileinput"
+import Loader from "@/components/ui/Loader"
+
 import { Button } from "@/components/ui/button"
 
 import {
@@ -27,14 +28,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-import Loader from "@/components/ui/Loader"
-import z from "zod"
-
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   worker: GarmentWorker
-  onSubmit: (values: UpdateGarmentWorkerPayload) => Promise<void>
+  onSubmit: (formData: FormData) => Promise<void>
   isSaving: boolean
 }
 
@@ -50,16 +48,14 @@ export default function EditGarmentWorkerDialog({
     handleSubmit,
     reset,
     control,
+    watch,
+    setValue,
     formState: { errors },
-  } = useForm<
-    GarmentWorkerFormValues,
-    any,
-    z.output<typeof garmentWorkerSchema>
-  >({
+  } = useForm<GarmentWorkerFormValues>({
     resolver: zodResolver(garmentWorkerSchema),
     defaultValues: initialGarmentWorkerValues,
   })
-  // Populate form when editing worker
+
   useEffect(() => {
     if (!open) return
 
@@ -74,11 +70,17 @@ export default function EditGarmentWorkerDialog({
   const handleFormSubmit: SubmitHandler<GarmentWorkerFormValues> = async (
     values
   ) => {
-    await onSubmit({
-      name: values.name.trim(),
-      phone: values.phone.trim(),
-      gender: values.gender,
-    })
+    const formData = new FormData()
+
+    formData.append("name", values.name.trim())
+    formData.append("phone", values.phone.trim())
+    formData.append("gender", values.gender)
+
+    if (values.photo?.[0]) {
+      formData.append("photo", values.photo[0])
+    }
+
+    await onSubmit(formData)
   }
 
   return (
@@ -88,12 +90,14 @@ export default function EditGarmentWorkerDialog({
           <DialogTitle>Edit Worker</DialogTitle>
 
           <DialogDescription>
-            Update the worker's name, phone number, and gender.
+            Update the worker's information and profile photo.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          {/* Name */}
+        <form
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className="space-y-4"
+        >
           <FormField
             id="name"
             label="Worker Name"
@@ -102,7 +106,6 @@ export default function EditGarmentWorkerDialog({
             errors={errors}
           />
 
-          {/* Phone */}
           <FormField
             id="phone"
             label="Phone Number"
@@ -111,7 +114,6 @@ export default function EditGarmentWorkerDialog({
             errors={errors}
           />
 
-          {/* Gender */}
           <FormSelect
             id="gender"
             label="Gender"
@@ -124,6 +126,20 @@ export default function EditGarmentWorkerDialog({
               { label: "Female", value: "female" },
               { label: "Other", value: "other" },
             ]}
+          />
+
+          <FileInput
+            id="photo"
+            label="Profile Photo"
+            value={watch("photo") ?? []}
+            onChange={(files) =>
+              setValue("photo", files, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
+            disabled={isSaving}
+            error={errors.photo?.message}
           />
 
           <DialogFooter>

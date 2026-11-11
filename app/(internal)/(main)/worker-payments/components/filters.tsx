@@ -11,7 +11,7 @@ import FormDatePicker from "@/components/ui/FormDatePicker"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
 
 export type WorkerPaymentFiltersValue = {
   worker_id: string

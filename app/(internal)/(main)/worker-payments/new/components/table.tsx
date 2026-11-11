@@ -7,7 +7,7 @@ import DataTable from "@/components/ui/DataTable"
 import Pagination from "@/components/ui/pagination"
 
 import { formatDate, formatMoney } from "@/utils/utils"
-import type { ProductionEntry } from "@/utils/zodSchema/production-entry"
+import type { ProductionEntry } from "@/utils/types/production-entry"
 interface Props {
   entries: ProductionEntry[]
   limit: number

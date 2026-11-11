@@ -74,7 +74,7 @@ export default function OverviewCards({ stats, isLoading }: Props) {
       bg: "bg-violet-500/10",
     },
     {
-      title: "Today's production",
+      title: "Today's production amount",
       value: formatMoney(today?.production_amount ?? 0),
       description: "Production completed today",
       icon: TrendingUp,

@@ -15,7 +15,7 @@ import {
   QuickLinkItem,
 } from "@/components/ui/quick-links"
 
-import type { GarmentWorker } from "@/utils/zodSchema/garmentWorker"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
 import WorkerExportDialog from "./export-dialog"
 
 

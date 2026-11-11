@@ -1,7 +1,7 @@
 
 "use client"
 
-import type { Size } from "@/utils/zodSchema/size"
+import type { Size } from "@/utils/types/size"
 
 import {
   AlertDialog,

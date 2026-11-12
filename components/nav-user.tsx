@@ -26,6 +26,8 @@ import {
   CreditCardIcon,
   BellIcon,
   LogOutIcon,
+  UserCheck2Icon,
+  FactoryIcon,
 } from "lucide-react"
 
 export function NavUser({ user }: { user: User }) {
@@ -72,41 +74,41 @@ export function NavUser({ user }: { user: User }) {
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <SparklesIcon />
                 Upgrade to Pro
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator /> */}
             <DropdownMenuGroup>
-              <DropdownMenuItem
+              <DropdownMenuItem className="cursor-pointer"
                 onClick={() => {
                   router.push("/users/me")
                 }}
               >
-                <BadgeCheckIcon />
-                Account
+                <UserCheck2Icon />
+                Profile
               </DropdownMenuItem>
-              <DropdownMenuItem
+              <DropdownMenuItem className="cursor-pointer"
                 onClick={() => {
                   router.push("/organization")
                 }}
               >
-                <BadgeCheckIcon />
+                <FactoryIcon />
                 Organization
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              {/* <DropdownMenuItem>
                 <CreditCardIcon />
                 Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
+              </DropdownMenuItem> */}
+              <DropdownMenuItem className="cursor-pointer">
                 <BellIcon />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
+            <DropdownMenuItem className="cursor-pointer"
               onClick={async () => {
                 const res = await logout()
                 if (res) {

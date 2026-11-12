@@ -6,6 +6,7 @@ import { useEffect } from "react"
 import "@/app/globals.css"
 import { UserProvider } from "@/contexts/UserContext"
 import { OrganizationProvider } from "@/contexts/OrganizationContext"
+import LicenseGuard from "@/components/auth/LicenseGuard"
 
 const MainLayout = ({
   children,
@@ -21,7 +22,11 @@ const MainLayout = ({
   return (
     <>
       <UserProvider>
-        <OrganizationProvider>{children}</OrganizationProvider>
+        <OrganizationProvider>
+          <LicenseGuard>
+            {children}
+            </LicenseGuard>
+        </OrganizationProvider>
       </UserProvider>
     </>
   )

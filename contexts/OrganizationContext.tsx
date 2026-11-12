@@ -1,35 +1,32 @@
 "use client"
 
-import Loader from "@/components/ui/Loader"
 import useFetch from "@/hooks/useFetch"
 import {
   createContext,
   useContext,
   useEffect,
   useState,
-  ReactNode,
+  type ReactNode,
 } from "react"
 import { useUser } from "./UserContext"
-
-export interface Organization {
-  id: string
-  name: string
-  license_status: "active" | "suspended" | "expired"
-  license_expires_at: string | null
-  created_at: string
-  updated_at: string
-}
+import type { Organization } from "@/utils/types/organization"
 
 interface OrganizationContextType {
   organization: Organization | null
   setOrganization: React.Dispatch<React.SetStateAction<Organization | null>>
+
   refetch: () => Promise<void>
+  update: (formData: FormData) => Promise<void>
+  remove: () => Promise<void>
+
   isLoading: boolean
+  isUpdating: boolean
+  isDeleting: boolean
 }
 
-const OrganizationContext = createContext<OrganizationContextType | undefined>(
-  undefined
-)
+const OrganizationContext = createContext<
+  OrganizationContextType | undefined
+>(undefined)
 
 interface OrganizationProviderProps {
   children: ReactNode
@@ -41,10 +38,9 @@ export const OrganizationProvider = ({
   const { user } = useUser()
 
   const [organization, setOrganization] = useState<Organization | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const [isLoading, setIsLoading] = useState(true)
-
-  const { refetch } = useFetch({
+  const { refetch: fetchOrganization } = useFetch<Organization>({
     auto: false,
     showErrorToast: true,
     onSuccess: (result) => {
@@ -57,7 +53,7 @@ export const OrganizationProvider = ({
     },
   })
 
-  useEffect(() => {
+  const refetch = async () => {
     if (!user?.organization_id) {
       setOrganization(null)
       setIsLoading(false)
@@ -66,13 +62,57 @@ export const OrganizationProvider = ({
 
     setIsLoading(true)
 
-    refetch({
+    await fetchOrganization({
       url: `/api/organizations/${user.organization_id}`,
       method: "GET",
     })
-  }, [user?.organization_id, refetch])
+  }
 
-  if (isLoading) return <Loader fullScreen />
+  const { refetch: updateOrganization, isLoading: isUpdating } =
+    useFetch<Organization>({
+      auto: false,
+      showErrorToast: true,
+      onSuccess: () => {
+        refetch()
+      },
+    })
+
+  const { refetch: deleteOrganization, isLoading: isDeleting } = useFetch({
+    auto: false,
+    showErrorToast: true,
+    onSuccess: () => {
+      setOrganization(null)
+    },
+  })
+
+  const update = async (formData: FormData) => {
+    if (!user?.organization_id) return
+
+    await updateOrganization({
+      url: `/api/organizations/${user.organization_id}`,
+      method: "PUT",
+      payload: formData,
+    })
+  }
+
+  const remove = async () => {
+    if (!user?.organization_id) return
+
+    await deleteOrganization({
+      url: `/api/organizations/${user.organization_id}`,
+      method: "DELETE",
+    })
+  }
+
+  useEffect(() => {
+    if (!user?.organization_id) {
+      setOrganization(null)
+      setIsLoading(false)
+      return
+    }
+
+    refetch()
+  }, [user?.organization_id])
 
   return (
     <OrganizationContext.Provider
@@ -80,7 +120,11 @@ export const OrganizationProvider = ({
         organization,
         setOrganization,
         refetch,
+        update,
+        remove,
         isLoading,
+        isUpdating,
+        isDeleting,
       }}
     >
       {children}

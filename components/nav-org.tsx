@@ -1,16 +1,26 @@
 "use client"
 
-import * as React from "react"
-
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-import { FactoryIcon } from "lucide-react"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
 
-export function OrganizationHeader() {
+import { FactoryIcon } from "lucide-react"
+import type { Organization } from "@/utils/types/organization"
+import { getInitials } from "@/utils/utils"
+
+export function OrganizationHeader({
+  organization,
+}: {
+  organization: Organization | null
+}) {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -19,14 +29,29 @@ export function OrganizationHeader() {
           tooltip="StitchForce"
           className="cursor-default hover:bg-transparent active:bg-transparent"
         >
-          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            <FactoryIcon className="size-4" />
-          </div>
+          <Avatar className="size-8 rounded-lg">
+            {organization?.photo_url && (
+              <AvatarImage
+                src={organization.photo_url}
+                alt={organization.name}
+                className="rounded-lg object-cover"
+              />
+            )}
 
-          <div className="grid flex-1 text-left text-sm leading-tight">
+            <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              {organization?.name ? (
+                getInitials(organization.name)
+              ) : (
+                <FactoryIcon className="size-4" />
+              )}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
             <span className="truncate font-semibold">
-              StitchForce
+              {organization?.name || "StitchForce Organization"}
             </span>
+
             <span className="truncate text-xs text-muted-foreground">
               Garment Management
             </span>

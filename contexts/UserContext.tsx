@@ -41,7 +41,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const isPublicOnly = isPublicOnlyRoute(pathname)
 
   const isPrivateRoute = Boolean(pathname && !isPublic && !isPublicOnly)
-  console.log({ isPrivateRoute })
   // Use custom fetch hook
   const { refetch } = useFetch({
     auto: true,

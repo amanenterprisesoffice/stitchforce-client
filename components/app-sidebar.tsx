@@ -22,6 +22,7 @@ import {
 
 import { useUser } from "@/contexts/UserContext"
 import { Separator } from "./ui/separator"
+import { useOrganization } from "@/contexts/OrganizationContext"
 
 const data = {
   navMain: [
@@ -88,11 +89,12 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser()
+  const { organization } = useOrganization()
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <OrganizationHeader />
+        <OrganizationHeader organization={organization} />
       </SidebarHeader>
 
       <Separator />

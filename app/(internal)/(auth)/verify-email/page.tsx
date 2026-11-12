@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import Signature from "@/components/ui/signature"
 
 type VerificationStatus = "loading" | "success" | "error"
 
@@ -94,9 +95,7 @@ export default function VerifyEmailPage() {
           </CardFooter>
         )}
       </Card>
-      <p className="absolute bottom-6 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} StitchForce. All rights reserved.
-      </p>
+      <Signature />
     </div>
   )
 }

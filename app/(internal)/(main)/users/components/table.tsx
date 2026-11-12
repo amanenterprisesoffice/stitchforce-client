@@ -1,10 +1,11 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Mail, ShieldCheck } from "lucide-react"
+import { Mail, ShieldCheck, Clock } from "lucide-react"
 import { useUser } from "@/contexts/UserContext"
 
 import type { User } from "@/utils/types/user"
+import type { OrganizationInvitation } from "@/utils/types/organization"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +15,21 @@ import { formatDate, getInitials } from "@/utils/utils"
 
 interface Props {
   users: User[]
+  invitations: OrganizationInvitation[]
+  onInvitationClick: (invitation: OrganizationInvitation) => void
 }
+
+type UserTableRow =
+  | {
+      type: "user"
+      id: string
+      user: User
+    }
+  | {
+      type: "invitation"
+      id: string
+      invitation: OrganizationInvitation
+    }
 
 function displayRole(role: string) {
   switch (role) {
@@ -29,49 +44,109 @@ function displayRole(role: string) {
   }
 }
 
-export default function UsersTable({ users }: Props) {
+export default function UsersTable({
+  users,
+  invitations,
+  onInvitationClick,
+}: Props) {
   const router = useRouter()
-  const { user } = useUser()
-  const isCurrentUser = (userId: string) => user?.id === userId
+  const { user: currentUser } = useUser()
+
+  const data: UserTableRow[] = [
+    ...users.map((user) => ({
+      type: "user" as const,
+      id: user.id,
+      user,
+    })),
+    ...invitations.map((invitation) => ({
+      type: "invitation" as const,
+      id: invitation.id,
+      invitation,
+    })),
+  ]
 
   const columns = [
     {
       header: "User",
-      render: (user: User) => (
-        <div className="flex min-w-0 items-center gap-3">
-          <Avatar className="size-10 shrink-0">
-            <AvatarImage
-              src={user.photo_url || undefined}
-              alt={user.name}
-              className="object-cover"
-            />
-            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-          </Avatar>
+      render: (row: UserTableRow) => {
+        if (row.type === "invitation") {
+          return (
+            <div className="flex min-w-0 items-center gap-3">
+              <Avatar className="size-10 shrink-0">
+                <AvatarFallback>
+                  <Mail className="size-4" />
+                </AvatarFallback>
+              </Avatar>
 
-          <div className="min-w-0">
-            <p className="truncate font-medium">
-              {user.name || "Unnamed user"}
-            </p>
-            <p className="truncate text-sm text-muted-foreground">
-              {user.email}
-            </p>
+              <div className="min-w-0">
+                <p className="truncate font-medium">
+                  {row.invitation.email}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Invitation pending
+                </p>
+              </div>
+            </div>
+          )
+        }
+
+        return (
+          <div className="flex min-w-0 items-center gap-3">
+            <Avatar className="size-10 shrink-0">
+              <AvatarImage
+                src={row.user.photo_url || undefined}
+                alt={row.user.name}
+                className="object-cover"
+              />
+              <AvatarFallback>
+                {getInitials(row.user.name)}
+              </AvatarFallback>
+            </Avatar>
+
+            <div className="min-w-0">
+              <p className="truncate font-medium">
+                {row.user.name || "Unnamed user"}
+                {currentUser?.id === row.user.id && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    (You)
+                  </span>
+                )}
+              </p>
+              <p className="truncate text-sm text-muted-foreground">
+                {row.user.email}
+              </p>
+            </div>
           </div>
-        </div>
-      ),
+        )
+      },
     },
     {
       header: "Role",
-      render: (user: User) => (
-        <Badge variant="secondary" className="whitespace-nowrap">
-          {displayRole(user.role)}
-        </Badge>
-      ),
+      render: (row: UserTableRow) => {
+        const role =
+          row.type === "user" ? row.user.role : row.invitation.role
+
+        return (
+          <Badge variant="secondary" className="whitespace-nowrap">
+            {displayRole(role)}
+          </Badge>
+        )
+      },
     },
     {
-      header: "Email status",
+      header: "Status",
       className: "hidden sm:table-cell",
-      render: (user: User) =>
-        user.email_verified_at ? (
+      render: (row: UserTableRow) => {
+        if (row.type === "invitation") {
+          return (
+            <Badge variant="outline" className="gap-1">
+              <Clock className="size-3" />
+              Pending invitation
+            </Badge>
+          )
+        }
+
+        return row.user.email_verified_at ? (
           <Badge variant="outline" className="gap-1">
             <ShieldCheck className="size-3" />
             Verified
@@ -81,23 +156,46 @@ export default function UsersTable({ users }: Props) {
             <Mail className="size-3" />
             Unverified
           </Badge>
-        ),
+        )
+      },
     },
     {
-      header: "Joined",
+      header: "Joined / Invited",
       className: "whitespace-nowrap text-right",
-      render: (user: User) => formatDate(user.created_at),
+      render: (row: UserTableRow) => {
+        if (row.type === "invitation") {
+          return (
+            <div className="text-right">
+              <p>{formatDate(row.invitation.created_at)}</p>
+              <p className="text-xs text-muted-foreground">
+                Expires {formatDate(row.invitation.expires_at)}
+              </p>
+            </div>
+          )
+        }
+
+        return formatDate(row.user.created_at)
+      },
     },
   ]
 
   return (
     <DataTable
-      data={users}
+      data={data}
       columns={columns}
-      getRowId={(user) => user.id}
-      onRowClick={(user) =>
-        router.push(isCurrentUser(user.id) ? `/users/me` : `/users/${user.id}`)
-      }
+      getRowId={(row) => `${row.type}-${row.id}`}
+      onRowClick={(row) => {
+        if (row.type === "invitation") {
+          onInvitationClick(row.invitation)
+          return
+        }
+
+        router.push(
+          currentUser?.id === row.user.id
+            ? "/users/me"
+            : `/users/${row.user.id}`
+        )
+      }}
       emptyMessage="No users found."
     />
   )

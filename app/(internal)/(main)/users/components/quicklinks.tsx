@@ -10,7 +10,6 @@ import { User } from "@/utils/types/user"
 const UserQuickLinks = ({ user }: { user: User }) => {
   const router = useRouter()
 
-
   const handleViewEntries = ({
     queryParams,
   }: {

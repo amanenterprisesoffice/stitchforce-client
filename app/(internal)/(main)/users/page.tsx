@@ -17,9 +17,15 @@ import UserFilters from "./components/filters"
 import InviteUserDialog, {
   type InviteUserValues,
 } from "./components/invite-dialog"
+import EditInviteDialog from "./components/edit-invite-dialog"
 
 import type { User } from "@/utils/types/user"
-import UsersList from "./components/table"
+import type {
+  OrganizationInvitation,
+  OrganizationInvitationsResponse,
+} from "@/utils/types/organization"
+
+import UsersTable from "./components/table"
 import UsersHeader from "./components/header"
 
 const DEFAULT_LIMIT = 25
@@ -35,9 +41,15 @@ export default function UsersPage() {
   const [offset, setOffset] = useState(0)
 
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [selectedInvitation, setSelectedInvitation] =
+    useState<OrganizationInvitation | null>(null)
 
   const usersURL = organizationID
     ? `/api/organizations/${organizationID}/users`
+    : ""
+
+  const invitationsURL = organizationID
+    ? `/api/organizations/${organizationID}/invitations`
     : ""
 
   const requestURL = useMemo(() => {
@@ -59,32 +71,48 @@ export default function UsersPage() {
 
   const {
     data: usersData,
-    isLoading,
+    isLoading: isLoadingUsers,
     refetch: fetchUsers,
   } = useFetch<User[]>({
     auto: false,
   })
 
   const {
-    isLoading: isInviting,
-    refetch: inviteUser,
-  } = useFetch()
+    data: invitationsData,
+    isLoading: isLoadingInvitations,
+    refetch: fetchInvitations,
+  } = useFetch<OrganizationInvitationsResponse>({
+    auto: false,
+  })
+
+  const { isLoading: isInviting, refetch: inviteUser } = useFetch()
 
   const users: User[] = Array.isArray(usersData) ? usersData : []
+
+const invitations: OrganizationInvitation[] =
+  invitationsData?.invitations ?? []
 
   const hasNextPage = users.length === limit
 
   const loadUsers = useCallback(() => {
     if (!organizationID) return
 
-    fetchUsers({
-      url: requestURL,
-    })
+    fetchUsers({ url: requestURL })
   }, [organizationID, requestURL, fetchUsers])
+
+  const loadInvitations = useCallback(() => {
+    if (!organizationID) return
+
+    fetchInvitations({ url: invitationsURL })
+  }, [organizationID, invitationsURL, fetchInvitations])
 
   useEffect(() => {
     loadUsers()
   }, [loadUsers])
+
+  useEffect(() => {
+    loadInvitations()
+  }, [loadInvitations])
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
@@ -103,7 +131,7 @@ export default function UsersPage() {
     }
 
     await inviteUser({
-      url: `/api/organizations/${organizationID}/invitations`,
+      url: invitationsURL,
       method: "POST",
       payload: {
         email: values.email.trim(),
@@ -112,8 +140,14 @@ export default function UsersPage() {
       onSuccess: () => {
         toast.success("Invitation sent successfully")
         setInviteOpen(false)
+        loadInvitations()
       },
     })
+  }
+
+  const handleInvitationUpdated = () => {
+    setSelectedInvitation(null)
+    loadInvitations()
   }
 
   if (!organizationID) {
@@ -126,13 +160,26 @@ export default function UsersPage() {
     )
   }
 
+  const isLoading = isLoadingUsers || isLoadingInvitations
+
+  // Apply the same filters to invitations.
+  const filteredInvitations = invitations.filter((invitation) => {
+    const matchesSearch =
+      !search.trim() ||
+      invitation.email.toLowerCase().includes(search.trim().toLowerCase())
+
+    const matchesRole = !role || invitation.role === role
+
+    return matchesSearch && matchesRole
+  })
+
   const isEmptyPage = users.length === 0 && offset > 0
   const hasActiveFilters = !!search.trim() || !!role
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <UsersHeader
-        count={users.length}
+        count={users.length + filteredInvitations.length}
         onInvite={() => setInviteOpen(true)}
       />
 
@@ -144,7 +191,7 @@ export default function UsersPage() {
       />
 
       <div className="relative flex flex-1 flex-col">
-        {isLoading && !usersData ? (
+        {isLoading && !usersData && !invitationsData ? (
           <Loader text="Loading users" />
         ) : isEmptyPage ? (
           <State
@@ -152,19 +199,14 @@ export default function UsersPage() {
             description="There are no users available on this page."
             ICON={<Users />}
             PortalButton={
-              <Button
-                variant="outline"
-                onClick={() => setOffset(0)}
-              >
+              <Button variant="outline" onClick={() => setOffset(0)}>
                 Go to first page
               </Button>
             }
           />
-        ) : users.length === 0 ? (
+        ) : users.length === 0 && filteredInvitations.length === 0 ? (
           <State
-            message={
-              hasActiveFilters ? "No users found" : "No users yet"
-            }
+            message={hasActiveFilters ? "No users found" : "No users yet"}
             description={
               hasActiveFilters
                 ? "Try changing your search or role filter."
@@ -184,17 +226,18 @@ export default function UsersPage() {
                   Clear filters
                 </Button>
               ) : (
-                <Button
-                  variant="outline"
-                  onClick={() => setInviteOpen(true)}
-                >
+                <Button variant="outline" onClick={() => setInviteOpen(true)}>
                   Invite your first user
                 </Button>
               )
             }
           />
         ) : (
-          <UsersList users={users} />
+          <UsersTable
+            users={users}
+            invitations={filteredInvitations}
+            onInvitationClick={setSelectedInvitation}
+          />
         )}
       </div>
 
@@ -217,6 +260,16 @@ export default function UsersPage() {
         onOpenChange={setInviteOpen}
         onSubmit={handleInvite}
         isSaving={isInviting}
+      />
+
+      <EditInviteDialog
+        open={!!selectedInvitation}
+        onOpenChange={(open) => {
+          if (!open) setSelectedInvitation(null)
+        }}
+        invitation={selectedInvitation}
+        organizationID={organizationID}
+        onUpdated={handleInvitationUpdated}
       />
     </div>
   )

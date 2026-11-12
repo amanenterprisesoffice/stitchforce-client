@@ -10,7 +10,9 @@ import {
 
 import { formatDate, getInitials } from "@/utils/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User } from "@/utils/types/user"
+import type { User } from "@/utils/types/user"
+
+import { CopyButton } from "@/components/ui/CopyButton"
 
 interface Props {
   user: User
@@ -19,7 +21,7 @@ interface Props {
 export default function UserDetails({ user }: Props) {
   return (
     <Card className="w-full min-w-0">
-      <CardHeader>
+      <CardHeader className="border-b">
         <CardTitle className="text-base">User information</CardTitle>
         <CardDescription>
           Detailed information about the user
@@ -28,24 +30,18 @@ export default function UserDetails({ user }: Props) {
 
       <CardContent className="w-full min-w-0">
         <div className="flex w-full min-w-0 flex-col gap-6 sm:flex-row">
-          {user.photo_url && (
-            <Avatar className="size-24 shrink-0 sm:size-32">
-              <AvatarImage
-                src={user.photo_url}
-                alt={user.name}
-                className="object-cover"
-              />
-              <AvatarFallback className="text-2xl font-semibold">
-                {getInitials(user.name)}
-              </AvatarFallback>
-            </Avatar>
-          )}
+          <Avatar className="size-24 shrink-0 sm:size-32">
+            <AvatarImage
+              src={user.photo_url || undefined}
+              alt={user.name}
+              className="object-cover"
+            />
+            <AvatarFallback className="text-2xl font-semibold">
+              {user.name ? getInitials(user.name) : "U"}
+            </AvatarFallback>
+          </Avatar>
 
-          <div
-            className={`grid w-full min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-5 lg:grid-cols-3 ${
-              user.photo_url ? "sm:border-l sm:pl-6" : ""
-            }`}
-          >
+          <div className="grid w-full min-w-0 flex-1 grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 sm:border-l sm:pl-6">
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Name</p>
               <p className="mt-1 break-words font-medium">
@@ -67,11 +63,14 @@ export default function UserDetails({ user }: Props) {
               </p>
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 space-y-1">
               <p className="text-sm text-muted-foreground">User ID</p>
-              <p className="mt-1 break-all font-mono text-xs">
-                {user.id}
-              </p>
+              <div className="flex items-center">
+                <span className="break-all font-mono text-xs">
+                  {user.id}
+                </span>
+                <CopyButton label="" value={user.id} />
+              </div>
             </div>
 
             <div className="min-w-0">

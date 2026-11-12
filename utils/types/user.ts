@@ -1,5 +1,11 @@
-// Define a type for the user object
-export type UserRole = "org_admin" | "admin" | "staff"
+export const ORG_ADMIN = "org_admin" as const
+export const ADMIN = "admin" as const
+export const STAFF = "staff" as const
+
+export type UserRole =
+  | typeof ORG_ADMIN
+  | typeof ADMIN
+  | typeof STAFF
 
 export interface User {
   id: string

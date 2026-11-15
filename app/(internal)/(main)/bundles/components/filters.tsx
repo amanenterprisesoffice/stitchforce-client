@@ -87,7 +87,7 @@ export default function BundleFilters({
         <FormSelect
           label="Style"
           id="style-filter"
-          value={styleFilter || "all"}
+          value={styleFilter}
           onChange={(value: string) =>
             onStyleChange(value === "all" ? "" : value)
           }
@@ -102,12 +102,13 @@ export default function BundleFilters({
                 : style.name,
             })),
           ]}
+          searchBar
         />
 
         <FormSelect
           label="Size"
           id="size-filter"
-          value={sizeFilter || "all"}
+          value={sizeFilter}
           onChange={(value: string) =>
             onSizeChange(value === "all" ? "" : value)
           }
@@ -120,18 +121,20 @@ export default function BundleFilters({
               label: size.name,
             })),
           ]}
+          searchBar
         />
 
         <FormSelect
           label="Status"
           id="status-filter"
-          value={statusFilter || "all"}
+          value={statusFilter}
           onChange={(value: string) =>
             onStatusChange(value === "all" ? "" : value)
           }
           placeholder="All statuses"
           parentClass="w-full min-w-0"
           options={[{ value: "all", label: "All statuses" }, ...statusOptions]}
+          searchBar
         />
 
         <FormDatePicker

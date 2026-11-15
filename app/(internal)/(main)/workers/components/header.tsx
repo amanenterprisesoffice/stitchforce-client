@@ -3,26 +3,32 @@
 import { Plus, Users } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import PageHeader from "@/components/ui/PageHeader"
 
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
+
 interface Props {
-  count: number
   onCreate: () => void
 }
 
-export default function WorkersHeader({ count, onCreate }: Props) {
+export default function WorkersHeader({ onCreate }: Props) {
+  const { hasPermission } = usePermissions()
+
+  const canCreate = hasPermission(PERMISSIONS.WORKERS_CREATE)
+
   return (
     <PageHeader
       title="Garment Workers"
       description="Manage your workers and their employment status."
       icon={<Users className="size-5 text-muted-foreground" />}
-      badge={<Badge variant="secondary">{count}</Badge>}
       action={
-        <Button onClick={onCreate}>
-          <Plus className="size-4" />
-          Add Worker
-        </Button>
+        canCreate ? (
+          <Button onClick={onCreate}>
+            <Plus className="size-4" />
+            Add Worker
+          </Button>
+        ) : undefined
       }
     />
   )

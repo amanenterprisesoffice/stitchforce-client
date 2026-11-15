@@ -10,15 +10,17 @@ import {
 
 import { formatDate, getInitials } from "@/utils/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import type { User } from "@/utils/types/user"
+import { displayUserRole, type User } from "@/utils/types/user"
 
 import { CopyButton } from "@/components/ui/CopyButton"
 
 interface Props {
-  user: User
+  user: User | null
 }
 
 export default function UserDetails({ user }: Props) {
+  if (!user) return null
+
   return (
     <Card className="w-full min-w-0">
       <CardHeader className="border-b">
@@ -59,17 +61,14 @@ export default function UserDetails({ user }: Props) {
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Role</p>
               <p className="mt-1 font-medium capitalize">
-                {user.role?.replaceAll("_", " ") || "—"}
+                {displayUserRole(user.role || "—")}
               </p>
             </div>
 
             <div className="min-w-0 space-y-1">
               <p className="text-sm text-muted-foreground">User ID</p>
               <div className="flex items-center">
-                <span className="break-all font-mono text-xs">
-                  {user.id}
-                </span>
-                <CopyButton label="" value={user.id} />
+                <CopyButton label={user.id} value={user.id} />
               </div>
             </div>
 

@@ -1,14 +1,12 @@
+
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   BookAlertIcon,
-  CalendarDays,
-  Clock3,
   ExternalLink,
-  IndianRupee,
   Package,
   PackageCheck,
   Scissors,
@@ -30,9 +28,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 
-import { formatDate, formatMoney, getInitials } from "@/utils/utils"
+import { formatDate, formatMoney } from "@/utils/utils"
 
 import type {
   ProductionEntry,
@@ -44,13 +41,14 @@ import EditProductionEntryDialog from "./components/edit-dialog"
 import DeleteProductionEntryDialog from "./components/delete-dialog"
 import ProdEntryQuickLinks from "./components/quick-links"
 import ProdEntrySummary from "./components/summary"
+import { CopyButton } from "@/components/ui/CopyButton"
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex min-w-0 items-start justify-between gap-4 text-sm">
       <span className="shrink-0 text-muted-foreground">{label}</span>
       <span className="min-w-0 text-right font-medium break-all">
-        {value || "—"}
+        {value ?? "—"}
       </span>
     </div>
   )
@@ -76,6 +74,7 @@ export default function ProductionEntryDetailsPage() {
     data: entry,
     refetch: fetchEntry,
     isLoading,
+    error,
   } = useFetch<ProductionEntry>({
     auto: true,
     url: entryURL,
@@ -113,9 +112,6 @@ export default function ProductionEntryDetailsPage() {
         toast.success("Production entry deleted")
         router.push("/production-entries")
       },
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to delete production entry")
-      },
     })
   }
 
@@ -123,7 +119,7 @@ export default function ProductionEntryDetailsPage() {
     return (
       <StateComponent
         className="rounded-none"
-        message="Error"
+        message="An Error Occurred"
         description="Something went wrong"
         PortalButton={
           <Button
@@ -139,6 +135,25 @@ export default function ProductionEntryDetailsPage() {
 
   if (isLoading && !entry) {
     return <Loader text="Loading production entry" />
+  }
+
+  if (error) {
+    return (
+      <StateComponent
+        className="rounded-none"
+        message={error || "Something went wrong"}
+        description="An error occurred while loading production entry details."
+        ICON={<BookAlertIcon className="size-8 text-muted-foreground" />}
+        PortalButton={
+          <Button
+            variant="outline"
+            render={<Link href="/production-entries" />}
+          >
+            Back to entries
+          </Button>
+        }
+      />
+    )
   }
 
   if (!entry) {
@@ -172,6 +187,7 @@ export default function ProductionEntryDetailsPage() {
         onEdit={() => setEditOpen(true)}
         onDelete={() => setDeleteOpen(true)}
       />
+
       <ProdEntrySummary entry={entry} />
 
       {/* Details */}
@@ -185,32 +201,32 @@ export default function ProductionEntryDetailsPage() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {/* Bundle */}
             <Link
               href={`/bundles/${bundle?.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-w-0 items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/60"
+              className="group flex min-w-0 items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
             >
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
                 <Package className="size-5 text-muted-foreground" />
               </div>
 
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Bundle</p>
-                <p className="font-semibold">{bundle?.bundle_number || "—"}</p>
-                <p className="text-sm text-muted-foreground">
-                  {Number(bundle?.quantity || 0).toLocaleString("en-IN")} pcs
+                <p className="truncate text-sm font-medium">
+                  {bundle?.bundle_number || "—"}
                 </p>
               </div>
 
               {bundle?.status && (
-                <Badge variant="outline">
+                <Badge variant="outline" className="capitalize">
                   {bundle.status.replaceAll("_", " ")}
                 </Badge>
               )}
-              <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
+
+              <ExternalLink className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
             </Link>
 
             {/* Style */}
@@ -218,42 +234,41 @@ export default function ProductionEntryDetailsPage() {
               href={`/styles/${style?.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-w-0 items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/60"
+              className="group flex min-w-0 items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
             >
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
                 <PackageCheck className="size-5 text-muted-foreground" />
               </div>
 
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Style</p>
-                <p className="font-semibold">{style?.name || "—"}</p>
-                <p className="text-sm text-muted-foreground">
-                  {style?.style_number || "No style number"}
+                <p className="truncate text-sm font-medium">
+                  {style?.name || "—"}
                 </p>
               </div>
+              <p className="text-xs text-muted-foreground">
+                {style?.style_number || "No style number"}
+              </p>
 
-              <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
+              <ExternalLink className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
             </Link>
 
-            {/* Operation - plain row */}
-            <div className="flex min-w-0 items-center gap-3 px-3 py-1">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+            {/* Operation */}
+            <div className="flex min-w-0 items-center gap-3 rounded-lg border p-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
                 <Scissors className="size-5 text-muted-foreground" />
               </div>
 
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Operation</p>
-                <p className="font-semibold">
+                <p className="truncate text-sm font-medium">
                   {operation?.name || "Unknown operation"}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Rate:{" "}
-                  {formatMoney(
-                    operation?.rate_per_piece ?? entry.rate_per_piece
-                  )}{" "}
-                  per piece
-                </p>
               </div>
+              <p className="text-xs text-muted-foreground">
+                {formatMoney(operation?.rate_per_piece ?? entry.rate_per_piece)}{" "}
+                per piece
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -268,7 +283,10 @@ export default function ProductionEntryDetailsPage() {
           </CardHeader>
 
           <CardContent className="h-full space-y-4">
-            <DetailRow label="Production entry ID" value={entry.id} />
+            <DetailRow
+              label="Production entry ID"
+              value={<CopyButton label={entry.id} value={entry.id} />}
+            />
 
             <DetailRow
               label="Production date"
@@ -282,6 +300,7 @@ export default function ProductionEntryDetailsPage() {
               value={formatDate(entry.updated_at)}
             />
           </CardContent>
+
           <CardFooter>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Remarks</p>
@@ -292,6 +311,7 @@ export default function ProductionEntryDetailsPage() {
           </CardFooter>
         </Card>
       </div>
+
       {/* Quick links */}
       <ProdEntryQuickLinks
         bundle={bundle}

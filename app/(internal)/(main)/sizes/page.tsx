@@ -1,8 +1,7 @@
-
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { PencilRuler, Search } from "lucide-react"
+import { AlertCircle, PencilRuler, Search } from "lucide-react"
 import { toast } from "sonner"
 
 import useFetch from "@/hooks/useFetch"
@@ -17,9 +16,9 @@ import type { Size, SizeFormValues } from "@/utils/types/size"
 import SizesHeader from "./components/header"
 import SizesTable from "./components/table"
 import SizeFormDialog from "./components/form-dialog"
-import State from "@/components/StateComponent"
 import DeleteSizeDialog from "./components/delete-size-dialog"
 import StateComponent from "@/components/StateComponent"
+import DebouncedSearch from "@/components/ui/debounced-search"
 
 export default function SizesPage() {
   const { user } = useUser()
@@ -41,6 +40,7 @@ export default function SizesPage() {
     data: sizesData,
     isLoading,
     refetch: fetchSizes,
+    error: sizesError,
   } = useFetch({
     url: sizesURL,
     method: "GET",
@@ -68,9 +68,7 @@ export default function SizesPage() {
 
     if (!query) return sizes
 
-    return sizes.filter((size) =>
-      size.name?.toLowerCase().includes(query)
-    )
+    return sizes.filter((size) => size.name?.toLowerCase().includes(query))
   }, [sizes, search])
 
   // Create
@@ -109,9 +107,7 @@ export default function SizesPage() {
     const isEditing = !!editingSize
 
     await mutateSize({
-      url: isEditing
-        ? `${sizesURL}/${editingSize.id}`
-        : sizesURL,
+      url: isEditing ? `${sizesURL}/${editingSize.id}` : sizesURL,
 
       method: isEditing ? "PUT" : "POST",
 
@@ -121,9 +117,7 @@ export default function SizesPage() {
 
       onSuccess: () => {
         toast.success(
-          isEditing
-            ? "Size updated successfully"
-            : "Size created successfully"
+          isEditing ? "Size updated successfully" : "Size created successfully"
         )
 
         setDialogOpen(false)
@@ -169,31 +163,27 @@ export default function SizesPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <SizesHeader
-        count={sizes.length}
-        onCreate={openCreateDialog}
-      />
+      <SizesHeader onCreate={openCreateDialog} />
 
       {/* Search */}
       <div className="relative max-w-sm">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-
-        <Input
-          placeholder="Search sizes..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+        <DebouncedSearch value={search} onChange={setSearch} />
       </div>
 
       <div className="relative flex flex-1">
         {/* Loading */}
         {isLoading && !sizesData ? (
           <Loader text="Loading sizes" />
-        ) : !isLoading &&sizes.length === 0 ? (
-          <State
+        ) : sizesError ? (
+          <StateComponent
+            className="rounded-none"
+            message={sizesError || "Something went wrong"}
+            description="An error occurred while loading sizes."
+            ICON={<AlertCircle />}
+          />
+        ) : !isLoading && sizes.length === 0 ? (
+          <StateComponent
             message="No sizes yet"
-            // use relavatn icon
             ICON={<PencilRuler />}
             description="Get started by creating your first size. These reusable sizes can be assigned to garment bundles."
             PortalButton={
@@ -204,14 +194,11 @@ export default function SizesPage() {
           />
         ) : !isLoading && filteredSizes.length === 0 ? (
           /* No search results */
-          <State
+          <StateComponent
             message="No sizes found"
             description="Try searching with a different size name."
             PortalButton={
-              <Button
-                variant="outline"
-                onClick={() => setSearch("")}
-              >
+              <Button variant="outline" onClick={() => setSearch("")}>
                 Clear search
               </Button>
             }

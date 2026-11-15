@@ -23,7 +23,7 @@ import { User } from "@/utils/types/user"
 
 interface UserFormValues {
   name: string
-  email: string
+  // email: string
   photo: File[]
 }
 
@@ -52,7 +52,7 @@ export default function EditUserDialog({
   } = useForm<UserFormValues>({
     defaultValues: {
       name: "",
-      email: "",
+      // email: "",
       photo: [],
     },
   })
@@ -62,7 +62,7 @@ export default function EditUserDialog({
 
     reset({
       name: user.name,
-      email: user.email,
+      // email: user.email,
       photo: [],
     })
   }, [open, user, reset])
@@ -71,7 +71,7 @@ export default function EditUserDialog({
     const formData = new FormData()
 
     formData.append("name", values.name.trim())
-    formData.append("email", values.email.trim())
+    // formData.append("email", values.email.trim())
 
     if (values.photo?.[0]) {
       formData.append("photo", values.photo[0])
@@ -102,14 +102,14 @@ export default function EditUserDialog({
             register={register}
             errors={errors}
           />
-
+{/* 
           <FormField
             id="email"
             label="Email Address"
             placeholder="e.g. aman@example.com"
             register={register}
             errors={errors}
-          />
+          /> */}
 
           <FileInput
             id="photo"

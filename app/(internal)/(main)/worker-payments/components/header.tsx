@@ -1,28 +1,44 @@
 "use client"
 
 import { Plus, Wallet } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import PageHeader from "@/components/ui/PageHeader"
 import { useRouter } from "next/navigation"
 
+import { Button } from "@/components/ui/button"
+import PageHeader from "@/components/ui/PageHeader"
+
+import type { WorkerPaymentFiltersValue } from "./filters"
+import WorkerPaymentsExportButton from "./export-button"
+
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
+
 interface Props {
-  count: number
+  filters: WorkerPaymentFiltersValue
 }
 
-export default function WorkerPaymentsHeader({ count}: Props) {
+export default function WorkerPaymentsHeader({ filters }: Props) {
   const router = useRouter()
+  const { hasPermission } = usePermissions()
+
+  const canCreate = hasPermission(PERMISSIONS.PAYMENTS_CREATE)
+  const canView = hasPermission(PERMISSIONS.PAYMENTS_VIEW)
+
   return (
     <PageHeader
       title="Worker payments"
       icon={<Wallet />}
-      badge={<Badge variant="secondary">{count}</Badge>}
       description="Track payments made to garment workers."
       action={
-        <Button onClick={() => router.push("/worker-payments/new")}>
-          <Plus className="mr-2 size-4" />
-          Record payment
-        </Button>
+        <>
+          {canView && <WorkerPaymentsExportButton filters={filters} />}
+
+          {canCreate && (
+            <Button onClick={() => router.push("/worker-payments/new")}>
+              <Plus className="mr-2 size-4" />
+              Record payment
+            </Button>
+          )}
+        </>
       }
     />
   )

@@ -15,6 +15,9 @@ import {
 
 import DataTable from "@/components/ui/DataTable"
 
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
+
 interface Props {
   sizes: Size[]
   onEdit: (size: Size) => void
@@ -28,6 +31,11 @@ export default function SizesTable({
   onDelete,
   isLoading,
 }: Props) {
+  const { hasPermission } = usePermissions()
+
+  const canUpdate = hasPermission(PERMISSIONS.SIZES_UPDATE)
+  const canDelete = hasPermission(PERMISSIONS.SIZES_DELETE)
+
   const columns = [
     {
       header: "Size Name",
@@ -49,41 +57,50 @@ export default function SizesTable({
           ? new Date(size.created_at).toLocaleDateString()
           : "—",
     },
-    {
-      header: "",
-      className: "w-[60px]",
-      render: (size: Size) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8"
-              />
-            }
-          >
-            <MoreHorizontal className="size-4" />
-            <span className="sr-only">Open menu</span>
-          </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(size)}>
-              <Pencil className="mr-2 size-4" />
-              Edit
-            </DropdownMenuItem>
+    ...(canUpdate || canDelete
+      ? [
+          {
+            header: "Actions",
+            className: "w-[60px]",
+            render: (size: Size) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                    >
+                      <MoreHorizontal className="size-4" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  }
+                />
 
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => onDelete(size)}
-            >
-              <Trash2 className="mr-2 size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
+                <DropdownMenuContent align="end">
+                  {canUpdate && (
+                    <DropdownMenuItem onClick={() => onEdit(size)}>
+                      <Pencil className="mr-2 size-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+
+                  {canDelete && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => onDelete(size)}
+                    >
+                      <Trash2 className="mr-2 size-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (

@@ -16,6 +16,12 @@ import EditUserDialog from "./components/edit-dialog"
 import DeleteUserDialog from "./components/delete-dialog"
 import UserDetails from "../components/details"
 
+import type { z } from "zod"
+import { deleteAccountSchema } from "@/utils/types/auth"
+
+
+type DeleteAccountValues = z.infer<typeof deleteAccountSchema>
+
 export default function ProfilePage() {
   const router = useRouter()
   const { user, refetch } = useUser()
@@ -39,10 +45,11 @@ export default function ProfilePage() {
     })
   }
 
-  const handleDelete = async () => {
+  const handleDelete = async (values: DeleteAccountValues) => {
     await deleteUser({
       url: "/api/users/me",
       method: "DELETE",
+      payload: values,
       onSuccess: () => {
         toast.success("Account deleted")
         router.replace("/login")
@@ -76,7 +83,8 @@ export default function ProfilePage() {
       <div className="mx-auto h-fit w-full">
         <UserDetails user={user} />
       </div>
-      <UserQuickLinks user={user} />
+
+      <UserQuickLinks />
 
       <EditUserDialog
         open={editOpen}
@@ -89,7 +97,7 @@ export default function ProfilePage() {
       <DeleteUserDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        userName={user.name}
+        userEmail={user.email}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
       />

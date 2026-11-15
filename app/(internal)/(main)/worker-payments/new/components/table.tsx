@@ -31,20 +31,15 @@ export default function PayableProductionEntriesTable({
     {
       header: "Production date",
       className: "whitespace-nowrap",
-      render: (entry: ProductionEntry) =>
-        formatDate(entry.production_date),
+      render: (entry: ProductionEntry) => formatDate(entry.production_date),
     },
     {
       header: "Bundle / Style",
       render: (entry: ProductionEntry) => (
         <div className="min-w-[150px]">
-          <p className="font-medium">
-            {entry.bundle?.bundle_number || "—"}
-          </p>
+          <p className="font-medium">{entry.bundle?.bundle_number || "—"}</p>
           <p className="text-xs text-muted-foreground">
-            {entry.style?.style_number
-              ? `${entry.style.style_number} · `
-              : ""}
+            {entry.style?.style_number ? `${entry.style.style_number} · ` : ""}
             {entry.style?.name || "Unknown style"}
           </p>
         </div>
@@ -70,9 +65,7 @@ export default function PayableProductionEntriesTable({
         if (paid >= total && total > 0) {
           return (
             <div className="text-right">
-              <p className="font-medium tabular-nums">
-                {formatMoney(total)}
-              </p>
+              <p className="font-medium tabular-nums">{formatMoney(total)}</p>
 
               <Badge variant="secondary" className="mt-1">
                 <CheckCircle2 className="mr-1 size-3" />
@@ -85,9 +78,7 @@ export default function PayableProductionEntriesTable({
         if (paid > 0) {
           return (
             <div className="min-w-[130px] space-y-1 text-right">
-              <p className="font-medium tabular-nums">
-                {formatMoney(total)}
-              </p>
+              <p className="font-medium tabular-nums">{formatMoney(total)}</p>
 
               <p className="text-xs text-green-600 tabular-nums">
                 Paid: {formatMoney(paid)}
@@ -102,9 +93,7 @@ export default function PayableProductionEntriesTable({
 
         return (
           <div className="text-right">
-            <p className="font-semibold tabular-nums">
-              {formatMoney(pending)}
-            </p>
+            <p className="font-semibold tabular-nums">{formatMoney(pending)}</p>
           </div>
         )
       },
@@ -112,22 +101,21 @@ export default function PayableProductionEntriesTable({
   ]
 
   return (
-    <div className="flex min-w-0 flex-col">
-      <DataTable
-        className="rounded-none"
-        frameClassName="rounded-none!"
-        tableContainerClassName="max-h-[400px]"
-        data={entries}
-        columns={columns}
-        onRowClick={(entry) => {
-          window.open(
-            `/production-entries/${entry.id}`,
-            "_blank"
-          )
-        }}
-        getRowId={(entry) => entry.id}
-        emptyMessage="No payable production entries found."
-      />
+    <div className="flex h-full min-w-0 flex-1 flex-col">
+      <div className="flex-1">
+        <DataTable
+          className="rounded-none"
+          frameClassName="rounded-none!"
+          tableContainerClassName="max-h-[400px]"
+          data={entries}
+          columns={columns}
+          onRowClick={(entry) => {
+            window.open(`/production-entries/${entry.id}`, "_blank")
+          }}
+          getRowId={(entry) => entry.id}
+          emptyMessage="No payable production entries found."
+        />
+      </div>
 
       <div className="border-t p-3">
         <Pagination

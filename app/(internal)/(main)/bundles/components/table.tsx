@@ -17,6 +17,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
+
 interface Props {
   bundles: Bundle[]
   styles: Style[]
@@ -58,6 +61,10 @@ export default function BundlesTable({
   isLoading,
 }: Props) {
   const router = useRouter()
+  const { hasPermission } = usePermissions()
+
+  const canUpdate = hasPermission(PERMISSIONS.BUNDLES_UPDATE)
+  const canDelete = hasPermission(PERMISSIONS.BUNDLES_DELETE)
 
   const styleMap = new Map(styles.map((style) => [style.id, style.name]))
   const sizeMap = new Map(sizes.map((size) => [size.id, size.name]))
@@ -116,42 +123,54 @@ export default function BundlesTable({
           ? new Date(bundle.created_at).toLocaleDateString()
           : "—",
     },
-    {
-      header: "",
-      className: "w-[60px]",
-      render: (bundle: Bundle) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8"
-                onClick={(e) => e.stopPropagation()}
-              />
-            }
-          >
-            <MoreHorizontal className="size-4" />
-            <span className="sr-only">Open menu</span>
-          </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuItem onClick={() => onEdit(bundle)}>
-              <Pencil className="mr-2 size-4" />
-              Edit
-            </DropdownMenuItem>
+    ...(canUpdate || canDelete
+      ? [
+          {
+            header: "Actions",
+            className: "w-[60px]",
+            render: (bundle: Bundle) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreHorizontal className="size-4" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  }
+                />
 
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => onDelete(bundle)}
-            >
-              <Trash2 className="mr-2 size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
+                <DropdownMenuContent
+                  align="end"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {canUpdate && (
+                    <DropdownMenuItem onClick={() => onEdit(bundle)}>
+                      <Pencil className="mr-2 size-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+
+                  {canDelete && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => onDelete(bundle)}
+                    >
+                      <Trash2 className="mr-2 size-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (

@@ -1,12 +1,14 @@
 "use client"
 
-import Link from "next/link"
-import { ArrowLeft, Book, Pencil, Trash2 } from "lucide-react"
+import { Book, Pencil, Trash2 } from "lucide-react"
 
 import type { ProductionEntry } from "@/utils/types/production-entry"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import PageHeader from "@/components/ui/PageHeader"
+
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
 
 interface Props {
   entry: ProductionEntry
@@ -19,27 +21,38 @@ export default function ProductionEntryHeader({
   onEdit,
   onDelete,
 }: Props) {
+  const { hasPermission } = usePermissions()
+
+  const canUpdate = hasPermission(PERMISSIONS.PRODUCTION_UPDATE)
+  const canDelete = hasPermission(PERMISSIONS.PRODUCTION_DELETE)
+
   return (
     <PageHeader
       title="Production entry"
-      // backlink="/production-entries"
       icon={<Book className="size-5 text-muted-foreground" />}
       badge={
         <Badge variant="secondary" className="font-mono">
-          {entry.id.slice(0, 8)}
+          {entry.id.slice(0, 8)}...
         </Badge>
       }
       action={
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={onEdit}>
-            <Pencil className="mr-2 size-4" />
-            Edit entry
-          </Button>
-          <Button variant="destructive" onClick={onDelete}>
-            <Trash2 className="mr-2 size-4" />
-            Delete
-          </Button>
-        </div>
+        canUpdate || canDelete ? (
+          <div className="flex flex-wrap gap-2">
+            {canUpdate && (
+              <Button variant="outline" onClick={onEdit}>
+                <Pencil className="mr-2 size-4" />
+                Edit entry
+              </Button>
+            )}
+
+            {canDelete && (
+              <Button variant="destructive" onClick={onDelete}>
+                <Trash2 className="mr-2 size-4" />
+                Delete
+              </Button>
+            )}
+          </div>
+        ) : undefined
       }
       description="Review the worker, bundle, operation, quantity, and payment details for this production record."
     />

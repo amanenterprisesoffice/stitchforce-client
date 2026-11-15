@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { PackagePlus, Search } from "lucide-react"
+import { PackagePlus, PackageXIcon, Search } from "lucide-react"
 import { toast } from "sonner"
 
 import useFetch from "@/hooks/useFetch"
@@ -109,16 +109,19 @@ export default function BundlesPage() {
     data: bundlesResponse,
     refetch: fetchBundles,
     isLoading: bundlesLoading,
+    error: bundlesError,
   } = useFetch<unknown>({ auto: false })
   const {
     data: stylesResponse,
     refetch: fetchStyles,
     isLoading: stylesLoading,
+    error: stylesError,
   } = useFetch<unknown>({ auto: false })
   const {
     data: sizesResponse,
     refetch: fetchSizes,
     isLoading: sizesLoading,
+    error: sizesError,
   } = useFetch<unknown>({ auto: false })
   const { refetch: mutateBundle, isLoading: isSaving } = useFetch({
     auto: false,
@@ -313,18 +316,15 @@ export default function BundlesPage() {
   const isEmptyPage = !isLoading && bundles.length === 0 && offset > 0
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <BundlesHeader
-        count={totalItems ?? bundles.length}
-        onCreate={openCreateDialog}
-      />
+      <BundlesHeader onCreate={openCreateDialog} />
 
       <div className="flex h-full gap-4">
         <BundleFilters
           styles={styles}
           sizes={sizes}
-          styleFilter={filters.styleID || "all"}
-          sizeFilter={filters.sizeID || "all"}
-          statusFilter={filters.status || "all"}
+          styleFilter={filters.styleID}
+          sizeFilter={filters.sizeID}
+          statusFilter={filters.status}
           createdFrom={filters.createdFrom}
           createdTo={filters.createdTo}
           search={filters.search}
@@ -344,10 +344,16 @@ export default function BundlesPage() {
         />
 
         <div className="relative flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-          {isEmptyPage ? (
+          {bundlesError ? (
+            <StateComponent
+              message={bundlesError || "Something went wrong"}
+              description="An error occurred while loading bundles"
+              ICON={<PackageXIcon />}
+            />
+          ) : isEmptyPage ? (
             <StateComponent
               message="No more bundles on this page"
-              ICON={<PackagePlus />}
+              ICON={<PackageXIcon />}
               description="There are no bundles available at this page. You can go back to the previous page to view available bundles."
               PortalButton={
                 <Button variant="outline" onClick={() => setOffset(0)}>

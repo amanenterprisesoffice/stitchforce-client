@@ -58,7 +58,7 @@ interface BaseProps {
   id: string
   label?: string
   options?: FormSelectOption[]
-  errors?: Record<string, any>
+  errors?: Record<string, any> | string | null
   disabled?: boolean
   defaultValue?: string | string[]
   placeholder?: string
@@ -112,8 +112,14 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
   tooltipText = "",
   ...props
 }: FormSelectProps<T>) {
-  const error = get(errors, id) as FieldError | undefined
-  const hasError = !!error
+  const error =
+    typeof errors === "string"
+      ? errors
+        ? ({ message: errors } as FieldError)
+        : undefined
+      : (get(errors ?? {}, id) as FieldError | undefined)
+
+  const hasError = !!error?.message
   const hasOptions = options.length > 0
 
   const selectPlaceholder = placeholder || `Select ${label || id}`
@@ -231,6 +237,7 @@ export default function FormSelect<T extends FieldValues = FieldValues>({
           placeholder={selectPlaceholder}
           className={selectClassName}
           aria-invalid={hasError}
+          disabled={disabled}
         />
 
         <ComboboxContent>

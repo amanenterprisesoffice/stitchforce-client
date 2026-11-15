@@ -30,12 +30,12 @@ export default function BundleQuickLinks({
         ),
     },
     {
-      title: "View pending production entries",
-      description: "See all pending production records for this bundle",
+      title: "View pending payments",
+      description: "See worker wise pending payments",
       icon: ListClockIcon,
       onClick: () =>
         router.push(
-          `/production-entries?style_id=${encodeURIComponent(bundle.style_id)}&bundle_id=${encodeURIComponent(bundle.id)}&status=payable`
+          `/worker-payments/pending?style_id=${encodeURIComponent(bundle.style_id)}&bundle_id=${encodeURIComponent(bundle.id)}`
         ),
     },
     {

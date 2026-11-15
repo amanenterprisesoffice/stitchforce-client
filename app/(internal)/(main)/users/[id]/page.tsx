@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -15,12 +15,21 @@ import { User } from "@/utils/types/user"
 import UserDetails from "../components/details"
 import UserDetailsHeader from "../components/details-header"
 import UserQuickLinks from "../components/quicklinks"
-
+import { useUser } from "@/contexts/UserContext"
+import { UserX2Icon } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 
 export default function UserDetailsPage() {
   const router = useRouter()
   const params = useParams()
   const userID = params.id as string
+  const { user: currentUser } = useUser()
+
+  useEffect(() => {
+    if (currentUser?.id === userID) {
+      router.replace("/users/me")
+    }
+  }, [currentUser, userID, router])
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -29,6 +38,7 @@ export default function UserDetailsPage() {
     data: user,
     isLoading,
     refetch: refetchUser,
+    error: userError,
   } = useFetch<User>({
     url: `/api/users/${userID}`,
     auto: !!userID,
@@ -62,16 +72,26 @@ export default function UserDetailsPage() {
   }
 
   if (isLoading) {
+    return <Loader />
+  }
+
+  if (userError) {
     return (
       <StateComponent
         className="rounded-none"
-        message="Loading user"
-        description="Please wait while user information is being loaded."
+        message={userError || "Something went wrong"}
+        description="An error occurred while loading user details."
+        ICON={<UserX2Icon />}
+        PortalButton={
+          <Button variant="outline" onClick={() => refetchUser()}>
+            Try again
+          </Button>
+        }
       />
     )
   }
 
-  if (!user) {
+  if (!isLoading && !user) {
     return (
       <StateComponent
         className="rounded-none"
@@ -98,7 +118,7 @@ export default function UserDetailsPage() {
         <UserDetails user={user} />
       </div>
 
-      <UserQuickLinks user={user} />
+      <UserQuickLinks />
 
       <EditUserDialog
         open={editOpen}
@@ -111,7 +131,7 @@ export default function UserDetailsPage() {
       <DeleteUserDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        userName={user.name}
+        userName={user?.name}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
       />

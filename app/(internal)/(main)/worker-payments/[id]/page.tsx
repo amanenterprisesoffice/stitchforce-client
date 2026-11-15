@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Ban, CreditCard, Wallet } from "lucide-react"
+import { AlertCircle, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
 import useFetch from "@/hooks/useFetch"
@@ -17,8 +16,7 @@ import PaymentSummary from "./components/payment-summary"
 import TransactionCard from "./components/transaction-card"
 import ProductionEntriesTable from "./components/production-entries-table"
 import { SlimWorker } from "@/utils/types/garmentWorker"
-
-
+import VoidPaymentDialog from "./components/void-dialog"
 
 export interface PaymentProductionEntry {
   id: string
@@ -78,6 +76,7 @@ export default function WorkerPaymentDetailsPage() {
     data,
     isLoading,
     refetch: fetchPayment,
+    error: paymentError,
   } = useFetch<WorkerPayment>({
     auto: !!paymentURL,
     url: paymentURL,
@@ -101,12 +100,30 @@ export default function WorkerPaymentDetailsPage() {
         setVoidDialogOpen(false)
         fetchPayment({ url: paymentURL, method: "GET" })
       },
-      onError: (error: any) =>
-        toast.error(error?.message || "Failed to void payment"),
     })
   }
 
   if (isLoading && !payment) return <Loader text="Loading payment" />
+
+  if (paymentError) {
+    return (
+      <StateComponent
+        className="rounded-none"
+        ICON={<AlertCircle />}
+        message={paymentError || "Something went wrong"}
+        description="An error occurred while loading worker payment details."
+        PortalButton={
+          <Button
+            variant="outline"
+            onClick={() => router.push("/worker-payments")}
+          >
+            <ArrowLeft className="mr-2 size-4" />
+            Back to payments
+          </Button>
+        }
+      />
+    )
+  }
 
   if (!organizationID || !payment) {
     return (
@@ -138,6 +155,13 @@ export default function WorkerPaymentDetailsPage() {
 
       <ProductionEntriesTable entries={payment.production_entry ?? []} />
 
+      <VoidPaymentDialog
+        payment={payment}
+        open={voidDialogOpen}
+        onOpenChange={setVoidDialogOpen}
+        onConfirm={handleVoid}
+        isVoiding={isVoiding}
+      />
     </main>
   )
 }

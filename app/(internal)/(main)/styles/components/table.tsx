@@ -1,14 +1,13 @@
+
 "use client"
 
 import { useRouter } from "next/navigation"
-
 import { MoreHorizontal, Pencil, Trash2, Shirt } from "lucide-react"
 
 import type { Style } from "@/utils/types/style"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import DataTable from "@/components/ui/DataTable"
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
 
 interface Props {
   styles: Style[]
@@ -25,8 +26,17 @@ interface Props {
   isLoading: boolean
 }
 
-export default function StylesTable({ styles, onEdit, onDelete, isLoading }: Props) {
+export default function StylesTable({
+  styles,
+  onEdit,
+  onDelete,
+  isLoading,
+}: Props) {
   const router = useRouter()
+  const { hasPermission } = usePermissions()
+
+  const canUpdate = hasPermission(PERMISSIONS.STYLES_UPDATE)
+  const canDelete = hasPermission(PERMISSIONS.STYLES_DELETE)
 
   const columns = [
     {
@@ -44,14 +54,14 @@ export default function StylesTable({ styles, onEdit, onDelete, isLoading }: Pro
           <div className="hidden size-9 items-center justify-center rounded-lg bg-muted sm:flex">
             <Shirt className="size-4 text-muted-foreground" />
           </div>
-
           <span className="font-medium">{style.name}</span>
         </div>
       ),
     },
     {
       header: "Description",
-      className: "hidden max-w-[250px] truncate text-muted-foreground md:table-cell",
+      className:
+        "hidden max-w-[250px] truncate text-muted-foreground md:table-cell",
       render: (style: Style) => style.description || "—",
     },
     {
@@ -62,45 +72,55 @@ export default function StylesTable({ styles, onEdit, onDelete, isLoading }: Pro
           ? new Date(style.created_at).toLocaleDateString()
           : "—",
     },
-    {
-      header: "",
-      className: "w-[60px]",
-      render: (style: Style) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8"
-                onClick={(e) => e.stopPropagation()}
-              />
-            }
-          >
-            <MoreHorizontal className="size-4" />
-            <span className="sr-only">Open menu</span>
-          </DropdownMenuTrigger>
 
-          <DropdownMenuContent
-            align="end"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <DropdownMenuItem onClick={() => onEdit(style)}>
-              <Pencil className="mr-2 size-4" />
-              Edit
-            </DropdownMenuItem>
+    // Show actions only when the user has permission
+    ...(canUpdate || canDelete
+      ? [
+          {
+            header: "Actions",
+            className: "w-[60px]",
+            render: (style: Style) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreHorizontal className="size-4" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  }
+                />
 
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => onDelete(style)}
-            >
-              <Trash2 className="mr-2 size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
+                <DropdownMenuContent
+                  align="end"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {canUpdate && (
+                    <DropdownMenuItem onClick={() => onEdit(style)}>
+                      <Pencil className="mr-2 size-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+
+                  {canDelete && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => onDelete(style)}
+                    >
+                      <Trash2 className="mr-2 size-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -25,21 +24,9 @@ import { useUser } from "@/contexts/UserContext"
 type ExportFormat = "csv" | "xlsx" | "pdf"
 
 const EXPORT_OPTIONS = [
-  {
-    value: "csv",
-    label: "CSV",
-    icon: FileText,
-  },
-  {
-    value: "xlsx",
-    label: "Excel",
-    icon: FileSpreadsheet,
-  },
-  {
-    value: "pdf",
-    label: "PDF",
-    icon: FileType,
-  },
+  { value: "csv", label: "CSV", icon: FileText },
+  { value: "xlsx", label: "Excel", icon: FileSpreadsheet },
+  { value: "pdf", label: "PDF", icon: FileType },
 ]
 
 interface Props {
@@ -48,39 +35,32 @@ interface Props {
   title: string
   description: string
   endpoint: string
-  workerName: string
-  workerID: string
+  queryParams?: Record<string, string>
 }
 
-export default function WorkerExportDialog({
+export default function ExportDialog({
   open,
   onOpenChange,
   title,
   description,
   endpoint,
-  workerName,
-  workerID,
+  queryParams = {},
 }: Props) {
   const { user } = useUser()
-
   const [format, setFormat] = useState<ExportFormat>("xlsx")
 
   const handleDownload = () => {
     if (!user?.organization_id) return
 
     const params = new URLSearchParams({
+      ...queryParams,
       format,
-      worker_id: workerID,
     })
 
-    const url =
-      `${endpoint}?${params.toString()}`
-
     const downloadURL =
-      `/api/organizations/${user.organization_id}${url}`
+      `/api/organizations/${user.organization_id}${endpoint}?${params.toString()}`
 
     window.open(downloadURL, "_blank", "noopener,noreferrer")
-
     onOpenChange(false)
   }
 
@@ -89,22 +69,13 @@ export default function WorkerExportDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-
-          <DialogDescription>
-            {description}{" "}
-            <span className="font-medium text-foreground">
-              {workerName}
-            </span>
-            .
-          </DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         <FormToggleGroup
           name="exportFormat"
           value={format}
-          onChange={(value) =>
-            setFormat(value as ExportFormat)
-          }
+          onChange={(value) => setFormat(value as ExportFormat)}
           options={EXPORT_OPTIONS}
           type="single"
           ToggleGroupClassName="w-full"

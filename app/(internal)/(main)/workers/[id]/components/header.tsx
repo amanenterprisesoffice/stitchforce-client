@@ -1,19 +1,16 @@
 "use client"
 
-import {
-  Pencil,
-  Trash2,
-  UserRound,
-  Share2,
-  Copy,
-  Phone,
-} from "lucide-react"
+import { Pencil, Trash2, UserRound, Share2, Copy, Phone } from "lucide-react"
 import { FaWhatsapp } from "react-icons/fa"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import PageHeader from "@/components/ui/PageHeader"
 import { GarmentWorker } from "@/utils/types/garmentWorker"
+
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
+import Loader from "@/components/ui/Loader"
 
 interface Props {
   worker: GarmentWorker
@@ -30,7 +27,12 @@ export default function GarmentWorkerDetailsHeader({
   onStatusChange,
   isChangingStatus,
 }: Props) {
+  const { hasPermission } = usePermissions()
+
   if (!worker) return null
+
+  const canUpdate = hasPermission(PERMISSIONS.WORKERS_UPDATE)
+  const canDelete = hasPermission(PERMISSIONS.WORKERS_DELETE)
 
   const phone = worker.phone?.replace(/\D/g, "")
 
@@ -95,35 +97,36 @@ export default function GarmentWorkerDetailsHeader({
             variant="ghost"
             size="icon"
             disabled={!worker.phone}
-            onClick={() =>
-              (window.location.href = `tel:${worker.phone}`)
-            }
+            onClick={() => (window.location.href = `tel:${worker.phone}`)}
             title="Call worker"
           >
             <Phone className="size-4" />
           </Button>
 
-          <Button variant="outline" onClick={onEdit}>
-            <Pencil className="mr-2 size-4" />
-            Edit
-          </Button>
+          {canUpdate && (
+            <>
+              <Button variant="outline" onClick={onEdit}>
+                <Pencil className="mr-2 size-4" />
+                Edit
+              </Button>
 
-          <Button
-            variant="outline"
-            onClick={onStatusChange}
-            disabled={isChangingStatus}
-          >
-            {isChangingStatus
-              ? "Updating..."
-              : worker.status === "active"
-                ? "Deactivate"
-                : "Activate"}
-          </Button>
+              <Button
+                variant="outline"
+                onClick={onStatusChange}
+                disabled={isChangingStatus}
+              >
+                {isChangingStatus && <Loader />}
+                {worker.status === "active" ? "Deactivate" : "Activate"}
+              </Button>
+            </>
+          )}
 
-          <Button variant="destructive" onClick={onDelete}>
-            <Trash2 className="mr-2 size-4" />
-            Delete
-          </Button>
+          {canDelete && (
+            <Button variant="destructive" onClick={onDelete}>
+              <Trash2 className=" size-4" />
+              Delete
+            </Button>
+          )}
         </>
       }
     />

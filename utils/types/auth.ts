@@ -8,3 +8,10 @@ export const baseSchema = z.object({
 export const signupSchema = baseSchema.extend({
   name: z.string().min(1, "Name is required"),
 });
+
+// make delete account schema
+export const deleteAccountSchema = z.object({
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+

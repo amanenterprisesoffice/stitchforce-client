@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -9,12 +10,14 @@ import {
 } from "@/components/ui/card"
 
 import { Badge } from "@/components/ui/badge"
+import StateComponent from "@/components/StateComponent"
 
 import type { DashboardOverview } from "../schema"
 
 interface Props {
   stats: DashboardOverview | null
   isLoading: boolean
+  error?: string | null
 }
 
 const statuses = [
@@ -40,7 +43,11 @@ const statuses = [
   },
 ] as const
 
-export default function BundleStatus({ stats, isLoading }: Props) {
+export default function BundleStatus({
+  stats,
+  isLoading,
+  error,
+}: Props) {
   const bundleStatus = stats?.bundle_status
 
   const total = statuses.reduce(
@@ -52,56 +59,80 @@ export default function BundleStatus({ stats, isLoading }: Props) {
     <Card className="shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg">Bundle overview</CardTitle>
-        <CardDescription>Current distribution of your bundles</CardDescription>
+        <CardDescription>
+          Current distribution of your bundles
+        </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-5">
-        <div>
-          <p className="text-3xl font-semibold tabular-nums">
-            {isLoading ? "—" : total.toLocaleString("en-IN")}
-          </p>
-          <p className="text-xs text-muted-foreground">Total bundles</p>
-        </div>
+        {error ? (
+          <StateComponent
+            className="rounded-none"
+            message={error || "Something went wrong"}
+            description="An error occurred while loading bundle statistics."
+          />
+        ) : (
+          <>
+            <div>
+              <p className="text-3xl font-semibold tabular-nums">
+                {isLoading ? "—" : total.toLocaleString("en-IN")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Total bundles
+              </p>
+            </div>
 
-        <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
-          {statuses.map((item) => {
-            const count = bundleStatus?.[item.key] ?? 0
+            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
+              {statuses.map((item) => {
+                const count = bundleStatus?.[item.key] ?? 0
 
-            return (
-              <div
-                key={item.key}
-                className={`${item.color} transition-all`}
-                style={{
-                  width: total > 0 ? `${(count / total) * 100}%` : "0%",
-                }}
-              />
-            )
-          })}
-        </div>
+                return (
+                  <div
+                    key={item.key}
+                    className={`${item.color} transition-all`}
+                    style={{
+                      width:
+                        total > 0
+                          ? `${(count / total) * 100}%`
+                          : "0%",
+                    }}
+                  />
+                )
+              })}
+            </div>
 
-        <div className="space-y-3">
-          {statuses.map((item) => {
-            const count = bundleStatus?.[item.key] ?? 0
+            <div className="space-y-3">
+              {statuses.map((item) => {
+                const count = bundleStatus?.[item.key] ?? 0
 
-            return (
-              <div
-                key={item.key}
-                className="flex items-center justify-between gap-3"
-              >
-                <div className="flex items-center gap-2">
-                  <span className={`size-2.5 rounded-full ${item.color}`} />
-                  <span className="text-sm text-muted-foreground">
-                    {item.label}
-                  </span>
-                </div>
+                return (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`size-2.5 rounded-full ${item.color}`}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {item.label}
+                      </span>
+                    </div>
 
-                <Badge variant="secondary" className="tabular-nums">
-                  {isLoading ? "—" : count.toLocaleString("en-IN")}
-                </Badge>
-              </div>
-            )
-          })}
-        </div>
+                    <Badge
+                      variant="secondary"
+                      className="tabular-nums"
+                    >
+                      {isLoading
+                        ? "—"
+                        : count.toLocaleString("en-IN")}
+                    </Badge>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   )

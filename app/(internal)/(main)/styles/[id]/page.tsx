@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Shirt, Settings2, Plus } from "lucide-react"
+import { ArrowLeft, Shirt, Settings2, Plus, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 
 import useFetch from "@/hooks/useFetch"
@@ -96,7 +96,11 @@ export default function StyleDetailsPage() {
     : (bundlesData?.bundles ?? [])
 
   // Fetch style
-  const { data: styleData, isLoading: styleLoading } = useFetch({
+  const {
+    data: styleData,
+    isLoading: styleLoading,
+    error: styleError,
+  } = useFetch({
     auto: true,
     url: baseURL,
   })
@@ -107,6 +111,7 @@ export default function StyleDetailsPage() {
     data: styleOperationsData,
     refetch: fetchOperations,
     isLoading: operationsLoading,
+    error: operationsError,
   } = useFetch({
     auto: true,
     url: `${baseURL}/operations`,
@@ -170,17 +175,12 @@ export default function StyleDetailsPage() {
       })
     }
 
-    const onError = (err: any) => {
-      toast.error(err?.message || "Failed to save operation")
-    }
-
     if (editingOperation) {
       await updateOperation({
         url: `${baseURL}/operations/${editingOperation.id}`,
         method: "PUT",
         payload,
         onSuccess,
-        onError,
       })
     } else {
       await createOperation({
@@ -188,7 +188,6 @@ export default function StyleDetailsPage() {
         method: "POST",
         payload,
         onSuccess,
-        onError,
       })
     }
   }
@@ -216,6 +215,22 @@ export default function StyleDetailsPage() {
   // Loading style
   if (styleLoading && !style) {
     return <Loader />
+  }
+
+  if (styleError) {
+    return (
+      <StateComponent
+        className="rounded-none"
+        message={styleError || "Something went wrong"}
+        description="An error occurred while loading style details."
+        PortalButton={
+          <Button variant="outline" render={<Link href="/styles" />}>
+            <ArrowLeft className="mr-2 size-4" />
+            Back to styles
+          </Button>
+        }
+      />
+    )
   }
 
   // Style not found
@@ -292,7 +307,14 @@ export default function StyleDetailsPage() {
       </div>
 
       {/* Operations Table */}
-      { !operationsLoading && operations.length === 0 ? (
+      {operationsError ? (
+        <StateComponent
+          className="rounded-none"
+          message={operationsError || "Something went wrong"}
+          description="An error occurred while loading style operations."
+          ICON={<AlertCircle />}
+        />
+      ) : !operationsLoading && operations.length === 0 ? (
         <StateComponent
           message="No operations yet"
           ICON={<Settings2 className="size-8 text-muted-foreground" />}

@@ -66,7 +66,11 @@ export default function BundleDetailsPage() {
       ? `/api/organizations/${organizationID}/bundles/${bundleID}`
       : ""
 
-  const { refetch: fetchBundle, isLoading: bundleLoading } = useFetch({
+  const {
+    refetch: fetchBundle,
+    isLoading: bundleLoading,
+    error: bundleError,
+  } = useFetch({
     auto: false,
     onSuccess: (result: any) => {
       setBundle(result?.bundle ?? result?.data ?? result)
@@ -179,6 +183,19 @@ export default function BundleDetailsPage() {
       <StateComponent
         message="Bundle not found"
         description="The bundle may have been deleted or you may not have access to it."
+        PortalButton={
+          <Button variant="outline" render={<Link href="/bundles" />}>
+            Back to bundles
+          </Button>
+        }
+      />
+    )
+  }
+  if (bundleError) {
+    return (
+      <StateComponent
+        message={bundleError || "Something went wrong."}
+        description="The bundle could not be loaded."
         PortalButton={
           <Button variant="outline" render={<Link href="/bundles" />}>
             Back to bundles

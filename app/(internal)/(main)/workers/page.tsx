@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { Users2 } from "lucide-react"
+import { Users2, UserX2 } from "lucide-react"
 
 import useFetch from "@/hooks/useFetch"
 import { useUser } from "@/contexts/UserContext"
 
 import Loader from "@/components/ui/Loader"
 import { Button } from "@/components/ui/button"
-import State from "@/components/StateComponent"
 import StateComponent from "@/components/StateComponent"
 import Pagination from "@/components/ui/pagination"
 
@@ -36,8 +35,7 @@ export default function GarmentWorkersPage() {
   const [offset, setOffset] = useState(0)
 
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingWorker, setEditingWorker] =
-    useState<GarmentWorker | null>(null)
+  const [editingWorker, setEditingWorker] = useState<GarmentWorker | null>(null)
 
   const workersURL = organizationID
     ? `/api/organizations/${organizationID}/garment-workers`
@@ -65,20 +63,18 @@ export default function GarmentWorkersPage() {
     data: workersData,
     isLoading,
     refetch: fetchWorkers,
+    error: workersError,
   } = useFetch<any>({
     auto: false,
   })
 
   // POST, PUT and DELETE
-  const {
-    isLoading: isSaving,
-    refetch: mutateWorker,
-  } = useFetch()
+  const { isLoading: isSaving, refetch: mutateWorker } = useFetch()
 
   // Normalize workers
   const workers: GarmentWorker[] = Array.isArray(workersData)
     ? workersData
-    : workersData?.workers ?? []
+    : (workersData?.workers ?? [])
 
   // Total count
   const totalItems = useMemo(() => {
@@ -164,9 +160,7 @@ export default function GarmentWorkersPage() {
     }
 
     await mutateWorker({
-      url: isEditing
-        ? `${workersURL}/${editingWorker.id}`
-        : workersURL,
+      url: isEditing ? `${workersURL}/${editingWorker.id}` : workersURL,
 
       method: isEditing ? "PUT" : "POST",
 
@@ -202,10 +196,7 @@ export default function GarmentWorkersPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <WorkersHeader
-        count={totalItems ?? workers.length}
-        onCreate={openCreateDialog}
-      />
+      <WorkersHeader onCreate={openCreateDialog} />
 
       {/* Filters */}
       <WorkerFilters
@@ -218,27 +209,27 @@ export default function GarmentWorkersPage() {
       <div className="relative flex flex-1 flex-col">
         {isLoading && !workersData ? (
           <Loader text="Loading workers" />
+        ) : workersError ? (
+          <StateComponent
+            className="rounded-none"
+            ICON={<UserX2 />}
+            message={workersError || "Something went wrong"}
+            description="An error occurred while loading garment workers."
+          />
         ) : isEmptyPage ? (
-          <State
+          <StateComponent
             message="No more workers on this page"
             description="There are no workers available on this page."
             ICON={<Users2 />}
             PortalButton={
-              <Button
-                variant="outline"
-                onClick={() => setOffset(0)}
-              >
+              <Button variant="outline" onClick={() => setOffset(0)}>
                 Go to first page
               </Button>
             }
           />
         ) : workers.length === 0 ? (
-          <State
-            message={
-              hasActiveFilters
-                ? "No workers found"
-                : "No workers yet"
-            }
+          <StateComponent
+            message={hasActiveFilters ? "No workers found" : "No workers yet"}
             description={
               hasActiveFilters
                 ? "Try changing your search or status filter."
@@ -258,10 +249,7 @@ export default function GarmentWorkersPage() {
                   Clear filters
                 </Button>
               ) : (
-                <Button
-                  variant="outline"
-                  onClick={openCreateDialog}
-                >
+                <Button variant="outline" onClick={openCreateDialog}>
                   Add your first worker
                 </Button>
               )

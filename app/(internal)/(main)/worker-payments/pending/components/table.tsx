@@ -33,6 +33,13 @@ interface Props {
   hasNextPage: boolean
   setOffset: (offset: number) => void
   setLimit: (limit: number) => void
+  filters: {
+    styleID: string
+    bundleID: string
+    operationID: string
+    fromDate: string
+    toDate: string
+  }
 }
 
 export default function WorkerPaymentsTable({
@@ -44,6 +51,7 @@ export default function WorkerPaymentsTable({
   hasNextPage,
   setOffset,
   setLimit,
+  filters,
 }: Props) {
   const router = useRouter()
 
@@ -94,9 +102,21 @@ export default function WorkerPaymentsTable({
         columns={columns}
         getRowId={(balance) => balance.worker.id}
         onRowClick={(balance) => {
-          router.push(
-            `/production-entries?worker_id=${balance.worker.id}&status=payable`
-          )
+          const params = new URLSearchParams({
+            worker_id: balance.worker.id,
+            status: "payable",
+          })
+
+          if (filters.styleID) params.set("style_id", filters.styleID)
+          if (filters.bundleID) params.set("bundle_id", filters.bundleID)
+          if (filters.operationID)
+            params.set("style_operation_id", filters.operationID)
+          if (filters.fromDate) params.set("from_date", filters.fromDate)
+          if (filters.toDate) params.set("to_date", filters.toDate)
+
+            // open in new page
+            window.open(`/production-entries?${params.toString()}`, "_blank")
+          // router.push(`/production-entries?${params.toString()}`)
         }}
         emptyMessage="No pending worker payments found."
         isLoading={isLoading}

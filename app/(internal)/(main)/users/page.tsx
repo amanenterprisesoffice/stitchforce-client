@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { Users } from "lucide-react"
+import { Users, UserX2Icon } from "lucide-react"
 
 import useFetch from "@/hooks/useFetch"
 import { useUser } from "@/contexts/UserContext"
 
 import Loader from "@/components/ui/Loader"
 import { Button } from "@/components/ui/button"
-import State from "@/components/StateComponent"
 import StateComponent from "@/components/StateComponent"
 import Pagination from "@/components/ui/pagination"
 
@@ -73,6 +72,7 @@ export default function UsersPage() {
     data: usersData,
     isLoading: isLoadingUsers,
     refetch: fetchUsers,
+    error: errorUsers,
   } = useFetch<User[]>({
     auto: false,
   })
@@ -81,6 +81,7 @@ export default function UsersPage() {
     data: invitationsData,
     isLoading: isLoadingInvitations,
     refetch: fetchInvitations,
+    error: errorInvitations,
   } = useFetch<OrganizationInvitationsResponse>({
     auto: false,
   })
@@ -89,8 +90,8 @@ export default function UsersPage() {
 
   const users: User[] = Array.isArray(usersData) ? usersData : []
 
-const invitations: OrganizationInvitation[] =
-  invitationsData?.invitations ?? []
+  const invitations: OrganizationInvitation[] =
+    invitationsData?.invitations ?? []
 
   const hasNextPage = users.length === limit
 
@@ -193,8 +194,14 @@ const invitations: OrganizationInvitation[] =
       <div className="relative flex flex-1 flex-col">
         {isLoading && !usersData && !invitationsData ? (
           <Loader text="Loading users" />
+        ) : errorUsers || errorInvitations ? (
+          <StateComponent
+            message={errorUsers || errorInvitations || "Something went wrong"}
+            description="An error occurred while loading users or invitations."
+            ICON={<UserX2Icon />}
+          />
         ) : isEmptyPage ? (
-          <State
+          <StateComponent
             message="No more users on this page"
             description="There are no users available on this page."
             ICON={<Users />}
@@ -205,7 +212,7 @@ const invitations: OrganizationInvitation[] =
             }
           />
         ) : users.length === 0 && filteredInvitations.length === 0 ? (
-          <State
+          <StateComponent
             message={hasActiveFilters ? "No users found" : "No users yet"}
             description={
               hasActiveFilters

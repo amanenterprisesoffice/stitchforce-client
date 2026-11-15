@@ -6,8 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CopyButton } from "@/components/ui/CopyButton"
 import DataTable from "@/components/ui/DataTable"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 import { formatMoney } from "@/utils/utils"
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
 
 export interface StyleOperation {
   id: string
@@ -26,13 +34,17 @@ interface Props {
   isLoading: boolean
 }
 
-
 export default function StyleOperationsTable({
   operations,
   onEdit,
   onDelete,
   isLoading,
 }: Props) {
+  const { hasPermission } = usePermissions()
+
+  const canUpdate = hasPermission(PERMISSIONS.STYLES_UPDATE)
+  const canDelete = hasPermission(PERMISSIONS.STYLES_DELETE)
+
   const columns = [
     {
       header: "ID.",
@@ -76,41 +88,50 @@ export default function StyleOperationsTable({
           ? new Date(operation.created_at).toLocaleDateString()
           : "—",
     },
-    {
-      header: "",
-      className: "w-[60px]",
-      render: (operation: StyleOperation) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8"
-              />
-            }
-          >
-            <MoreHorizontal className="size-4" />
-            <span className="sr-only">Open menu</span>
-          </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(operation)}>
-              <Pencil className="mr-2 size-4" />
-              Edit
-            </DropdownMenuItem>
+    ...(canUpdate || canDelete
+      ? [
+          {
+            header: "Actions",
+            className: "w-[60px]",
+            render: (operation: StyleOperation) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                    >
+                      <MoreHorizontal className="size-4" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  }
+                />
 
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => onDelete(operation)}
-            >
-              <Trash2 className="mr-2 size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
+                <DropdownMenuContent align="end">
+                  {canUpdate && (
+                    <DropdownMenuItem onClick={() => onEdit(operation)}>
+                      <Pencil className="mr-2 size-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+
+                  {canDelete && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => onDelete(operation)}
+                    >
+                      <Trash2 className="mr-2 size-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (

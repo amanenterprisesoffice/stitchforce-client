@@ -1,3 +1,4 @@
+
 "use client"
 
 import type { ReactNode } from "react"
@@ -57,7 +58,12 @@ export default function DataTable<T>({
           <TableHeader className="bg-red-500!">
             <TableRow>
               {columns.map((column, index) => (
-                <TableHead key={index} className={column.className}>
+                <TableHead
+                  key={index}
+                  className={`${column.className ?? ""} ${
+                    index === columns.length - 1 ? "text-right" : ""
+                  }`}
+                >
                   {column.header}
                 </TableHead>
               ))}
@@ -69,8 +75,13 @@ export default function DataTable<T>({
               Array.from({ length: skeletonRows }).map((_, rowIndex) => (
                 <TableRow key={`skeleton-${rowIndex}`}>
                   {columns.map((column, colIndex) => (
-                    <TableCell key={colIndex} className={column.className}>
-                      <Skeleton className="h-4 w-full max-w-[140px]" />
+                    <TableCell
+                      key={colIndex}
+                      className={`${column.className ?? ""} ${
+                        colIndex === columns.length - 1 ? "text-right" : ""
+                      }`}
+                    >
+                      <Skeleton className="ml-auto h-4 w-full max-w-[140px]" />
                     </TableCell>
                   ))}
                 </TableRow>
@@ -83,7 +94,12 @@ export default function DataTable<T>({
                   onClick={() => onRowClick?.(item)}
                 >
                   {columns.map((column, index) => (
-                    <TableCell key={index} className={column.className}>
+                    <TableCell
+                      key={index}
+                      className={`${column.className ?? ""} ${
+                        index === columns.length - 1 ? "text-right" : ""
+                      }`}
+                    >
                       {column.render ? column.render(item) : null}
                     </TableCell>
                   ))}

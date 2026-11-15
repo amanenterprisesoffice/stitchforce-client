@@ -24,12 +24,12 @@ export function CopyButton({ label, value }: CopyButtonProps) {
       <Button
         variant="link"
         size="icon"
-        className="ml-1 size-3"
+        className="ml-1 size-3 text-foreground"
         onClick={handleCopy}
         title={copied ? "Copied!" : "Copy"}
       >
         {copied ? (
-          <Check className="size-3.5 text-primary" />
+          <Check className="size-3.5 text-primary" strokeWidth={3}/>
         ) : (
           <Copy className="size-3.5" />
         )}

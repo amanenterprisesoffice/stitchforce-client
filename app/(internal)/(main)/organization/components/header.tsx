@@ -8,6 +8,10 @@ import PageHeader from "@/components/ui/PageHeader"
 import type { Organization } from "@/utils/types/organization"
 import { getInitials } from "@/utils/utils"
 
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
+import { useUser } from "@/contexts/UserContext"
+
 interface Props {
   organization: Organization
   onEdit: () => void
@@ -19,6 +23,12 @@ export default function OrganizationHeader({
   onEdit,
   onDelete,
 }: Props) {
+  const { hasPermission } = usePermissions()
+  const { isOrgAdmin } = useUser()
+
+  const canUpdate = hasPermission(PERMISSIONS.ORGANIZATION_UPDATE)
+  const canDelete = isOrgAdmin
+
   return (
     <PageHeader
       title={organization.name}
@@ -36,17 +46,23 @@ export default function OrganizationHeader({
         </Avatar>
       }
       action={
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={onEdit}>
-            <Pencil className="size-4" />
-            Edit organization
-          </Button>
+        canUpdate || canDelete ? (
+          <div className="flex items-center gap-2">
+            {canUpdate && (
+              <Button variant="outline" onClick={onEdit}>
+                <Pencil className="size-4" />
+                Edit organization
+              </Button>
+            )}
 
-          <Button variant="destructive" onClick={onDelete}>
-            <Trash2 className="size-4" />
-            Delete
-          </Button>
-        </div>
+            {canDelete && (
+              <Button variant="destructive" onClick={onDelete}>
+                <Trash2 className="size-4" />
+                Delete
+              </Button>
+            )}
+          </div>
+        ) : undefined
       }
     />
   )

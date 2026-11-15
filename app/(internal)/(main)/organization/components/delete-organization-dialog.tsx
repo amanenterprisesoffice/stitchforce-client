@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import Loader from "@/components/ui/Loader"
 import { Organization } from "@/utils/types/organization"
 
 interface Props {
@@ -33,8 +34,8 @@ export default function DeleteOrganizationDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete organization?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete <strong>{organization.name}</strong>
-            {" "}and its associated organization data. This action cannot be undone.
+            This will permanently delete <strong>{organization.name}</strong>{" "}
+            and its associated organization data. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -46,9 +47,10 @@ export default function DeleteOrganizationDialog({
               onConfirm()
             }}
             disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            variant="destructive"
           >
-            {isDeleting ? "Deleting..." : "Delete organization"}
+            {isDeleting && <Loader />}
+            Delete organization
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

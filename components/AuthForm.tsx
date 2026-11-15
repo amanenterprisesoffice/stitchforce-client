@@ -127,13 +127,29 @@ export function AuthForm({
 
         <FormField
           id="password"
-          label="Password"
+          labelClassName="flex flex-row items-center justify-between w-full"
+          label={
+            <>
+              Password 
+              {!isSignup && (
+                <div className="text-right">
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm text-muted-foreground  underline-offset-4 hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              )}
+            </>
+          }
           icon={<Lock size={15} />}
           placeholder="••••••••"
           register={register}
           errors={errors}
           isSecret
         />
+
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Please wait..." : isSignup ? "Register" : "Login"}
         </Button>

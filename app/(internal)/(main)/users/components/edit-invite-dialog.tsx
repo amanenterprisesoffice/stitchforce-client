@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 
 import { formatDate } from "@/utils/utils"
+import Loader from "@/components/ui/Loader"
 
 interface Props {
   open: boolean
@@ -47,15 +48,9 @@ export default function EditInviteDialog({
   organizationID,
   onUpdated,
 }: Props) {
-  const {
-    isLoading: isResending,
-    refetch: resendInvitation,
-  } = useFetch()
+  const { isLoading: isResending, refetch: resendInvitation } = useFetch()
 
-  const {
-    isLoading: isCancelling,
-    refetch: cancelInvitation,
-  } = useFetch()
+  const { isLoading: isCancelling, refetch: cancelInvitation } = useFetch()
 
   if (!invitation) return null
 
@@ -96,15 +91,13 @@ export default function EditInviteDialog({
         </DialogHeader>
 
         <div className="space-y-5 py-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 rounded-md border p-2.5">
             <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted">
               <Mail className="size-5 text-muted-foreground" />
             </div>
 
             <div className="min-w-0">
-              <p className="break-all font-medium">
-                {invitation.email}
-              </p>
+              <p className="font-medium break-all">{invitation.email}</p>
               <Badge variant="outline" className="mt-1">
                 Pending invitation
               </Badge>
@@ -114,9 +107,7 @@ export default function EditInviteDialog({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Role</p>
-              <p className="mt-1 font-medium">
-                {displayRole(invitation.role)}
-              </p>
+              <p className="mt-1 font-medium">{displayRole(invitation.role)}</p>
             </div>
 
             <div>
@@ -147,17 +138,13 @@ export default function EditInviteDialog({
             onClick={handleCancel}
             disabled={isLoading}
           >
-            <Trash2 className="mr-2 size-4" />
+            {isCancelling && <Loader />}
             Cancel invitation
           </Button>
 
-          <Button
-            type="button"
-            onClick={handleResend}
-            disabled={isLoading}
-          >
-            <RefreshCw className="mr-2 size-4" />
-            {isResending ? "Resending..." : "Resend invitation"}
+          <Button type="button" onClick={handleResend} disabled={isLoading}>
+            {isResending && <Loader />}
+            Resend invitation
           </Button>
         </DialogFooter>
       </DialogContent>

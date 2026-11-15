@@ -43,6 +43,11 @@ interface Props {
     value: ProductionEntryFiltersValue[K]
   ) => void
   onClear: () => void
+
+  workersError?: string | null
+  stylesError?: string | null
+  bundlesError?: string | null
+  operationsError?: string | null
 }
 
 
@@ -66,6 +71,10 @@ export default function ProductionEntryFilters({
   operationsLoading,
   onChange,
   onClear,
+  workersError,
+  stylesError,
+  bundlesError,
+  operationsError,
 }: Props) {
   return (
     <Card className="sticky top-4 h-fit w-[20%] max-w-2xl">
@@ -92,8 +101,9 @@ export default function ProductionEntryFilters({
         />
         <FormSelect
           label="Worker"
+          errors={workersError}
           id="worker-filter"
-          value={filters.workerID || "all"}
+          value={filters.workerID}
           onChange={(value: string) =>
             onChange("workerID", value === "all" ? "" : value)
           }
@@ -106,12 +116,14 @@ export default function ProductionEntryFilters({
               label: getWorkerName(worker),
             })),
           ]}
+          searchBar
         />
 
         <FormSelect
           label="Style"
+          errors={stylesError}
           id="style-filter"
-          value={filters.styleID || "all"}
+          value={filters.styleID}
           onChange={(value: string) =>
             onChange("styleID", value === "all" ? "" : value)
           }
@@ -126,12 +138,15 @@ export default function ProductionEntryFilters({
                 : style.name,
             })),
           ]}
+          searchBar
+
         />
 
         <FormSelect
           label="Bundle"
           id="bundle-filter"
-          value={filters.bundleID || "all"}
+          errors={bundlesError}
+          value={filters.bundleID}
           onChange={(value: string) =>
             onChange("bundleID", value === "all" ? "" : value)
           }
@@ -145,12 +160,15 @@ export default function ProductionEntryFilters({
             })),
           ]}
           disabled={bundlesLoading || !filters.styleID}
+          searchBar
+
         />
 
         <FormSelect
           label="Operation"
           id="operation-filter"
-          value={filters.operationID || "all"}
+          errors={operationsError}
+          value={filters.operationID}
           onChange={(value: string) =>
             onChange("operationID", value === "all" ? "" : value)
           }
@@ -166,6 +184,8 @@ export default function ProductionEntryFilters({
             })),
           ]}
           disabled={operationsLoading || !filters.styleID}
+          searchBar
+
         />
 
         <FormDatePicker

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect } from "react"
@@ -14,16 +15,13 @@ import RecentProduction from "./components/recent-production"
 import RecentPayments from "./components/recent-payments"
 import RecentWorkers from "./components/recent-workers"
 
-import type {
-  OrganizationDashboard,
-  DashboardPayment,
-  DashboardOverview,
-} from "./schema"
-
+import type { DashboardOverview } from "./schema"
 import type { ProductionEntry } from "@/utils/types/production-entry"
 import type { GarmentWorker } from "@/utils/types/garmentWorker"
 
 import DashboardHeader from "./components/header"
+import { WorkerPaymentsResponse } from "../worker-payments/page"
+import DashboardAlerts from "./components/dashboard-alerts"
 
 export default function DashboardPage() {
   const { user } = useUser()
@@ -35,24 +33,28 @@ export default function DashboardPage() {
     data: stats,
     isLoading: isDashboardLoading,
     refetch: fetchDashboard,
+    error: dashboardError,
   } = useFetch<DashboardOverview>()
 
   const {
     data: productionEntries,
     isLoading: isProductionLoading,
     refetch: fetchProduction,
+    error: productionError,
   } = useFetch<ProductionEntry[]>()
 
   const {
     data: payments,
     isLoading: isPaymentsLoading,
     refetch: fetchPayments,
-  } = useFetch<DashboardPayment[]>()
+    error: paymentsError,
+  } = useFetch<WorkerPaymentsResponse>()
 
   const {
     data: workers,
     isLoading: isWorkersLoading,
     refetch: fetchWorkers,
+    error: workersError,
   } = useFetch<GarmentWorker[]>()
 
   // FETCH OVERVIEW
@@ -156,23 +158,45 @@ export default function DashboardPage() {
         isWorkersLoading={isWorkersLoading}
       />
 
-      <OverviewCards stats={stats} isLoading={isDashboardLoading} />
+      {/* OVERVIEW */}
+      <OverviewCards
+        stats={stats}
+        isLoading={isDashboardLoading}
+        error={dashboardError}
+      />
+      <DashboardAlerts
+      />
 
       <DashboardTrend organizationID={organizationID} />
 
+      {/* WORKERS AND BUNDLE STATUS */}
       <div className="grid gap-6 xl:grid-cols-[1.65fr_1fr]">
-        <RecentWorkers workers={workers} isLoading={isWorkersLoading} />
-        <BundleStatus stats={stats} isLoading={isDashboardLoading} />
+        <RecentWorkers
+          workers={workers}
+          isLoading={isWorkersLoading}
+          error={workersError}
+        />
+
+        <BundleStatus
+          stats={stats}
+          isLoading={isDashboardLoading}
+          error={dashboardError}
+        />
       </div>
 
       {/* RECENT PRODUCTION */}
       <RecentProduction
         entries={productionEntries}
         isLoading={isProductionLoading}
+        error={productionError}
       />
 
       {/* RECENT PAYMENTS */}
-      <RecentPayments payments={payments} isLoading={isPaymentsLoading} />
+      <RecentPayments
+        payments={payments?.payments || []}
+        isLoading={isPaymentsLoading}
+        error={paymentsError}
+      />
     </main>
   )
 }

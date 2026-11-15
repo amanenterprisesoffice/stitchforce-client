@@ -14,7 +14,21 @@ export interface User {
   photo_url?: string
   organization_id: string
   role: UserRole
+  permissions: string[]
   email_verified_at: string | null
   created_at: string
   updated_at: string
+}
+
+export function displayUserRole(role: string | UserRole) {
+  switch (role) {
+    case ORG_ADMIN:
+      return "Organization admin"
+    case ADMIN:
+      return "Admin"
+    case STAFF:
+      return "Staff"
+    default:
+      return role
+  }
 }

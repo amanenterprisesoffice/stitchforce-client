@@ -69,7 +69,7 @@ export default function WorkerPaymentFilters({
           id="worker_id"
           label="Worker"
           placeholder="All workers"
-          value={filters.worker_id || "all"}
+          value={filters.worker_id}
           onChange={(value: string) =>
             onChange("worker_id", value === "all" ? "" : value)
           }

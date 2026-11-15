@@ -4,7 +4,7 @@ import Loader from "@/components/ui/Loader"
 import { isPublicRoute, isPublicOnlyRoute } from "@/constants/routes"
 import useFetch from "@/hooks/useFetch"
 import { logout } from "@/utils/utils"
-import { User } from "@/utils/types/user"
+import { ADMIN, displayUserRole, ORG_ADMIN, STAFF, User } from "@/utils/types/user"
 import { usePathname, useRouter } from "next/navigation"
 import {
   createContext,
@@ -15,10 +15,13 @@ import {
 } from "react"
 import { toast } from "sonner"
 
-
 // Define the context value type
 interface UserContextType {
   user: User | null
+  role: string | null
+  isStaff: boolean
+  isOrgAdmin: boolean
+  isAdmin: boolean
   setUser: React.Dispatch<React.SetStateAction<User | null>>
   refetch: () => void
   isLoading: boolean
@@ -64,7 +67,18 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   if (isLoading) return <Loader fullScreen />
 
   return (
-    <UserContext.Provider value={{ user, setUser, refetch, isLoading }}>
+    <UserContext.Provider
+      value={{
+        user,
+        role: displayUserRole(user?.role || ""),
+        isStaff: user?.role === STAFF,
+        isOrgAdmin: user?.role === ORG_ADMIN,
+        isAdmin: user?.role === ADMIN,
+        setUser,
+        refetch,
+        isLoading,
+      }}
+    >
       {children}
     </UserContext.Provider>
   )

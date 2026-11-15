@@ -49,7 +49,7 @@ export default function VoidPaymentDialog({
               void onConfirm()
             }}
           >
-            {isVoiding && <Loader spinnerClassName="size-4" variant="destructive" />}
+            {isVoiding && <Loader  variant="destructive" />}
             Void payment
           </AlertDialogAction>
         </AlertDialogFooter>

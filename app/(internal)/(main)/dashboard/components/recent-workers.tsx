@@ -1,16 +1,17 @@
+
 "use client"
 
 import { useRouter } from "next/navigation"
-import { ArrowUpRight, Phone, UserRound } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/DataTable"
+import StateComponent from "@/components/StateComponent"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { formatDate, getInitials, prettifyKey } from "@/utils/utils"
+import { formatDate, prettifyKey } from "@/utils/utils"
 
 import type { GarmentWorker } from "@/utils/types/garmentWorker"
 import { WorkerInfo } from "@/components/ui/worker-avatar"
@@ -18,16 +19,21 @@ import { WorkerInfo } from "@/components/ui/worker-avatar"
 interface Props {
   workers: GarmentWorker[] | null
   isLoading: boolean
+  error?: string | null
 }
 
-export default function RecentWorkers({ workers, isLoading }: Props) {
+export default function RecentWorkers({
+  workers,
+  isLoading,
+  error,
+}: Props) {
   const router = useRouter()
 
   const columns = [
     {
       header: "Worker",
       render: (worker: GarmentWorker) => (
-        <WorkerInfo worker={worker}  />
+        <WorkerInfo worker={worker} />
       ),
     },
     {
@@ -70,15 +76,27 @@ export default function RecentWorkers({ workers, isLoading }: Props) {
       </CardHeader>
 
       <CardContent className="px-0 pb-0">
-        <DataTable
-          data={workers ?? []}
-          columns={columns}
-          getRowId={(worker) => worker?.id ?? ""}
-          onRowClick={(worker) => router.push(`/workers/${worker?.id}`)}
-          emptyMessage="No workers found."
-          className="rounded-none"
-          isLoading={isLoading}
-        />
+        {error ? (
+          <div className="px-4 pb-4">
+            <StateComponent
+              className="rounded-none"
+              message={error || "Something went wrong"}
+              description="An error occurred while loading recent workers."
+            />
+          </div>
+        ) : (
+          <DataTable
+            data={workers ?? []}
+            columns={columns}
+            getRowId={(worker) => worker?.id ?? ""}
+            onRowClick={(worker) =>
+              router.push(`/workers/${worker?.id}`)
+            }
+            emptyMessage="No workers found."
+            className="rounded-none"
+            isLoading={isLoading}
+          />
+        )}
       </CardContent>
     </Card>
   )

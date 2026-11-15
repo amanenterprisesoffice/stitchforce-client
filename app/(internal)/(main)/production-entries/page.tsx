@@ -198,6 +198,7 @@ export default function ProductionEntriesPage() {
     data: entriesResponse,
     refetch: fetchEntries,
     isLoading: entriesLoading,
+    error: entriesError,
   } = useFetch<unknown>({ auto: false })
 
   // Fetch filter options.
@@ -205,6 +206,7 @@ export default function ProductionEntriesPage() {
     data: workersResponse,
     refetch: fetchWorkers,
     isLoading: workersLoading,
+    error: workersError,
   } = useFetch<unknown>({
     auto: true,
     url: `${base}/garment-workers?limit=${MAX_OPTION_LIMIT}&offset=0`,
@@ -214,6 +216,7 @@ export default function ProductionEntriesPage() {
     data: stylesResponse,
     refetch: fetchStyles,
     isLoading: stylesLoading,
+    error: stylesError,
   } = useFetch<unknown>({
     auto: true,
     url: `${base}/styles?limit=${MAX_OPTION_LIMIT}&offset=0`,
@@ -223,12 +226,14 @@ export default function ProductionEntriesPage() {
     data: bundlesResponse,
     refetch: fetchBundles,
     isLoading: bundlesLoading,
+    error: bundlesError,
   } = useFetch<unknown>({ auto: false })
 
   const {
     data: operationsResponse,
     refetch: fetchOperations,
     isLoading: operationsLoading,
+    error: operationsError,
   } = useFetch<unknown>({ auto: false })
 
   // Delete mutation.
@@ -395,7 +400,7 @@ export default function ProductionEntriesPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <ProductionEntriesHeader count={totalItems ?? entries.length} />
+      <ProductionEntriesHeader />
 
       <div className="flex h-full gap-4">
         <ProductionEntryFilters
@@ -410,12 +415,22 @@ export default function ProductionEntriesPage() {
           operationsLoading={operationsLoading}
           onChange={updateFilter}
           onClear={clearFilters}
+          workersError={workersError}
+          stylesError={stylesError}
+          bundlesError={bundlesError}
+          operationsError={operationsError}
         />
 
         <div className="relative flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden">
           <div className="min-h-0 flex-1">
             {entriesLoading && !entriesResponse ? (
               <Loader text="Loading production entries" />
+            ) : entriesError ? (
+              <StateComponent
+                className="rounded-none"
+                message={entriesError || "Something went wrong"}
+                description="An error occurred while loading production entries."
+              />
             ) : !entriesLoading && isEmptyPage ? (
               <StateComponent
                 message="No more production entries on this page"

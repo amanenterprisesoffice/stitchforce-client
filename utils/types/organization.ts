@@ -30,6 +30,15 @@ export interface Organization {
   license_expires_at: string | null
   created_at: string
   updated_at: string
+
+  dashboard_alert_enabled: boolean
+  dashboard_alert_email: string
+  dashboard_alert_schedule: {
+    frequency: "daily" | "weekly" | "monthly"
+    time: string
+    day_of_week?: string
+    day_of_month?: number
+  }
 }
 
 export const ACTIVE_LICENSE = "active" as const
@@ -44,9 +53,7 @@ export const LICENSE_STATUSES = [
 
 export type LicenseStatus = (typeof LICENSE_STATUSES)[number]
 
-export function hasValidLicense(
-  organization: Organization | null
-): boolean {
+export function hasValidLicense(organization: Organization | null): boolean {
   return (
     organization?.license_status === ACTIVE_LICENSE &&
     (!organization.license_expires_at ||

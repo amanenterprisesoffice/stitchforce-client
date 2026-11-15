@@ -9,7 +9,8 @@ import { Textarea } from "./textarea"
 // Define the types for the component props
 interface FormFieldProps {
   id: string
-  label?: string
+  label?: string | ReactNode
+  labelClassName?: string
   placeholder?: string
   register?: any
   registerOptions?: Record<string, any>
@@ -28,6 +29,7 @@ interface FormFieldProps {
 const FormField: React.FC<FormFieldProps> = ({
   id,
   label,
+  labelClassName,
   placeholder,
   register,
   registerOptions,
@@ -54,7 +56,7 @@ const FormField: React.FC<FormFieldProps> = ({
   return (
     <div className={clsx("grid w-full gap-1", parentClass)}>
       {label && (
-        <Label htmlFor={id} className="pb-1">
+        <Label htmlFor={id} className={clsx("pb-1", labelClassName)}>
           {label}
         </Label>
       )}

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { Users, ShieldCheck, CreditCard } from "lucide-react"
 
 import { QuickLinks, QuickLinkItem } from "@/components/ui/quick-links"
-import { Organization } from "@/utils/types/organization"
+import { hasValidLicense, Organization } from "@/utils/types/organization"
 import { SUPPORT_EMAIL } from "@/constants/globals"
 
 export default function OrganizationQuickLinks({
@@ -13,6 +13,7 @@ export default function OrganizationQuickLinks({
   organization: Organization
 }) {
   const router = useRouter()
+  const isValidLicense = hasValidLicense(organization)
 
   return (
     <QuickLinks className="h-fit!">
@@ -28,10 +29,18 @@ export default function OrganizationQuickLinks({
         description="View and manage workers associated with the organization."
         onClick={() => router.push("/workers")}
       />
+      {isValidLicense && (
+        <QuickLinkItem
+          icon={<ShieldCheck className="size-5" />}
+          title="Extend License"
+          description="Extend your organization license."
+          onClick={() => router.push("/organization/license")}
+        />
+      )}
       <QuickLinkItem
         icon={<ShieldCheck className="size-5" />}
         title="Contact Support"
-        description="Review the current organization license and expiry."
+        description="Contact support for any issues or inquiries."
         onClick={() => (window.location.href = `mailto:${SUPPORT_EMAIL}`)}
       />
     </QuickLinks>

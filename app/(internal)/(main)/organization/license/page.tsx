@@ -32,6 +32,7 @@ import FormField from "@/components/ui/FormField"
 import { formatDate } from "@/utils/utils"
 import {
   getLicenseVariant,
+  hasValidLicense,
   type Organization,
 } from "@/utils/types/organization"
 import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/constants/globals"
@@ -44,6 +45,7 @@ export default function ActivateLicensePage() {
   const { organization, refetch } = useOrganization()
 
   const [licenseKey, setLicenseKey] = useState("")
+  const isValidLicense = hasValidLicense(organization)
 
   const { refetch: activateLicense, isLoading } = useFetch({
     auto: false,
@@ -97,7 +99,7 @@ export default function ActivateLicensePage() {
 
               <div className="space-y-1">
                 <CardTitle className="text-2xl">
-                  Activate your license
+                 {isValidLicense ? "Extend" : "Activate"} your license
                 </CardTitle>
 
                 <CardDescription>

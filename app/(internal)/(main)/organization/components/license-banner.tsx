@@ -9,6 +9,7 @@ import {
   ACTIVE_LICENSE,
   EXPIRED_LICENSE,
   SUSPENDED_LICENSE,
+  hasValidLicense,
 } from "@/utils/types/organization"
 
 const SUPPORT_EMAIL = "support@stitchforce.com"
@@ -24,10 +25,9 @@ export default function LicenseWarning({ organization }: Props) {
     !!organization.license_expires_at &&
     new Date(organization.license_expires_at).getTime() <= Date.now()
 
-  const hasValidLicense =
-    organization.license_status === ACTIVE_LICENSE && !isExpiredByDate
+  const isValidLicense = hasValidLicense(organization)
 
-  if (hasValidLicense) return null
+  if (isValidLicense) return null
 
   const licenseMessage =
     organization.license_status === SUSPENDED_LICENSE

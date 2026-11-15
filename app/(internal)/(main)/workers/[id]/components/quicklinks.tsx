@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -16,8 +15,7 @@ import {
 } from "@/components/ui/quick-links"
 
 import type { GarmentWorker } from "@/utils/types/garmentWorker"
-import WorkerExportDialog from "./export-dialog"
-
+import ExportDialog from "@/components/ui/ExportDialog"
 
 const WorkerQuickLinks = ({
   worker,
@@ -30,20 +28,21 @@ const WorkerQuickLinks = ({
     "production" | "payments" | null
   >(null)
 
-  const handleViewEntries = ({ queryParams }: { queryParams?: Record<string, string> }) => {
-    const queryString = new URLSearchParams({
+  const handleViewEntries = ({
+    queryParams,
+  }: {
+    queryParams?: Record<string, string>
+  }) => {
+    const params = new URLSearchParams({
       worker_id: worker.id,
       ...queryParams,
-    }).toString()
-    router.push(
-      `/production-entries?${queryString}`
-    )
+    })
+
+    router.push(`/production-entries?${params.toString()}`)
   }
 
   const handleViewPayments = () => {
-    router.push(
-      `/worker-payments?worker_id=${worker.id}`
-    )
+    router.push(`/worker-payments?worker_id=${worker.id}`)
   }
 
   return (
@@ -53,14 +52,18 @@ const WorkerQuickLinks = ({
           icon={<ClipboardList className="size-5" />}
           title="View production entries"
           description="See all production records for this worker."
-          onClick={() => handleViewEntries({ queryParams: { status: "all" } })}
+          onClick={() =>
+            handleViewEntries({ queryParams: { status: "all" } })
+          }
         />
 
         <QuickLinkItem
           icon={<ClipboardList className="size-5" />}
           title="View pending payment entries"
-          description="See all production records for this worker."
-          onClick={() => handleViewEntries({ queryParams: { status: "pending" } })}
+          description="See all pending production records for this worker."
+          onClick={() =>
+            handleViewEntries({ queryParams: { status: "payable" } })
+          }
         />
 
         <QuickLinkItem
@@ -83,34 +86,28 @@ const WorkerQuickLinks = ({
           description="Export the worker's payment history."
           onClick={() => setActiveExport("payments")}
         />
-
-      
       </QuickLinks>
 
-      {/* Production entries export */}
-      <WorkerExportDialog
+      <ExportDialog
         open={activeExport === "production"}
         onOpenChange={(open) =>
           setActiveExport(open ? "production" : null)
         }
         title="Download production entries"
-        description="Choose a format to export production entries for"
+        description={`Choose a format to export production entries for ${worker.name}.`}
         endpoint="/production-entries/export"
-        workerName={worker.name}
-        workerID={worker.id}
+        queryParams={{ worker_id: worker.id }}
       />
 
-      {/* Worker payments export */}
-      <WorkerExportDialog
+      <ExportDialog
         open={activeExport === "payments"}
         onOpenChange={(open) =>
           setActiveExport(open ? "payments" : null)
         }
         title="Download payment history"
-        description="Choose a format to export payment history for"
+        description={`Choose a format to export payment history for ${worker.name}.`}
         endpoint="/worker-payments/export"
-        workerName={worker.name}
-        workerID={worker.id}
+        queryParams={{ worker_id: worker.id }}
       />
     </>
   )

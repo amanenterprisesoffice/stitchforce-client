@@ -1,5 +1,6 @@
 import type { ProductionEntry } from "@/utils/types/production-entry"
-import type { GarmentWorker, SlimWorker } from "@/utils/types/garmentWorker"
+import type { GarmentWorker } from "@/utils/types/garmentWorker"
+import { WorkerPaymentsResponse } from "../worker-payments/page"
 
 export interface DashboardOverview {
   total_workers: number
@@ -62,21 +63,9 @@ export interface DashboardWorker {
   created_at: string
 }
 
-export interface DashboardPayment {
-  id: string
-  worker_id: string
-  amount: number
-  payment_date: string
-  payment_method: "cash" | "bank" | "upi" | "cheque"
-  reference: string
-  remarks: string
-  status: "completed" | "voided"
-  worker: SlimWorker
-}
-
 export interface DashboardData {
   stats: OrganizationDashboard | null
   productionEntries: ProductionEntry[]
-  payments: DashboardPayment[]
+  payments: WorkerPaymentsResponse
   workers: GarmentWorker[]
 }

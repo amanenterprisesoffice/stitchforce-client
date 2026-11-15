@@ -3,26 +3,32 @@
 import { PencilRuler, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import PageHeader from "@/components/ui/PageHeader"
 
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
+
 interface Props {
-  count: number
   onCreate: () => void
 }
 
-export default function SizesHeader({ count, onCreate }: Props) {
+export default function SizesHeader({ onCreate }: Props) {
+  const { hasPermission } = usePermissions()
+
+  const canCreate = hasPermission(PERMISSIONS.SIZES_CREATE)
+
   return (
     <PageHeader
       title="Sizes"
       description="Manage garment sizes and their manufacturing operations."
       icon={<PencilRuler className="size-5 text-muted-foreground" />}
-      badge={<Badge variant="secondary">{count}</Badge>}
       action={
-        <Button onClick={onCreate}>
-          <Plus className="size-4" />
-          Create Size
-        </Button>
+        canCreate ? (
+          <Button onClick={onCreate}>
+            <Plus className="size-4" />
+            Create Size
+          </Button>
+        ) : undefined
       }
     />
   )

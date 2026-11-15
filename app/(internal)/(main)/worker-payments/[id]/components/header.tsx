@@ -1,11 +1,14 @@
 "use client"
 
-import Link from "next/link"
-import { ArrowLeft, Ban, CreditCard } from "lucide-react"
+import { Ban, CreditCard } from "lucide-react"
+
 import PageHeader from "@/components/ui/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { WorkerPayment } from "../page"
+
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
 
 interface Props {
   payment: WorkerPayment
@@ -13,6 +16,10 @@ interface Props {
 }
 
 export default function PaymentDetailsHeader({ payment, onVoid }: Props) {
+  const { hasPermission } = usePermissions()
+
+  const canUpdate = hasPermission(PERMISSIONS.PAYMENTS_UPDATE)
+
   const statusVariant =
     payment.status === "completed"
       ? "default"
@@ -31,14 +38,14 @@ export default function PaymentDetailsHeader({ payment, onVoid }: Props) {
             {payment.status}
           </Badge>
         }
-        // action={
-        //   payment.status === "completed" ? (
-        //     <Button variant="destructive" onClick={onVoid}>
-        //       <Ban className="mr-2 size-4" />
-        //       Void payment
-        //     </Button>
-        //   ) : null
-        // }
+        action={
+          payment.status === "completed" && canUpdate ? (
+            <Button variant="destructive" onClick={onVoid}>
+              <Ban className="size-4" />
+              Void payment
+            </Button>
+          ) : undefined
+        }
       />
     </div>
   )

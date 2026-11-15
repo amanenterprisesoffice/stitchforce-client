@@ -1,15 +1,17 @@
+
 "use client"
 
 import {
   Users,
   Scissors,
-  IndianRupee,
   Wallet,
   Clock3,
   TrendingUp,
 } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import StateComponent from "@/components/StateComponent"
 
 import { formatMoney } from "@/utils/utils"
 
@@ -18,9 +20,14 @@ import type { DashboardOverview } from "../schema"
 interface Props {
   stats: DashboardOverview | null
   isLoading: boolean
+  error?: string | null
 }
 
-export default function OverviewCards({ stats, isLoading }: Props) {
+export default function OverviewCards({
+  stats,
+  isLoading,
+  error,
+}: Props) {
   const overview = stats
   const today = overview?.today
 
@@ -67,7 +74,7 @@ export default function OverviewCards({ stats, isLoading }: Props) {
     },
     {
       title: "Today's production",
-      value: `${today?.production_quantity ?? 0 } pcs`,
+      value: `${today?.production_quantity ?? 0} pcs`,
       description: `${today?.production_entries ?? 0} entries`,
       icon: Scissors,
       color: "text-violet-600",
@@ -91,6 +98,20 @@ export default function OverviewCards({ stats, isLoading }: Props) {
     },
   ]
 
+  if (error) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <StateComponent
+            className="rounded-none"
+            message={error || "Something went wrong"}
+            description="An error occurred while loading dashboard overview."
+          />
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       {cards.map((item) => {
@@ -98,29 +119,47 @@ export default function OverviewCards({ stats, isLoading }: Props) {
 
         return (
           <Card key={item.title} className="shadow-sm">
-            <CardContent className="">
+            <CardContent>
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">{item.title}</p>
+                <div className="min-w-0 flex-1">
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-4 w-28" />
 
-                  <div className="mt-1 min-h-8">
-                    {isLoading ? (
-                      <div className="h-7 w-24 animate-pulse rounded bg-muted" />
-                    ) : (
-                      <p className="truncate text-2xl font-semibold tracking-tight">
-                        {item.value.toLocaleString?.("en-IN") ?? item.value}
+                      <div className="mt-2 flex min-h-8 items-center">
+                        <Skeleton className="h-7 w-24" />
+                      </div>
+
+                      <Skeleton className="mt-3 h-3 w-32" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        {item.title}
                       </p>
-                    )}
+
+                      <div className="mt-1 min-h-8">
+                        <p className="truncate text-2xl font-semibold tracking-tight">
+                          {typeof item.value === "number"
+                            ? item.value.toLocaleString("en-IN")
+                            : item.value}
+                        </p>
+                      </div>
+
+                      <p className="mt-2 truncate text-xs text-muted-foreground">
+                        {item.description}
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {isLoading ? (
+                  <Skeleton className="size-11 shrink-0 rounded-xl" />
+                ) : (
+                  <div className={`shrink-0 rounded-xl p-3 ${item.bg}`}>
+                    <Icon className={`size-5 ${item.color}`} />
                   </div>
-
-                  <p className="mt-2 truncate text-xs text-muted-foreground">
-                    {item.description}
-                  </p>
-                </div>
-
-                <div className={`rounded-xl p-3 ${item.bg}`}>
-                  <Icon className={`size-5 ${item.color}`} />
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>

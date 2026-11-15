@@ -7,6 +7,7 @@ import { useOrganization } from "@/contexts/OrganizationContext"
 import Loader from "@/components/ui/Loader"
 import { hasValidLicense } from "@/utils/types/organization"
 import { isPublicOnlyRoute, isPublicRoute } from "@/constants/routes"
+import { useUser } from "@/contexts/UserContext"
 
 const LICENSE_ROUTE = "/organization/license"
 
@@ -53,7 +54,7 @@ export default function LicenseGuard({
     return isLoading ? <Loader fullScreen /> : children
   }
 
-  if (isLoading || !organization) {
+  if (isLoading && !organization ) {
     return <Loader fullScreen />
   }
 

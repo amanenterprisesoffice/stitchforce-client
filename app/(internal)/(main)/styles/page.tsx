@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Plus, Shirt } from "lucide-react"
+import { AlertCircle, Plus, Shirt } from "lucide-react"
 import { toast } from "sonner"
 import { useSearchParams } from "next/navigation"
 
@@ -120,6 +120,7 @@ export default function StylesPage() {
     data: stylesData,
     isLoading,
     refetch: fetchStyles,
+    error: stylesError,
   } = useFetch<unknown>({ auto: true, url: requestURL })
 
   // Create, update and delete.
@@ -241,10 +242,7 @@ export default function StylesPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <StylesHeader
-        count={totalItems ?? styles.length}
-        onCreate={openCreateDialog}
-      />
+      <StylesHeader onCreate={openCreateDialog} />
 
       <DebouncedSearch
         value={search}
@@ -256,6 +254,13 @@ export default function StylesPage() {
       <div className="relative flex flex-1 flex-col gap-4">
         {isLoading && !stylesData ? (
           <Loader text="Loading styles" />
+        ) : stylesError ? (
+          <StateComponent
+            className="rounded-none"
+            message={stylesError || "Something went wrong"}
+            ICON={<AlertCircle />}
+            description="An error occurred while loading garment styles."
+          />
         ) : !isLoading && isEmptyPage ? (
           <StateComponent
             message="No more styles on this page"

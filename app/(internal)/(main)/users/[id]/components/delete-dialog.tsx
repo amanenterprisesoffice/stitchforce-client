@@ -15,7 +15,7 @@ import Loader from "@/components/ui/Loader"
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  userName: string
+  userName: string | null | undefined
   onConfirm: () => Promise<void>
   isDeleting: boolean
 }
@@ -33,7 +33,7 @@ export default function DeleteUserDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete user?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will delete {userName}. This action cannot be undone.
+            This will delete {userName || "this user"}. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

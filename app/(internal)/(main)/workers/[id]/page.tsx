@@ -10,7 +10,7 @@ import Loader from "@/components/ui/Loader"
 import StateComponent from "@/components/StateComponent"
 
 import { Button } from "@/components/ui/button"
-import { UserRoundXIcon } from "lucide-react"
+import { UserRoundXIcon, UserX2 } from "lucide-react"
 
 import {
   GarmentWorker,
@@ -40,6 +40,7 @@ export default function GarmentWorkerDetailsPage() {
     data: worker,
     refetch: fetchWorker,
     isLoading,
+    error: workerError,
   } = useFetch<GarmentWorker>({
     auto: true,
   })
@@ -124,6 +125,17 @@ export default function GarmentWorkerDetailsPage() {
 
   if (isLoading && !worker) {
     return <Loader text="Loading worker" />
+  }
+
+  if (workerError) {
+    return (
+      <StateComponent
+        className="rounded-none"
+        ICON={<UserX2 className="size-6" />}
+        message={workerError || "Something went wrong"}
+        description="An error occurred while loading garment worker details."
+      />
+    )
   }
 
   if (!worker) {

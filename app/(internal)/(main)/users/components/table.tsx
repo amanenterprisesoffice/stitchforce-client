@@ -1,10 +1,11 @@
+
 "use client"
 
 import { useRouter } from "next/navigation"
 import { Mail, ShieldCheck, Clock } from "lucide-react"
 import { useUser } from "@/contexts/UserContext"
 
-import type { User } from "@/utils/types/user"
+import { displayUserRole, type User } from "@/utils/types/user"
 import type { OrganizationInvitation } from "@/utils/types/organization"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -12,6 +13,8 @@ import { Badge } from "@/components/ui/badge"
 import DataTable from "@/components/ui/DataTable"
 
 import { formatDate, getInitials } from "@/utils/utils"
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/constants/permissions"
 
 interface Props {
   users: User[]
@@ -31,19 +34,6 @@ type UserTableRow =
       invitation: OrganizationInvitation
     }
 
-function displayRole(role: string) {
-  switch (role) {
-    case "org_admin":
-      return "Organization admin"
-    case "admin":
-      return "Admin"
-    case "staff":
-      return "Staff"
-    default:
-      return role
-  }
-}
-
 export default function UsersTable({
   users,
   invitations,
@@ -51,14 +41,24 @@ export default function UsersTable({
 }: Props) {
   const router = useRouter()
   const { user: currentUser } = useUser()
+  const { hasPermission } = usePermissions()
+
+  const canViewUsers = hasPermission(PERMISSIONS.USERS_VIEW)
+  const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE)
+
+  const visibleUsers = canViewUsers
+    ? users
+    : users.filter((user) => user.id === currentUser?.id)
+
+  const visibleInvitations = canManageUsers ? invitations : []
 
   const data: UserTableRow[] = [
-    ...users.map((user) => ({
+    ...visibleUsers.map((user) => ({
       type: "user" as const,
       id: user.id,
       user,
     })),
-    ...invitations.map((invitation) => ({
+    ...visibleInvitations.map((invitation) => ({
       type: "invitation" as const,
       id: invitation.id,
       invitation,
@@ -128,7 +128,7 @@ export default function UsersTable({
 
         return (
           <Badge variant="secondary" className="whitespace-nowrap">
-            {displayRole(role)}
+            {displayUserRole(role)}
           </Badge>
         )
       },
@@ -186,6 +186,7 @@ export default function UsersTable({
       getRowId={(row) => `${row.type}-${row.id}`}
       onRowClick={(row) => {
         if (row.type === "invitation") {
+          if (!canManageUsers) return
           onInvitationClick(row.invitation)
           return
         }

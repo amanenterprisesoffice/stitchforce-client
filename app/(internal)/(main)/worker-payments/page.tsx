@@ -1,8 +1,7 @@
-
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Plus, Wallet } from "lucide-react"
+import { AlertCircle, Plus, Wallet } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { useUser } from "@/contexts/UserContext"
@@ -18,6 +17,9 @@ import WorkerPaymentFilters, {
   type WorkerPaymentFiltersValue,
 } from "./components/filters"
 import WorkerPaymentsTable from "./components/table"
+import WorkerPaymentsSummary, {
+  type WorkerPaymentsSummaryData,
+} from "./components/summary"
 
 import type { WorkerPayment } from "@/utils/types/payments"
 
@@ -28,6 +30,18 @@ const EMPTY_FILTERS: WorkerPaymentFiltersValue = {
   status: "",
   from_date: "",
   to_date: "",
+}
+
+const EMPTY_SUMMARY: WorkerPaymentsSummaryData = {
+  total_payments: 0,
+  total_amount: 0,
+  completed_payments: 0,
+  completed_amount: 0,
+}
+
+export interface WorkerPaymentsResponse {
+  summary: WorkerPaymentsSummaryData
+  payments: WorkerPayment[]
 }
 
 function readInitialFilters(
@@ -48,51 +62,15 @@ function buildQuery(
 ) {
   const params = new URLSearchParams()
 
-  if (filters.worker_id) {
-    params.set("worker_id", filters.worker_id)
-  }
-
-  if (filters.status) {
-    params.set("status", filters.status)
-  }
-
-  if (filters.from_date) {
-    params.set("from_date", filters.from_date)
-  }
-
-  if (filters.to_date) {
-    params.set("to_date", filters.to_date)
-  }
+  if (filters.worker_id) params.set("worker_id", filters.worker_id)
+  if (filters.status) params.set("status", filters.status)
+  if (filters.from_date) params.set("from_date", filters.from_date)
+  if (filters.to_date) params.set("to_date", filters.to_date)
 
   params.set("limit", String(limit))
   params.set("offset", String(offset))
 
   return params.toString()
-}
-
-function readTotal(response: unknown): number | undefined {
-  if (!response || typeof response !== "object") return undefined
-
-  const value = response as Record<string, any>
-
-  const candidates = [
-    value.total,
-    value.total_count,
-    value.count,
-    value.pagination?.total,
-    value.meta?.total,
-    value.meta?.total_count,
-  ]
-
-  const total = candidates.find(
-    (candidate) =>
-      candidate !== null &&
-      candidate !== undefined &&
-      candidate !== "" &&
-      Number.isFinite(Number(candidate))
-  )
-
-  return total === undefined ? undefined : Number(total)
 }
 
 export default function WorkerPaymentsPage() {
@@ -102,9 +80,7 @@ export default function WorkerPaymentsPage() {
 
   const organizationID = user?.organization_id
 
-  const base = organizationID
-    ? `/api/organizations/${organizationID}`
-    : ""
+  const base = organizationID ? `/api/organizations/${organizationID}` : ""
 
   const paymentsURL = `${base}/worker-payments`
 
@@ -148,39 +124,33 @@ export default function WorkerPaymentsPage() {
     data: paymentsData,
     isLoading,
     refetch: fetchPayments,
-  } = useFetch<any>({
+    error: paymentsError,
+  } = useFetch<WorkerPaymentsResponse>({
     auto: false,
   })
 
   // Build request URL.
-  const requestURL = useMemo(() => {
-    return `${paymentsURL}?${buildQuery(filters, limit, offset)}`
-  }, [
-    paymentsURL,
-    filters.worker_id,
-    filters.status,
-    filters.from_date,
-    filters.to_date,
-    limit,
-    offset,
-  ])
-
-  // Normalize payments.
-  const payments: WorkerPayment[] = Array.isArray(paymentsData)
-    ? paymentsData
-    : paymentsData?.worker_payments ?? []
-
-  // Total count.
-  const totalItems = useMemo(
-    () => readTotal(paymentsData),
-    [paymentsData]
+  const requestURL = useMemo(
+    () => `${paymentsURL}?${buildQuery(filters, limit, offset)}`,
+    [
+      paymentsURL,
+      filters.worker_id,
+      filters.status,
+      filters.from_date,
+      filters.to_date,
+      limit,
+      offset,
+    ]
   )
 
+  // Normalize response.
+  const payments: WorkerPayment[] = paymentsData?.payments ?? []
+  const summary = paymentsData?.summary ?? EMPTY_SUMMARY
+
   // Pagination.
-  const hasNextPage =
-    totalItems !== undefined
-      ? offset + payments.length < totalItems
-      : payments.length === limit
+  const totalItems = summary.total_payments
+
+  const hasNextPage = offset + payments.length < totalItems
 
   // Load payments.
   const loadPayments = useCallback(() => {
@@ -189,12 +159,7 @@ export default function WorkerPaymentsPage() {
     fetchPayments({
       url: requestURL,
     })
-  }, [
-    organizationID,
-    filtersInitialized,
-    requestURL,
-    fetchPayments,
-  ])
+  }, [organizationID, filtersInitialized, requestURL, fetchPayments])
 
   useEffect(() => {
     loadPayments()
@@ -222,7 +187,6 @@ export default function WorkerPaymentsPage() {
     setOffset(0)
   }, [])
 
-  // Organization validation.
   if (!organizationID) {
     return (
       <StateComponent
@@ -234,12 +198,17 @@ export default function WorkerPaymentsPage() {
   }
 
   const hasActiveFilters = Object.values(filters).some(Boolean)
-
   const isEmptyPage = payments.length === 0 && offset > 0
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <WorkerPaymentsHeader count={totalItems ?? payments.length} />
+      <WorkerPaymentsHeader filters={filters} />
+
+      <WorkerPaymentsSummary
+        summary={summary}
+        isLoading={isLoading}
+        error={paymentsError}
+      />
 
       <div className="flex h-full min-h-0 gap-4">
         <WorkerPaymentFilters
@@ -252,16 +221,20 @@ export default function WorkerPaymentsPage() {
           <div className="min-h-0 flex-1">
             {isLoading && !paymentsData ? (
               <Loader text="Loading worker payments" />
+            ) : paymentsError ? (
+              <StateComponent
+                className="rounded-none"
+                ICON={<AlertCircle />}
+                message={paymentsError || "Something went wrong"}
+                description="An error occurred while loading worker payments."
+              />
             ) : !isLoading && isEmptyPage ? (
               <StateComponent
                 message="No more payments on this page"
                 ICON={<Wallet />}
-                description="There are no payments available at this page. You can go back to the previous page to view available payments."
+                description="There are no payments available on this page. Go back to the first page to view available payments."
                 PortalButton={
-                  <Button
-                    variant="outline"
-                    onClick={() => setOffset(0)}
-                  >
+                  <Button variant="outline" onClick={() => setOffset(0)}>
                     Go to first page
                   </Button>
                 }
@@ -282,9 +255,7 @@ export default function WorkerPaymentsPage() {
                   !hasActiveFilters ? (
                     <Button
                       variant="outline"
-                      onClick={() =>
-                        router.push("/worker-payments/new")
-                      }
+                      onClick={() => router.push("/worker-payments/new")}
                     >
                       <Plus className="mr-2 size-4" />
                       Record payment
@@ -293,10 +264,7 @@ export default function WorkerPaymentsPage() {
                 }
               />
             ) : (
-              <WorkerPaymentsTable
-                payments={payments}
-                isLoading={isLoading}
-              />
+              <WorkerPaymentsTable payments={payments} isLoading={isLoading} />
             )}
           </div>
 

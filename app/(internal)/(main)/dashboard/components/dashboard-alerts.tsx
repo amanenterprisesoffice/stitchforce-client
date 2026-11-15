@@ -1,16 +1,19 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { Bell, Loader2 } from "lucide-react"
+import { Clock, CalendarDays, Mail, Pencil, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { useUser } from "@/contexts/UserContext"
 import { useOrganization } from "@/contexts/OrganizationContext"
+import useFetch from "@/hooks/useFetch"
 
 import FormField from "@/components/ui/FormField"
+import FormSelect from "@/components/ui/FormSelect"
+
 import {
   Card,
   CardContent,
@@ -21,7 +24,14 @@ import {
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import useFetch from "@/hooks/useFetch"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 const dashboardAlertsSchema = z
   .object({
@@ -83,16 +93,46 @@ const daysOfMonth = Array.from({ length: 31 }, (_, index) => ({
   value: String(index + 1),
 }))
 
+const defaultValues: DashboardAlertsFormValues = {
+  enabled: false,
+  email: "",
+  frequency: "daily",
+  time: "09:00",
+  day_of_week: "monday",
+  day_of_month: "1",
+}
+
+const formatFrequency = (frequency?: string) => {
+  if (!frequency) return "Daily"
+
+  return frequency.charAt(0).toUpperCase() + frequency.slice(1)
+}
+
+const formatSchedule = (schedule: DashboardAlertsFormValues) => {
+  switch (schedule.frequency) {
+    case "weekly":
+      return `Every ${
+        schedule.day_of_week.charAt(0).toUpperCase() +
+        schedule.day_of_week.slice(1)
+      }`
+
+    case "monthly":
+      return `On day ${schedule.day_of_month} of each month`
+
+    default:
+      return "Every day"
+  }
+}
+
 export default function DashboardAlerts() {
   const { user } = useUser()
-  const { organization } = useOrganization()
+  const { organization, setOrganization } = useOrganization()
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const organizationID = user?.organization_id
 
-  const {
-    refetch: updateAlerts,
-    isLoading: isSaving,
-  } = useFetch({
+  const { refetch: updateAlerts, isLoading: isSaving } = useFetch({
     auto: false,
     withAuth: true,
   })
@@ -106,18 +146,13 @@ export default function DashboardAlerts() {
     formState: { errors, isDirty },
   } = useForm<DashboardAlertsFormValues>({
     resolver: zodResolver(dashboardAlertsSchema),
-    defaultValues: {
-      enabled: false,
-      email: "",
-      frequency: "daily",
-      time: "09:00",
-      day_of_week: "monday",
-      day_of_month: "1",
-    },
+    defaultValues,
   })
 
   const enabled = watch("enabled")
   const frequency = watch("frequency")
+  const dayOfWeek = watch("day_of_week")
+  const dayOfMonth = watch("day_of_month")
 
   useEffect(() => {
     if (!organization) return
@@ -133,6 +168,18 @@ export default function DashboardAlerts() {
       day_of_month: String(schedule?.day_of_month ?? 1),
     })
   }, [organization, reset])
+
+  const currentSchedule: DashboardAlertsFormValues = {
+    enabled: organization?.dashboard_alert_enabled ?? false,
+    email: organization?.dashboard_alert_email ?? "",
+    frequency: organization?.dashboard_alert_schedule?.frequency ?? "daily",
+    time: organization?.dashboard_alert_schedule?.time ?? "09:00",
+    day_of_week:
+      organization?.dashboard_alert_schedule?.day_of_week ?? "monday",
+    day_of_month: String(
+      organization?.dashboard_alert_schedule?.day_of_month ?? 1
+    ),
+  }
 
   const onSubmit = async (values: DashboardAlertsFormValues) => {
     if (!organizationID) return
@@ -159,142 +206,249 @@ export default function DashboardAlerts() {
       },
       onSuccess: () => {
         toast.success("Dashboard alert settings updated")
+        setIsDialogOpen(false)
+        reset(values)
+
+        setOrganization((prev) => {
+          if (!prev) return prev
+
+          return {
+            ...prev,
+            dashboard_alert_enabled: values.enabled,
+            dashboard_alert_email: values.email,
+            dashboard_alert_schedule: schedule,
+          }
+        })
       },
     })
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="size-5" />
-          Dashboard Alerts
-        </CardTitle>
-        <CardDescription>
-          Configure automatic dashboard reports and choose when they should
-          be sent to your email.
-        </CardDescription>
-      </CardHeader>
+    <>
+      <Card className="w-full">
+        <CardHeader className="flex flex-col gap-4 border-b sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1.5">
+            <CardTitle className="text-base font-semibold">
+              Dashboard Alerts
+            </CardTitle>
 
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="flex items-start gap-3">
-            <Checkbox
-              id="dashboard-alert-enabled"
-              checked={enabled}
-              onCheckedChange={(checked) =>
-                setValue("enabled", checked === true, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }
-              disabled={isSaving}
-            />
-
-            <div className="space-y-1">
-              <Label htmlFor="dashboard-alert-enabled">
-                Enable dashboard alerts
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Receive automated reports according to your selected schedule.
-              </p>
-            </div>
+            <CardDescription>
+              Configure automatic dashboard reports sent to your email.
+            </CardDescription>
           </div>
 
-          <div className="space-y-4">
-            <FormField
-              id="email"
-              label="Email address"
-              placeholder="reports@example.com"
-              register={register}
-              errors={errors}
-              disabled={!enabled || isSaving}
-              autoComplete="email"
-            />
+          <div className="flex items-center gap-3">
+            <span
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
+                currentSchedule.enabled
+                  ? "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-900/20 dark:text-green-400"
+                  : "border-border bg-muted/50 text-muted-foreground"
+              }`}
+            >
+              <span
+                className={`size-1.5 rounded-full ${
+                  currentSchedule.enabled
+                    ? "bg-green-500"
+                    : "bg-muted-foreground"
+                }`}
+              />
+              {currentSchedule.enabled ? "Enabled" : "Disabled"}
+            </span>
 
-            <div className="space-y-2">
-              <Label htmlFor="frequency">Report frequency</Label>
-              <select
-                id="frequency"
-                {...register("frequency")}
-                disabled={isSaving}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-              {errors.frequency && (
-                <p className="text-sm text-destructive">
-                  {errors.frequency.message}
-                </p>
-              )}
-            </div>
-
-            {frequency === "weekly" && (
-              <div className="space-y-2">
-                <Label htmlFor="day_of_week">Day of the week</Label>
-                <select
-                  id="day_of_week"
-                  {...register("day_of_week")}
-                  disabled={isSaving}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  {weekdays.map((day) => (
-                    <option key={day.value} value={day.value}>
-                      {day.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.day_of_week && (
-                  <p className="text-sm text-destructive">
-                    {errors.day_of_week.message}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {frequency === "monthly" && (
-              <div className="space-y-2">
-                <Label htmlFor="day_of_month">Day of the month</Label>
-                <select
-                  id="day_of_month"
-                  {...register("day_of_month")}
-                  disabled={isSaving}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  {daysOfMonth.map((day) => (
-                    <option key={day.value} value={day.value}>
-                      {day.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.day_of_month && (
-                  <p className="text-sm text-destructive">
-                    {errors.day_of_month.message}
-                  </p>
-                )}
-              </div>
-            )}
-
-            <FormField
-              id="time"
-              label="Report time"
-              register={register}
-              errors={errors}
-              disabled={isSaving}
-              type="time"
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <Button type="submit" disabled={isSaving || !isDirty}>
-              {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Save settings
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDialogOpen(true)}
+              className="shrink-0"
+            >
+              <Pencil className="size-4" />
             </Button>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+        </CardHeader>
+
+        <CardContent>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <Mail className="size-4 text-muted-foreground" />
+              </div>
+
+              <div className="min-w-0 space-y-1">
+                <p className="text-sm text-muted-foreground">Recipient email</p>
+
+                <p className="text-sm font-medium break-all">
+                  {currentSchedule.email || "Not configured"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <CalendarDays className="size-4 text-muted-foreground" />
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Frequency</p>
+
+                <p className="text-sm font-medium">
+                  {formatFrequency(currentSchedule.frequency)}
+                </p>
+
+                <p className="text-xs text-muted-foreground">
+                  {formatSchedule(currentSchedule)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <Clock className="size-4 text-muted-foreground" />
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Report time</p>
+
+                <p className="text-sm font-medium">
+                  {currentSchedule.time} (IST)
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Dashboard alert settings</DialogTitle>
+
+            <DialogDescription>
+              Choose where and when your automated dashboard reports should be
+              sent.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="flex items-start gap-3 rounded-lg border p-4">
+              <Checkbox
+                id="dashboard-alert-enabled"
+                checked={enabled}
+                onCheckedChange={(checked) =>
+                  setValue("enabled", checked === true, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+                disabled={isSaving}
+              />
+
+              <div className="space-y-1">
+                <Label htmlFor="dashboard-alert-enabled">
+                  Enable dashboard alerts
+                </Label>
+
+                <p className="text-sm text-muted-foreground">
+                  Receive automated reports according to your selected schedule.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <FormField
+                id="email"
+                label="Email address"
+                placeholder="reports@example.com"
+                register={register}
+                errors={errors}
+                disabled={!enabled || isSaving}
+                autoComplete="email"
+              />
+
+              <FormSelect
+                id="frequency"
+                label="Report frequency"
+                value={frequency}
+                onChange={(value: string) =>
+                  setValue(
+                    "frequency",
+                    value as DashboardAlertsFormValues["frequency"],
+                    {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    }
+                  )
+                }
+                disabled={!enabled || isSaving}
+                options={[
+                  { label: "Daily", value: "daily" },
+                  { label: "Weekly", value: "weekly" },
+                  { label: "Monthly", value: "monthly" },
+                ]}
+              />
+
+              {frequency === "weekly" && (
+                <FormSelect
+                  id="day_of_week"
+                  label="Day of the week"
+                  value={dayOfWeek}
+                  onChange={(value: string) =>
+                    setValue("day_of_week", value, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                  disabled={!enabled || isSaving}
+                  options={weekdays}
+                />
+              )}
+
+              {frequency === "monthly" && (
+                <FormSelect
+                  id="day_of_month"
+                  label="Day of the month"
+                  value={dayOfMonth}
+                  onChange={(value: string) =>
+                    setValue("day_of_month", value, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                  disabled={!enabled || isSaving}
+                  options={daysOfMonth}
+                />
+              )}
+
+              <FormField
+                id="time"
+                label="Report time"
+                register={register}
+                errors={errors}
+                disabled={!enabled || isSaving}
+                type="time"
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  reset(currentSchedule)
+                  setIsDialogOpen(false)
+                }}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+
+              <Button type="submit" disabled={isSaving || !isDirty}>
+                {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
+                Save settings
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

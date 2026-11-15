@@ -39,6 +39,7 @@ export interface Organization {
     day_of_week?: string
     day_of_month?: number
   }
+  dashboard_alert_last_sent_at : string | null
 }
 
 export const ACTIVE_LICENSE = "active" as const

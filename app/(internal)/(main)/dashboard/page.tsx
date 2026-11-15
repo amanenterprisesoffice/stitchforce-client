@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect } from "react"
@@ -164,8 +163,6 @@ export default function DashboardPage() {
         isLoading={isDashboardLoading}
         error={dashboardError}
       />
-      <DashboardAlerts
-      />
 
       <DashboardTrend organizationID={organizationID} />
 
@@ -190,13 +187,15 @@ export default function DashboardPage() {
         isLoading={isProductionLoading}
         error={productionError}
       />
-
-      {/* RECENT PAYMENTS */}
-      <RecentPayments
-        payments={payments?.payments || []}
-        isLoading={isPaymentsLoading}
-        error={paymentsError}
-      />
+      <div className="grid gap-6 xl:grid-cols-[1.65fr_1fr]">
+        {/* RECENT PAYMENTS */}
+        <RecentPayments
+          payments={payments?.payments || []}
+          isLoading={isPaymentsLoading}
+          error={paymentsError}
+        />
+        <DashboardAlerts />
+      </div>
     </main>
   )
 }

@@ -46,6 +46,8 @@ const LabeledSwitchRow: React.FC<LabeledSwitchRowProps> = ({
           {tooltipText && (
             <Tooltip>
               <TooltipTrigger
+                delay={0}
+                className="cursor-pointer"
                 render={<HelpCircle size={12} className="stext-xs" />}
               />
 

@@ -3,6 +3,7 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import AutoBreadcrumbs from "@/components/ui/AutoBreadCrumps"
 import { LanguageTranslator } from "@/components/ui/LanguageTranslator"
+import NotificationsPopover from "@/components/ui/notifications-popover"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
@@ -75,6 +76,7 @@ const TopNav = () => {
             <TooltipContent side="bottom">{title}</TooltipContent>
           </Tooltip>
         ))}
+        <NotificationsPopover/>
       </nav>
     </TooltipProvider>
   )

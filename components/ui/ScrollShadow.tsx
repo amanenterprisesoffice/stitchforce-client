@@ -1,14 +1,23 @@
+
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
+import {
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 
 type ScrollDirection = "vertical" | "horizontal" | "both"
-
 type AutoScroll = boolean | "top" | "bottom"
-
 type ScrollBehavior = "auto" | "instant" | "smooth"
 
 interface ScrollShadows {
@@ -34,6 +43,15 @@ interface ScrollShadowProps {
   autoScrollBehavior?: ScrollBehavior
 }
 
+const SCROLL_AMOUNT = 80
+
+const INITIAL_SHADOWS: ScrollShadows = {
+  top: false,
+  bottom: false,
+  left: false,
+  right: false,
+}
+
 export default function ScrollShadow({
   children,
   className = "",
@@ -51,146 +69,161 @@ export default function ScrollShadow({
 }: ScrollShadowProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const { forcedTheme: theme, systemTheme } = useTheme()
+  const { resolvedTheme } = useTheme()
 
-  const isDark =
-    theme === "dark" || (theme === "system" && systemTheme === "dark")
+  const [shadows, setShadows] = useState<ScrollShadows>(
+    INITIAL_SHADOWS,
+  )
 
-  const currentShadowColor = isDark ? shadowColorDark : shadowColor
+  const isVertical =
+    direction === "vertical" || direction === "both"
 
-  const [shadows, setShadows] = useState<ScrollShadows>({
-    top: false,
-    bottom: false,
-    left: false,
-    right: false,
-  })
+  const isHorizontal =
+    direction === "horizontal" || direction === "both"
 
-  const SCROLL_AMOUNT = 80
+  const currentShadowColor =
+    resolvedTheme === "dark" ? shadowColorDark : shadowColor
 
-  // Update shadow visibility
+  const updateShadows = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    const nextShadows: ScrollShadows = {
+      top: isVertical && el.scrollTop > 0,
+      bottom:
+        isVertical &&
+        el.scrollTop + el.clientHeight + 1 < el.scrollHeight,
+      left: isHorizontal && el.scrollLeft > 0,
+      right:
+        isHorizontal &&
+        el.scrollLeft + el.clientWidth + 1 < el.scrollWidth,
+    }
+
+    setShadows((current) => {
+      if (
+        current.top === nextShadows.top &&
+        current.bottom === nextShadows.bottom &&
+        current.left === nextShadows.left &&
+        current.right === nextShadows.right
+      ) {
+        return current
+      }
+
+      return nextShadows
+    })
+  }, [isVertical, isHorizontal])
+
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
 
-    const update = () => {
-      const {
-        scrollTop,
-        scrollHeight,
-        clientHeight,
-        scrollLeft,
-        scrollWidth,
-        clientWidth,
-      } = el
+    updateShadows()
 
-      setShadows({
-        top: scrollTop > 0,
-        bottom: scrollTop + clientHeight + 1 < scrollHeight,
-        left: scrollLeft > 0,
-        right: scrollLeft + clientWidth + 1 < scrollWidth,
-      })
+    el.addEventListener("scroll", updateShadows, {
+      passive: true,
+    })
+
+    window.addEventListener("resize", updateShadows)
+
+    const resizeObserver = new ResizeObserver(updateShadows)
+
+    resizeObserver.observe(el)
+
+    if (el.firstElementChild) {
+      resizeObserver.observe(el.firstElementChild)
     }
-
-    update()
-
-    el.addEventListener("scroll", update)
-    window.addEventListener("resize", update)
 
     return () => {
-      el.removeEventListener("scroll", update)
-      window.removeEventListener("resize", update)
+      el.removeEventListener("scroll", updateShadows)
+      window.removeEventListener("resize", updateShadows)
+      resizeObserver.disconnect()
     }
-  }, [])
+  }, [updateShadows])
 
-  // Auto scroll
   useEffect(() => {
-    if (!autoScroll) return
-
     const el = scrollRef.current
-    if (!el) return
+    if (!el || !autoScroll) return
 
     const animationFrame = requestAnimationFrame(() => {
-      if (autoScroll === "top") {
-        el.scrollTo({
-          top: 0,
-          behavior: autoScrollBehavior,
-        })
-      } else {
-        el.scrollTo({
-          top: el.scrollHeight,
-          behavior: autoScrollBehavior,
-        })
-      }
+      el.scrollTo({
+        top:
+          autoScroll === "top"
+            ? 0
+            : isVertical
+              ? el.scrollHeight
+              : el.scrollTop,
+        left:
+          autoScroll === "top"
+            ? 0
+            : isHorizontal
+              ? el.scrollWidth
+              : el.scrollLeft,
+        behavior: autoScrollBehavior,
+      })
+
+      updateShadows()
     })
 
     return () => cancelAnimationFrame(animationFrame)
-  }, [watch, autoScroll, autoScrollBehavior])
+  }, [
+    watch,
+    autoScroll,
+    autoScrollBehavior,
+    isVertical,
+    isHorizontal,
+    updateShadows,
+  ])
 
-  // Recalculate shadows when watch changes
   useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
+    updateShadows()
+  }, [watch, updateShadows])
 
-    const {
-      scrollTop,
-      scrollHeight,
-      clientHeight,
-      scrollLeft,
-      scrollWidth,
-      clientWidth,
-    } = el
+  const scroll = useCallback(
+    (axis: "vertical" | "horizontal", amount: number) => {
+      const el = scrollRef.current
+      if (!el) return
 
-    setShadows({
-      top: scrollTop > 0,
-      bottom: scrollTop + clientHeight + 1 < scrollHeight,
-      left: scrollLeft > 0,
-      right: scrollLeft + clientWidth + 1 < scrollWidth,
-    })
-  }, [watch])
-
-  // Scroll handler
-  const scroll = (axis: "vertical" | "horizontal", amount: number) => {
-    if (!scrollRef.current) return
-
-    if (axis === "vertical") {
-      scrollRef.current.scrollBy({
-        top: amount,
+      el.scrollBy({
+        [axis === "vertical" ? "top" : "left"]: amount,
         behavior: "smooth",
       })
-    } else {
-      scrollRef.current.scrollBy({
-        left: amount,
-        behavior: "smooth",
-      })
-    }
-  }
 
-  // Keyboard handler
+      requestAnimationFrame(updateShadows)
+    },
+    [updateShadows],
+  )
+
   const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLDivElement>,
+    event: React.KeyboardEvent<HTMLButtonElement>,
     axis: "vertical" | "horizontal",
-    amount: number
+    amount: number,
   ) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault()
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault()
       scroll(axis, amount)
     }
   }
 
   return (
-    <div className={cn("relative h-full w-full overflow-hidden", parentClass)}>
-      {/* Vertical Shadows */}
-
-      {(direction === "vertical" || direction === "both") && shadows.top && (
-        <div
+    <div
+      className={cn(
+        "relative h-full w-full overflow-hidden",
+        parentClass,
+      )}
+    >
+      {isVertical && shadows.top && (
+        <button
+          type="button"
+          aria-label="Scroll up"
           onClick={() => scroll("vertical", -SCROLL_AMOUNT)}
-          className="absolute top-0 right-0 left-0 z-10 flex h-6 cursor-pointer items-center justify-center"
+          onKeyDown={(event) =>
+            handleKeyDown(event, "vertical", -SCROLL_AMOUNT)
+          }
+          className="absolute top-0 right-0 left-0 z-10 flex h-6 items-center justify-center"
           style={{
             background: `linear-gradient(to bottom, ${currentShadowColor}, transparent)`,
             ...topShadowStyles,
           }}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => handleKeyDown(e, "vertical", -SCROLL_AMOUNT)}
         >
           {icon && (
             <ChevronUp
@@ -199,20 +232,22 @@ export default function ScrollShadow({
               className="rounded-full bg-white p-[1.5px] dark:bg-background"
             />
           )}
-        </div>
+        </button>
       )}
 
-      {(direction === "vertical" || direction === "both") && shadows.bottom && (
-        <div
+      {isVertical && shadows.bottom && (
+        <button
+          type="button"
+          aria-label="Scroll down"
           onClick={() => scroll("vertical", SCROLL_AMOUNT)}
-          className="absolute right-0 bottom-0 left-0 z-10 flex h-6 cursor-pointer items-center justify-center"
+          onKeyDown={(event) =>
+            handleKeyDown(event, "vertical", SCROLL_AMOUNT)
+          }
+          className="absolute right-0 bottom-0 left-0 z-10 flex h-6 items-center justify-center"
           style={{
             background: `linear-gradient(to top, ${currentShadowColor}, transparent)`,
             ...bottomShadowStyles,
           }}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => handleKeyDown(e, "vertical", SCROLL_AMOUNT)}
         >
           {icon && (
             <ChevronDown
@@ -221,21 +256,21 @@ export default function ScrollShadow({
               className="rounded-full bg-white p-[1.5px] dark:bg-background"
             />
           )}
-        </div>
+        </button>
       )}
 
-      {/* Horizontal Shadows */}
-
-      {(direction === "horizontal" || direction === "both") && shadows.left && (
-        <div
+      {isHorizontal && shadows.left && (
+        <button
+          type="button"
+          aria-label="Scroll left"
           onClick={() => scroll("horizontal", -SCROLL_AMOUNT)}
-          className="absolute top-0 bottom-0 left-0 z-10 flex w-6 cursor-pointer items-center justify-center"
+          onKeyDown={(event) =>
+            handleKeyDown(event, "horizontal", -SCROLL_AMOUNT)
+          }
+          className="absolute top-0 bottom-0 left-0 z-10 flex w-6 items-center justify-center"
           style={{
             background: `linear-gradient(to right, ${currentShadowColor}, transparent)`,
           }}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => handleKeyDown(e, "horizontal", -SCROLL_AMOUNT)}
         >
           {icon && (
             <ChevronLeft
@@ -244,44 +279,43 @@ export default function ScrollShadow({
               className="rounded-full bg-white p-[1.5px] dark:bg-background"
             />
           )}
-        </div>
+        </button>
       )}
 
-      {(direction === "horizontal" || direction === "both") &&
-        shadows.right && (
-          <div
-            onClick={() => scroll("horizontal", SCROLL_AMOUNT)}
-            className="absolute top-0 right-0 bottom-0 z-10 flex w-6 cursor-pointer items-center justify-center"
-            style={{
-              background: `linear-gradient(to left, ${currentShadowColor}, transparent)`,
-            }}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => handleKeyDown(e, "horizontal", SCROLL_AMOUNT)}
-          >
-            {icon && (
-              <ChevronRight
-                size={16}
-                strokeWidth={2.5}
-                className="rounded-full bg-white p-[1.5px] dark:bg-background"
-              />
-            )}
-          </div>
-        )}
-
-      {/* Scrollable Content */}
+      {isHorizontal && shadows.right && (
+        <button
+          type="button"
+          aria-label="Scroll right"
+          onClick={() => scroll("horizontal", SCROLL_AMOUNT)}
+          onKeyDown={(event) =>
+            handleKeyDown(event, "horizontal", SCROLL_AMOUNT)
+          }
+          className="absolute top-0 right-0 bottom-0 z-10 flex w-6 items-center justify-center"
+          style={{
+            background: `linear-gradient(to left, ${currentShadowColor}, transparent)`,
+          }}
+        >
+          {icon && (
+            <ChevronRight
+              size={16}
+              strokeWidth={2.5}
+              className="rounded-full bg-white p-[1.5px] dark:bg-background"
+            />
+          )}
+        </button>
+      )}
 
       <div
         ref={scrollRef}
         id={id}
         className={cn(
-          className,
+          "no-scrollbar",
           direction === "vertical"
             ? "h-full overflow-y-auto"
             : direction === "horizontal"
               ? "w-full overflow-x-auto"
               : "h-full w-full overflow-auto",
-          "no-scrollbar"
+          className,
         )}
       >
         {children}

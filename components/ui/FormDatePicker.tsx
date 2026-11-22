@@ -41,9 +41,9 @@ import {
 } from "@/components/ui/tooltip"
 import { formatDate } from "@/utils/utils"
 
-// --------------------------------------------------
+
 // TYPES
-// --------------------------------------------------
+
 
 interface BaseProps {
   id: string
@@ -83,9 +83,9 @@ export type FormDatePickerProps<
   T extends FieldValues = FieldValues,
 > = ControlledProps<T> | UncontrolledProps
 
-// --------------------------------------------------
+
 // HELPERS
-// --------------------------------------------------
+
 
 const formatDateLocal = (date: Date | string | undefined) => {
   if (!date) return ""
@@ -117,9 +117,9 @@ const parseDate = (value?: string) => {
   return isNaN(date.getTime()) ? undefined : date
 }
 
-// --------------------------------------------------
+
 // CUSTOM DROPDOWN
-// --------------------------------------------------
+
 
 const handleCalendarChange = (
   value: string | number,
@@ -179,9 +179,9 @@ const calendarComponents = {
   DropdownNav: CalendarDropdownNav,
 }
 
-// --------------------------------------------------
+
 // COMPONENT
-// --------------------------------------------------
+
 
 function FormDatePicker<T extends FieldValues = FieldValues>({
   id,
@@ -213,9 +213,9 @@ function FormDatePicker<T extends FieldValues = FieldValues>({
     className
   )
 
-  // --------------------------------------------------
+  
   // CALENDAR
-  // --------------------------------------------------
+  
 
   const renderCalendar = (
     selectedDate: Date | undefined,
@@ -240,9 +240,9 @@ function FormDatePicker<T extends FieldValues = FieldValues>({
     />
   )
 
-  // --------------------------------------------------
+  
   // TRIGGER
-  // --------------------------------------------------
+  
 
   const renderTrigger = (displayValue?: string) => (
     <Button
@@ -257,9 +257,9 @@ function FormDatePicker<T extends FieldValues = FieldValues>({
     </Button>
   )
 
-  // --------------------------------------------------
+  
   // RENDER
-  // --------------------------------------------------
+  
 
   return (
     <div className={clsx("w-full", parentClass)}>

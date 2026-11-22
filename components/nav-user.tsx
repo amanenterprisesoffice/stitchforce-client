@@ -82,7 +82,8 @@ export function NavUser({ user }: { user: User }) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator /> */}
             <DropdownMenuGroup>
-              <DropdownMenuItem className="cursor-pointer"
+              <DropdownMenuItem
+                className="cursor-pointer"
                 onClick={() => {
                   router.push("/users/me")
                 }}
@@ -90,7 +91,8 @@ export function NavUser({ user }: { user: User }) {
                 <UserCheck2Icon />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer"
+              <DropdownMenuItem
+                className="cursor-pointer"
                 onClick={() => {
                   router.push("/organization")
                 }}
@@ -102,13 +104,19 @@ export function NavUser({ user }: { user: User }) {
                 <CreditCardIcon />
                 Billing
               </DropdownMenuItem> */}
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => {
+                  router.push("/notifications")
+                }}
+              >
                 <BellIcon />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer"
+            <DropdownMenuItem
+              className="cursor-pointer"
               onClick={async () => {
                 const res = await logout()
                 if (res) {

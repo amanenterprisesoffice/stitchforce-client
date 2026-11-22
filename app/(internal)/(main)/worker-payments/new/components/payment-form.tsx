@@ -50,9 +50,9 @@ import { ProductionEntry } from "@/utils/types/production-entry"
 
 const DEFAULT_LIMIT = 10
 
-// --------------------------------------------------
+
 // HELPERS
-// --------------------------------------------------
+
 
 function toDateString(date: Date) {
   const year = date.getFullYear()
@@ -150,9 +150,9 @@ function readTotalPending(response: any): number | undefined {
   return total === undefined ? undefined : Number(total)
 }
 
-// --------------------------------------------------
+
 // COMPONENT
-// --------------------------------------------------
+
 
 export default function WorkerPaymentForm() {
   const router = useRouter()

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
@@ -56,10 +55,10 @@ const chartConfig = {
 export default function DashboardTrend({ organizationID }: Props) {
   const today = getLocalDateValue()
 
-  // DEFAULT DATE RANGE: LAST ONE YEAR
-  const oneYearAgo = (() => {
+  // DEFAULT DATE RANGE: LAST 6 MONTHS
+  const sixMonthsAgo = (() => {
     const date = new Date(`${today}T00:00:00`)
-    date.setFullYear(date.getFullYear() - 1)
+    date.setMonth(date.getMonth() - 6)
 
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, "0")
@@ -68,7 +67,7 @@ export default function DashboardTrend({ organizationID }: Props) {
     return `${year}-${month}-${day}`
   })()
 
-  const [fromDate, setFromDate] = useState(oneYearAgo)
+  const [fromDate, setFromDate] = useState(sixMonthsAgo)
   const [toDate, setToDate] = useState(today)
   const [groupBy, setGroupBy] = useState("half_monthly")
 
@@ -155,7 +154,7 @@ export default function DashboardTrend({ organizationID }: Props) {
 
   // NORMALIZE RESPONSE
 
-  const stats = (trendData) as OrganizationDashboard | null
+  const stats = trendData as OrganizationDashboard | null
 
   const period = stats?.period
   const trend = stats?.trend
@@ -299,7 +298,9 @@ export default function DashboardTrend({ organizationID }: Props) {
 
                 <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                   <Package className="size-3" />
-                  {(period?.production_quantity ?? 0).toLocaleString("en-IN")}{" "}
+                  {(period?.production_quantity ?? 0).toLocaleString(
+                    "en-IN"
+                  )}{" "}
                   pieces produced
                 </p>
               </div>
@@ -311,9 +312,7 @@ export default function DashboardTrend({ organizationID }: Props) {
                 </div>
 
                 <p className="mt-2 text-2xl font-semibold tabular-nums">
-                  {isLoading
-                    ? "—"
-                    : formatMoney(period?.payment_amount ?? 0)}
+                  {isLoading ? "—" : formatMoney(period?.payment_amount ?? 0)}
                 </p>
 
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -326,9 +325,7 @@ export default function DashboardTrend({ organizationID }: Props) {
 
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm font-medium">
-                  {groupLabel} breakdown
-                </p>
+                <p className="text-sm font-medium">{groupLabel} breakdown</p>
 
                 {trend?.from_date && trend?.to_date && (
                   <p className="text-xs text-muted-foreground">
@@ -368,10 +365,7 @@ export default function DashboardTrend({ organizationID }: Props) {
                       bottom: 0,
                     }}
                   >
-                    <CartesianGrid
-                      vertical={false}
-                      strokeDasharray="3 3"
-                    />
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
 
                     <XAxis
                       dataKey="label"
@@ -469,9 +463,7 @@ export default function DashboardTrend({ organizationID }: Props) {
 
             <div className="grid grid-cols-2 gap-4 border-t pt-4 text-sm">
               <div>
-                <p className="text-muted-foreground">
-                  Production entries
-                </p>
+                <p className="text-muted-foreground">Production entries</p>
 
                 <p className="mt-1 font-semibold tabular-nums">
                   {period?.production_entries ?? 0}
@@ -479,9 +471,7 @@ export default function DashboardTrend({ organizationID }: Props) {
               </div>
 
               <div>
-                <p className="text-muted-foreground">
-                  Payment transactions
-                </p>
+                <p className="text-muted-foreground">Payment transactions</p>
 
                 <p className="mt-1 font-semibold tabular-nums">
                   {period?.payment_count ?? 0}

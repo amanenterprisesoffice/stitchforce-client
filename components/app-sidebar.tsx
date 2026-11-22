@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -20,6 +19,7 @@ import {
   FactoryIcon,
   UsersIcon,
   PieChartIcon,
+  FileArchiveIcon,
 } from "lucide-react"
 
 import { useUser } from "@/contexts/UserContext"
@@ -29,15 +29,14 @@ import { PERMISSIONS } from "@/constants/permissions"
 
 import { Separator } from "./ui/separator"
 
-export function AppSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser()
   const { organization } = useOrganization()
   const { hasPermission } = usePermissions()
 
   const navMain = React.useMemo(() => {
     const canViewDashboard = hasPermission(PERMISSIONS.DASHBOARD_VIEW)
+    const canViewReports = hasPermission(PERMISSIONS.ORGANIZATION_VIEW)
 
     const canViewStyles = hasPermission(PERMISSIONS.STYLES_VIEW)
     const canViewBundles = hasPermission(PERMISSIONS.BUNDLES_VIEW)
@@ -60,17 +59,11 @@ export function AppSidebar({
     }
 
     const productionItems = [
-      ...(canViewStyles
-        ? [{ title: "Styles", url: "/styles" }]
-        : []),
+      ...(canViewStyles ? [{ title: "Styles", url: "/styles" }] : []),
 
-      ...(canViewBundles
-        ? [{ title: "Bundles", url: "/bundles" }]
-        : []),
+      ...(canViewBundles ? [{ title: "Bundles", url: "/bundles" }] : []),
 
-      ...(canViewSizes
-        ? [{ title: "Sizes", url: "/sizes" }]
-        : []),
+      ...(canViewSizes ? [{ title: "Sizes", url: "/sizes" }] : []),
 
       ...(canViewProduction
         ? [{ title: "Entries", url: "/production-entries" }]
@@ -109,9 +102,7 @@ export function AppSidebar({
         ? [{ title: "Garment Workers", url: "/workers" }]
         : []),
 
-      ...(canViewUsers
-        ? [{ title: "Users", url: "/users" }]
-        : []),
+      ...(canViewUsers ? [{ title: "Users", url: "/users" }] : []),
     ]
 
     if (peopleItems.length > 0) {
@@ -120,6 +111,14 @@ export function AppSidebar({
         url: "#",
         icon: <UsersIcon />,
         items: peopleItems,
+      })
+    }
+
+    if (canViewReports) {
+      items.push({
+        title: "Reports",
+        url: "/reports",
+        icon: <FileArchiveIcon />,
       })
     }
 
@@ -138,9 +137,7 @@ export function AppSidebar({
         <NavMain items={navMain} />
       </SidebarContent>
 
-      <SidebarFooter>
-        {user && <NavUser user={user} />}
-      </SidebarFooter>
+      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
 
       <SidebarRail />
     </Sidebar>

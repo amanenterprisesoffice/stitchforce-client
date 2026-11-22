@@ -40,6 +40,12 @@ export function formatDate(date?: string | Date | null) {
   }).format(value)
 }
 
+export const IsUUID = (str: string) => {
+  const localUUIDRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return localUUIDRegex.test(str)
+}
+
 export function formatMoney(amount: number | undefined) {
   if (amount === undefined) return "—"
   return new Intl.NumberFormat("en-IN", {

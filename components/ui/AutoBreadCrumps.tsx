@@ -8,14 +8,11 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { IsUUID } from "@/utils/utils"
 import { Scissors } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import React from "react"
-
-// Regex to detect standard UUIDs (v1-v5)
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export default function AutoBreadcrumbs() {
   const pathname = usePathname()
@@ -27,7 +24,7 @@ export default function AutoBreadcrumbs() {
     const isLast = index === pathSegments.length - 1
 
     // Detect if the segment is a UUID, otherwise format normally
-    const label = UUID_REGEX.test(segment)
+    const label = IsUUID(segment)
       ? "Details"
       : decodeURIComponent(segment)
           .replace(/-/g, " ")

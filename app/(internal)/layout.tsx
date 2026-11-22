@@ -23,9 +23,7 @@ const MainLayout = ({
     <>
       <UserProvider>
         <OrganizationProvider>
-          <LicenseGuard>
-            {children}
-            </LicenseGuard>
+          <LicenseGuard>{children}</LicenseGuard>
         </OrganizationProvider>
       </UserProvider>
     </>

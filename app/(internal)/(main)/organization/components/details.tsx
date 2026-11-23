@@ -62,17 +62,6 @@ export default function OrganizationDetails({ organization }: Props) {
   const isExpiredByDate =
     !!organization.license_expires_at &&
     new Date(organization.license_expires_at).getTime() <= Date.now()
-
-  const hasValidLicense =
-    organization.license_status === ACTIVE_LICENSE && !isExpiredByDate
-
-  const licenseMessage =
-    organization.license_status === SUSPENDED_LICENSE
-      ? "Your organization's license has been suspended. Contact support to restore access."
-      : organization.license_status === EXPIRED_LICENSE || isExpiredByDate
-        ? "Your organization's license has expired. Renew your license to restore full access."
-        : "Your organization's license is not active. Please check your license details."
-
   return (
     <div className="space-y-4">
 

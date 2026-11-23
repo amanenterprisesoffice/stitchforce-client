@@ -16,6 +16,41 @@ export interface OrganizationInvitationsResponse {
   success: boolean
 }
 
+export type WorkerPaymentCycle =
+  | "half_monthly"
+  | "monthly"
+  | "bi_monthly"
+  | "quarterly"
+  | "half_yearly"
+  | "yearly"
+
+export const WORKER_PAYMENT_CYCLES = [
+  "half_monthly",
+  "monthly",
+  "bi_monthly",
+  "quarterly",
+  "half_yearly",
+  "yearly",
+] as const
+
+export const WORKER_PAYMENT_CYCLE_OPTIONS = [
+  {
+    label: "Half-monthly (1st–15th and 16th–month end)",
+    value: "half_monthly",
+  },
+  { label: "Monthly", value: "monthly" },
+  { label: "Every 2 months", value: "bi_monthly" },
+  { label: "Quarterly (every 3 months)", value: "quarterly" },
+  { label: "Half-yearly (every 6 months)", value: "half_yearly" },
+  { label: "Yearly", value: "yearly" },
+] satisfies { label: string; value: WorkerPaymentCycle }[]
+
+export interface OrganizationInvitationsResponse {
+  invitations: OrganizationInvitation[]
+  message: string
+  success: boolean
+}
+
 export interface Organization {
   id: string
   name: string
@@ -39,7 +74,9 @@ export interface Organization {
     day_of_week?: string
     day_of_month?: number
   }
-  dashboard_alert_last_sent_at : string | null
+  dashboard_alert_last_sent_at: string | null
+
+  worker_payment_cycle: WorkerPaymentCycle
 }
 
 export const ACTIVE_LICENSE = "active" as const

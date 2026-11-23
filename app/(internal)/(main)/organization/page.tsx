@@ -16,6 +16,9 @@ import DeleteOrganizationDialog from "./components/delete-organization-dialog"
 
 import { ADMIN, ORG_ADMIN } from "@/utils/types/user"
 import LicenseWarning from "./components/license-banner"
+import WorkerPaymentScheduleSection from "./components/payment-details"
+import { WorkerPaymentCycle } from "@/utils/types/organization"
+import DashboardAlerts from "../dashboard/components/dashboard-alerts"
 
 export default function OrganizationPage() {
   const { user } = useUser()
@@ -59,6 +62,22 @@ export default function OrganizationPage() {
     window.location.href = "/"
   }
 
+  const handleUpdatePaymentCycle = async (cycle: WorkerPaymentCycle) => {
+    if (!canManageOrganization) {
+      toast.error("You don't have permission to update this organization")
+      return
+    }
+
+    if (!organizationID) return
+
+    const formData = new FormData()
+    formData.append("worker_payment_cycle", cycle)
+
+    await update(formData)
+
+    toast.success("Worker payment cycle updated successfully")
+  }
+
   if (!organizationID) {
     return (
       <StateComponent
@@ -87,9 +106,18 @@ export default function OrganizationPage() {
         onDelete={() => setDeleteOpen(true)}
       />
 
-        <LicenseWarning organization={organization} />
+      <LicenseWarning organization={organization} />
 
       <OrganizationDetails organization={organization} />
+
+      <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <WorkerPaymentScheduleSection
+          organization={organization}
+          onUpdate={handleUpdatePaymentCycle}
+          isSaving={isUpdating}
+        />
+        <DashboardAlerts />
+      </div>
       <OrganizationQuickLinks organization={organization} />
 
       <EditOrganizationDialog
